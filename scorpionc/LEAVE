@@ -1,0 +1,74 @@
+Create a library using the present Scorpion Compiler
+The library will be caled "Compilr" 
+Have the library set the users reserved word like so:
+    std::map<string, int> *lang; // string = reserved word, int = reserved word's numeric value
+    bool skip whitespace;
+    
+have a setMap() function to assign a mat to Compilr's internal map
+   void setMap(std::map<string, int> map)
+    
+Allow user some flexability as to exactly how to define thier language's rules
+
+Extract the compiler from scorpionc and use the Compilr lib instead
+
+finalize the compiler and test compiler
+
+Use Compilr lib for Dev language too
+
+For SAR allow but ignore .xso files in library to be parsed only .scorpion can be parsed
+
+Have SAR compress its contents after it has been encrypted with Binary class
+
+Dev updates:
+
+ I want dev to be fore fun:
+   - have internal methods that doo certain things as well as better written attribute statements
+
+Change these attributes
+
+    compile file ('lib/library.sar')
+    compile all ('lib/', '.sar')
+    request permission 'scorpion.permission.POLICY'
+    export file ('app-release')
+    
+New Attribute example (internal Attribute methods)
+
+    setSystemLogPresedence(8);
+    
+Update XSO file format to require all base attributes but then to have optional attributes after that
+
+The base Attributes consist of the attributes already implemented but the optional ones are anything after that
+    
+Also do not require one attribute statement per line like how it is now
+
+Have Compilr library have methods to retrieve compiled data. For instance there would be a 'getNextWord()' that would send a structure of data populated with what was processed:
+       
+       struct compilr_data {
+           int type; // the type of data that was returned 
+           string Identifier; // if identifier/reserved word was found
+           double num; // if number was found
+           char c; // if character was found
+       }
+       
+       compilr_data getNextWord(){
+          ...
+       }
+       
+Also have method to tell Compilr what a single line comment and multiline comment is
+      setSingleLineFlag('@');
+      setMultilineFlag('/', '*', '*', '/');
+   
+BASICALLY COMPILR really isn't a COMPILER but just a really useful LEXER
+the uer will perform what happens when COMPILR returns the data.
+
+   if(compilr_data.type == tok_identifier)
+        Error("expected ')'");
+        
+Let Compilr trach the file name and line number processing 
+Also have Compilr have a "Error" function the will print out the filename, line number, error message, as well as show where the error occures as such
+
+      error:  expected identifier before '('.
+          int (4);
+              ^
+              
+add a import(std::string file) to import files into Compilr to be compiler in paralell with the compiling file              

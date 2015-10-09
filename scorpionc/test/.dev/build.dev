@@ -1,0 +1,31 @@
+# Hello World Application build script file 
+
+{ # Application
+   name 'Hello World'
+   {
+       minDevVersion 7
+   	 targetDevVersion 7
+	    versionNumber '0.0.1'
+	    applicationId 'scorpion.application'
+   }
+   
+   { # Singing configs
+       debug false 
+       export ('app-debug')                      # export project lib file
+   }
+
+   { # Logging
+      log true
+	   logPrecedence 7
+	   logFile ('file.log')       # output file
+   }
+
+   { # dependencies
+       compile ('lib/log.sar')        # test logging library
+       compile ('lib/log.sar')        # test logging library
+   }
+
+   { # security permissions
+       permission 'scorpion.security.permissions.READ_FILES'
+   }
+}

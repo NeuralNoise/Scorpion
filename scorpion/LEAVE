@@ -1,0 +1,116 @@
+This is a message for the Scorpion Virtual Machine Leave.
+
+Scorpion VM parts
+- Security Manager
+- Hardware Manager
+- Notification Interface
+- XSO Preprocessor
+- Image Holder(control opcode returning)
+   - example
+      // here we define the position of our vm registers in *vStaticRegisters 
+      #define IP 0
+      #define SDX 1
+      #define SCR 2
+      
+      struct imginfo {
+          string str;  // will be populated if a string is to be printed and or saved
+          u1 op;   // our opcode
+          u4 ags;  // out opcode arguments
+      }
+      
+      imginfo getNextInstr(long i){
+          // set the IP to i and parse instruction from refrence point
+          vStaticRegisters[IP] = i; // IP = i
+      }
+      
+- Execution Engines
+
+TODO: Finish creating a ROBUST virtual machine for the Scorpion programming language
+The Virtual machine must be quick, simple and firmly tested.
+
+When running a executable file, decompile the SAR algo.
+
+When calling methods by the VM, the methid name and class should be extracted from memory.
+The format of a method in memory is: "methodName&className"
+
+The method should be added to the traceback for exception debugging.
+A method is determined to be native if the first character in the char sequence contains a '~'
+
+Expand the tiny Security Framework the VM uses
+
+Implement GPIO IO processing into the VM and check for raspbery pi constant to initalize methods
+
+   #ifdef RASPBERRY_PI // this is an example find the real #def online
+   
+When implementing the GPIO processor be sure to implement a GPIOMapService
+   have the map service tracK:
+       - which pins ae active
+       - The IO direction on each pin
+       - and the last read IO signal (if applicabale)
+   have map service require GPIO policy on digital... and pinshift methods
+   if io processing was unsuccessful, return -1 else return 0
+   SRC will be set to the io response from GPIOMapService methods and log what happened if io request 
+   was unsuccessful.
+
+    // pre define pin values above
+    class GPIOMapService {
+    
+        std::map<int,bool,bool,int>* gpiomap; // int = the pin number | bool = the pin direction | bool = the pin state | int = the last read signal
+        
+         public:
+            int pinSetup(); // sets the pins up to be used including mapping
+            int digitalread(int pin);
+            int digitalwrite(int pin, int value); // write to a gpio pin
+            int digitalval(int pin); // get the digital value of a pin
+            int setpinactive(int pin, bool io); // setup a GPIO pin to be used for io processing
+            int pinshift(int pin);    // shift io direction of a gpio pin
+            bool hasdir(bool require, int pin); // check to see if a pin can process the requested io signal (if dir is set to in a pin cant process a digital write)
+            bool ispinavailable(int pin); // if the requested pin is available (you cannot set a pin active that is already active)
+            int setpin_inactive(int pin); // set a pin to be inactive
+    };
+
+Make opcodes before performing the above operations
+
+Add full .sar support (involves alot of memory mapping) 
+
+below is the full scorpion syntax
+
+namespace scorpion.application; // or namespace ;
+
+import io;
+
+
+class Main base System
+
+   int[2] nums = { 5, 10 };
+   string str = "Message";
+   
+   def main(int argc, string** ags)
+       std::console.println("Hello, World!" + " " + str); // namespace::method(); or namespace::label
+       throw "Test" : "Exception";
+       assert(true);
+       str("Test");
+       goto jmp;
+       
+       jmp: // goto statement always end with a '~'
+           if(true)
+           
+           end
+           
+           while(0)
+           
+           end
+       ~
+       
+       for( i : 10 ) end 
+       int i = 5;
+       i << 2;
+       
+       i += 3;
+       bool x(i < 2);
+       return 0;
+   end 
+
+endclass
+
+
