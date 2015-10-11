@@ -345,7 +345,7 @@ static int LastChar = ' ';
  
  void HandleStringInstruction(){
      getNextToken();
-     if(CurTok == OP_STRCONST || CurTok == OP_COUT){
+     if(CurTok == OP_STRCONST || CurTok == OP_COUT || CurTok == OP_STR_APND){
          string msg = getheadertxt();
          long arg1 = msg.size();
          
@@ -386,7 +386,8 @@ static int LastChar = ' ';
      }
      else if(CurTok == OP_SCONST || CurTok == OP_BCONST || CurTok == OP_CCONST || CurTok == OP_RSHFT 
        || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF 
-       || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST || CurTok == OP_THROW){
+       || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST 
+       || CurTok == OP_THROW){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
         setbyte(CurTok);
@@ -404,7 +405,8 @@ static int LastChar = ' ';
        || CurTok == OP_DSUB || CurTok == OP_DMULT || CurTok == OP_DDIV || CurTok == OP_FADD
        || CurTok == OP_FSUB || CurTok == OP_FMULT || CurTok == OP_FDIV || CurTok == OP_CADD
        || CurTok == OP_CSUB || CurTok == OP_CMULT || CurTok == OP_CDIV || CurTok == OP_IMOD
-       || CurTok == OP_CMOD || CurTok == OP_SMOD || CurTok == OP_OR || CurTok == OP_AND){
+       || CurTok == OP_CMOD || CurTok == OP_SMOD || CurTok == OP_OR || CurTok == OP_AND
+       || CurTok == OP_AT){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
         double arg3 = atof(getheadertxt().c_str());

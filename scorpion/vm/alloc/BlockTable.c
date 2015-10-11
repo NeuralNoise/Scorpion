@@ -57,7 +57,7 @@
 // TODO: make a TabelParser to control data in&out of heap
 // TODO: Create humor.c in this directory for memory crashes as well as check to see if file exists in beginning of boot(if not creat it)
 bool dataBlock(BlockTable table)
-{
+{ // TODO: create option for string size for setting (*name)
    table.mDataBlock->setSize(table.getBlockSize(), 0); // application data does not require a name
    return table.mDataBlock->blockSuccessful();
 }
@@ -106,7 +106,7 @@ bool stackBlock(BlockTable table, long size)
    long d = table.getBlockSize();
    long v = stacksz;
    long m = methodLimit;
-   long x = d + v + (m*2); // our allocated memory in total(bytes)
+   long x = (d*2) + v + (m*2); // our allocated memory in total(bytes)
    table.setBytes(x);
 
    stringstream ss;
@@ -189,7 +189,7 @@ long svmGetBlockAddr(BlockTable table, long blockId){
       Exception("Stub!", "BlockTableNotInitalizedException");
 
   if(blockId == 0)
-    return table.mDataBlock->getChildSize();
+    return table.mDataBlock->getChildSize() * 2;
   else if(blockId == 1)
     return table.mMethodBlock->getChildSize() * 2;
   else
@@ -224,6 +224,35 @@ double svmBlockFromAddr(BlockTable table, int blockId, long addr){
         default:
            return -19098739424;
     }
+}
+
+
+string svmDataBlockGetStr(BlockTable table, long ptr){
+    if(!table.isinitalized())
+      Exception("Stub!", "BlockTableNotInitalizedException");
+
+     if(!svmIsValidAddr( table, DATA_BLOCK, ptr)){
+      stringstream ss;
+      ss << "Well this is embarrasing, cannot access address @" << ptr << endl 
+         << "  note: memory cap set to " << svmGetBlockAddr(table, DATA_BLOCK) << " bytes";
+      Exception(ss.str(), "BlockAddressRequestDeniedException");
+     }
+     
+     return table.mDataBlock->getChildStr(ptr);
+}
+
+void svmDataBlockSetStr(BlockTable table, long ptr, string data){
+    if(!table.isinitalized())
+      Exception("Stub!", "BlockTableNotInitalizedException");
+
+     if(!svmIsValidAddr( table, DATA_BLOCK, ptr)){
+      stringstream ss;
+      ss << "Well this is embarrasing, cannot access address @" << ptr << endl 
+         << "  note: memory cap set to " << svmGetBlockAddr(table, DATA_BLOCK) << " bytes";
+      Exception(ss.str(), "BlockAddressRequestDeniedException");
+     }
+     
+     table.mDataBlock->setChildStr(ptr, data);   
 }
 
 

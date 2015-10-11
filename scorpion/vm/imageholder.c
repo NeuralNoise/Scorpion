@@ -69,7 +69,8 @@ extern long streamcount;
        || LastChar == OP_DSUB || LastChar == OP_DMULT || LastChar == OP_DDIV || LastChar == OP_FADD
        || LastChar == OP_FSUB || LastChar == OP_FMULT || LastChar == OP_FDIV || LastChar == OP_CADD
        || LastChar == OP_CSUB || LastChar == OP_CMULT || LastChar == OP_CDIV || LastChar == OP_IMOD
-       || LastChar == OP_CMOD || LastChar == OP_SMOD || LastChar == OP_OR || LastChar == OP_AND){ //
+       || LastChar == OP_CMOD || LastChar == OP_SMOD || LastChar == OP_OR || LastChar == OP_AND
+       || LastChar == OP_AT){ //
          instrgroup = 3;
          op_ags.byte1 = getb();
          op_ags.byte2 = getb();
@@ -77,7 +78,7 @@ extern long streamcount;
          return LastChar;
      }
      
-     if(LastChar == OP_STRCONST || LastChar == OP_COUT){ // string 13 'Hello, World!'
+     if(LastChar == OP_STRCONST || LastChar == OP_COUT || LastChar == OP_STR_APND){ // string 13 'Hello, World!'
          instrgroup = 4;
          op_ags.byte1 = getb();
          char c;

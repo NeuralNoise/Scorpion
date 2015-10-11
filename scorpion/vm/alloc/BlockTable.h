@@ -108,6 +108,15 @@ void svmBlockToAddr(BlockTable table,int blockId, long addr, double data, string
 bool svmIsValidAddr(BlockTable table, int blockId, long addr);
 
 /*
+* Whe've abstracted the DataBlock string methods because 
+* it would be simpler to interface with Data Block strings 
+* this way
+*/
+string svmDataBlockGetStr(BlockTable table, long ptr);
+
+void svmDataBlockSetStr(BlockTable table, long ptr, string data);
+
+/*
 * Class Block
 * 
 * This class is the base class for the scorpion heap 
@@ -159,8 +168,14 @@ class DataBlock: public Block {
         void setChild(long index, double data_in){
           child[index] = data_in;
         }
+        void setChildStr(long index, string value){
+            name[index] = value;
+        }
         double getChild(long index){
            return child[index];
+        }
+        string getChildStr(long index){
+            return name[index];
         }
         bool blockSuccessful(){
            return blockSuccess;

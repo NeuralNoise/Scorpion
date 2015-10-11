@@ -395,22 +395,9 @@ void Scorpion_VMExecute(){
                }
           goto exe;
           case OP_THROW:
-               {
-                   stringstream clause, message;
-                   long clength = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
-                   long mlength = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte2);
-                   long clause_address = arguments.byte1 + 1;
-                   long message_address = arguments.byte1 + 1;
-                   
-                   for(long i = 0; i < clength; i++)
-                       clause << (char)  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, clause_address++);
-                   
-                   for(long i = 0; i < mlength; i++)
-                       message << (char)  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, message_address++);
-                       
                    // TODO: Implement $ string processing in Exception()       
-                   Exception(message.str(), clause.str());
-               }
+                   Exception(svmDataBlockGetStr(gSvm.env->getBlockTable(), arguments.byte1), 
+                             svmDataBlockGetStr(gSvm.env->getBlockTable(), arguments.byte2));
           goto exe;
           case OP_CIN:
                {
@@ -432,6 +419,13 @@ void Scorpion_VMExecute(){
        goto exe;
     group3:
        switch( i ) {
+          case OP_AT:
+               {
+                   string output = svmDataBlockGetStr(gSvm.env->getBlockTable(), arguments.byte2);
+                   svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
+                                 (char) output.at((long) arguments.byte3), "");
+               }
+          goto exe;
           default:
                if(i == OP_ISEQ || i == OP_ISNEQ || i == OP_ISLT || i == OP_ISNLT || i == OP_ISLE || i == OP_ISNLE
                   || i == OP_ISGT || i == OP_ISNGT || i == OP_ISGE || i == OP_ISNGE || i == OP_OR || i == OP_AND)
@@ -453,9 +447,16 @@ void Scorpion_VMExecute(){
                  string output =  gSvm.appholder.getStr();
                  svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, output.size(), "");
                  
-                 long addr = arguments.byte1 + 1;
-                 for(long i = 0; i < output.size(); i++)
-                    svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr++, (int) output.at(i), "");
+                 svmDataBlockSetStr(gSvm.env->getBlockTable(), arguments.byte1, output);
+               }
+          goto exe;
+          case OP_STR_APND:
+               {
+                 string strBefore = svmDataBlockGetStr(gSvm.env->getBlockTable(), arguments.byte1);
+                 string output = gSvm.appholder.getStr();
+                 svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, strBefore.size() + output.size(), "");
+                 
+                 svmDataBlockSetStr(gSvm.env->getBlockTable(), arguments.byte1, strBefore + output);
                }
           goto exe;
           case OP_COUT: // output data to the console
