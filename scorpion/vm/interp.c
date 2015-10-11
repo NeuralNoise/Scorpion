@@ -266,7 +266,7 @@ void Scorpion_VMExecute(){
           goto exe;
           case OP_INC:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
-                      svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1) - 1, "");
+                      svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1) + 1, "");
           goto exe;
           case OP_DEC:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
@@ -408,6 +408,7 @@ void Scorpion_VMExecute(){
                    for(long i = 0; i < mlength; i++)
                        message << (char)  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, message_address++);
                        
+                   // TODO: Implement $ string processing in Exception()       
                    Exception(message.str(), clause.str());
                }
           goto exe;
