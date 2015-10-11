@@ -111,25 +111,29 @@ long compare(long instruction){
      b = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK,arguments.byte3);
      
      if(instruction == OP_ISEQ)
-        return (int) a == b;
+        return a == b;
      if(instruction == OP_ISGE)
-        return (int) a >= b;
+        return a >= b;
      if(instruction == OP_ISGT)
-        return (int) a > b;
+        return a > b;
      if(instruction == OP_ISLE)
-        return (int) a <= b;
+        return a <= b;
      if(instruction == OP_ISLT)
-        return (int) a < b;
+        return a < b;
      if(instruction == OP_ISNEQ)
-        return (int) a != b;
+        return a != b;
      if(instruction == OP_ISNGE)
-        return (int) !(a >= b);
+        return !(a >= b);
      if(instruction == OP_ISNGT)
-        return (int) !(a > b);
+        return !(a > b);
      if(instruction == OP_ISNLE)
-        return (int) !(a <= b);
+        return !(a <= b);
      if(instruction == OP_ISNLT)
-        return (int) !(a < b);
+        return !(a < b);
+     if(instruction == OP_OR)
+        return a || b;
+     if(instruction == OP_AND)
+        return a && b;
      else
         return 0;
 }
@@ -140,51 +144,57 @@ double math(long instruction){
      b = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK,arguments.byte3);
      
      if(instruction == OP_IADD)
-        return (long) a + b;
+        return (long) (a + b);
      if(instruction == OP_ISUB)
-        return (long) a - b;
+        return (long) (a - b);
      if(instruction == OP_IDIV)
-        return (long) a / b;
+        return (long) (a / b);
      if(instruction == OP_IMULT)
-        return (long) a * b;
+        return (long) (a * b);
      if(instruction == OP_SADD)
-        return (int) a + b;
+        return (int) (a + b);
      if(instruction == OP_SSUB)
-        return (int) a - b;
+        return (int) (a - b);
      if(instruction == OP_SDIV)
-        return (int) a / b;
+        return (int) (a / b);
      if(instruction == OP_SMULT)
-        return (int) a * b;
+        return (int) (a * b);
      if(instruction == OP_DADD)
-        return (double) a + b;
+        return (double) (a + b);
      if(instruction == OP_DSUB)
-        return (double) a - b;
+        return (double) (a - b);
      if(instruction == OP_DDIV)
-        return (double) a / b;
+        return (double) (a / b);
      if(instruction == OP_DMULT)
-        return (double) a * b;
+        return (double) (a * b);
      if(instruction == OP_FADD)
-        return (float) a + b;
+        return (float) (a + b);
      if(instruction == OP_FSUB)
-        return (float) a - b;
+        return (float) (a - b);
      if(instruction == OP_FDIV)
-        return (float) a / b;
+        return (float) (a / b);
      if(instruction == OP_FMULT)
-        return (float) a * b;
+        return (float) (a * b);
      if(instruction == OP_CADD)
-        return (char) a + b;
+        return (char) (a + b);
      if(instruction == OP_CSUB)
-        return (char) a - b;
+        return (char) (a - b);
      if(instruction == OP_CDIV)
-        return (char) a / b;
+        return (char) (a / b);
      if(instruction == OP_CMULT)
-        return (char) a * b;
+        return (char) (a * b);
+     if(instruction == OP_IMOD)
+        return (long) a % (long) b;
+     if(instruction == OP_SMOD)
+        return (int) a % (int) b;
+     if(instruction == OP_CMOD)
+        return (char) a % (char) b;
      else
         return 0;
 }
 
 // TODO: Finish implementing the rest of the instructions
-// TODO: Replace all break statements with goto exe;
+// TODO: Make the engine faster
 void Scorpion_VMExecute(){
   alog.ALOGD("running application.");
       
@@ -202,7 +212,6 @@ void Scorpion_VMExecute(){
       segfault();
     }
 
-    // TODO: Check flags 
     if(gSvm.vm.flags[VFLAG_NO] == 1 && i != OP_ENDNO) // do not run
         goto exe;
         
@@ -229,7 +238,7 @@ void Scorpion_VMExecute(){
 
     group0:
        switch( i ) {
-          case OP_NOP: break; // do nothing
+          case OP_NOP: goto exe; // do nothing
           case OP_END: 
               if(gSvm.vm.flags[VFLAG_IFC] > 0)
                   gSvm.vm.flags[VFLAG_IFC]--;
@@ -238,23 +247,31 @@ void Scorpion_VMExecute(){
                  gSvm.vm.flags[VFLAG_IGNORE] = false;
                  gSvm.vm.flags[VFLAG_IF_IGNORE] = false;
               }
-          break;
+          goto exe;
           case OP_NO:
-               gSvm.vm.flags[VFLAG_NO] == 1;
+               gSvm.vm.flags[VFLAG_NO] == 1; goto exe;
           case OP_ENDNO:
-               gSvm.vm.flags[VFLAG_NO] == 0;
+               gSvm.vm.flags[VFLAG_NO] == 0; goto exe;
           case OP_HLT:
                Init_ShutdownScorpionVM();
        } // run each instr
-       goto exe;
+       goto exe; // we do this for non implemented instructions
     group1:
        switch( i ) {
           case OP_RETURN:
                if(arguments.byte1 == 0 && gSvm.vm.flags[VFLAG_MTHDC] == 0)
                   return_main();
                else
-                 return_method(arguments.byte1); // TODO: return method
-          break;
+                 return_method(arguments.byte1);
+          goto exe;
+          case OP_INC:
+               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
+                      svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1) - 1, "");
+          goto exe;
+          case OP_DEC:
+               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
+                      svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1) - 1, "");
+          goto exe;
           case OP_IF:
                /*
                * VFLAG_IF_DEPTH
@@ -289,7 +306,7 @@ void Scorpion_VMExecute(){
                    gSvm.vm.flags[VFLAG_IF_IGNORE] = 1;
                    gSvm.vm.flags[VFLAG_IGNORE] = 1;
                }
-          break;
+          goto exe;
           case OP_PUSH:
             {
                long stacksz = svmGetBlockAddr(gSvm.env->getBlockTable(), STACK_BLOCK);
@@ -300,17 +317,17 @@ void Scorpion_VMExecute(){
                svmBlockToAddr(gSvm.env->getBlockTable(), STACK_BLOCK, gSvm.vm.vStaticRegs[VREG_SP], 
                       svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1), "");
             }
-          break;
+          goto exe;
           case OP_POP:
                if((gSvm.vm.vStaticRegs[VREG_SP] - 1) < -1)
                    Exception("Failure to pull data from empty stack.", "StackUnderflowException");
                 
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
                       svmBlockFromAddr(gSvm.env->getBlockTable(), STACK_BLOCK, gSvm.vm.vStaticRegs[VREG_SP]--),"");    
-          break;
+          goto exe;
           case OP_JMP:
                gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
-          break;
+          goto exe;
           case OP_CALL:
                {
                  gSvm.vm.flags[VFLAG_MTHDC]++;
@@ -318,53 +335,82 @@ void Scorpion_VMExecute(){
                  if(m != 0)
                    Exception("Failure to invoke unknown method.", "MethodInvocationFailure");
                }
-          break;
-          case OP_MTHD: break; // this instruction does nothing, it was executed during vm init
-          case OP_LBL: break;  // this instruction does nothing, it was executed during vm init
+          goto exe;
+          case OP_SLP:
+                {
+                    long time = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+                    sleep(time);
+                }
+          goto exe;
+          case OP_USLP:
+               {
+                   long time = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+                   usleep(time);
+               }
+          goto exe;
+          case OP_MTHD: goto exe; // this instruction does nothing, it was executed during vm init
+          case OP_LBL: goto exe;  // this instruction does nothing, it was executed during vm init
        } // run each instr
        goto exe;
     group2:
        switch( i ) {
           case OP_ICONST:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (long) arguments.byte2, "");
-          break;
+          goto exe;
           case OP_DCONST:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (double) arguments.byte2, "");
-          break;
+          goto exe;
           case OP_FCONST:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (float) arguments.byte2, "");
-          break;
+          goto exe;
           case OP_SCONST:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (int) arguments.byte2, "");
-          break;
+          goto exe;
           case OP_BCONST:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (bool) arguments.byte2, "");
-          break;
+          goto exe;
           case OP_CCONST:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (char) arguments.byte2, "");
-          break;
+          goto exe;
           case OP_JIT:
                if(arguments.byte2 == 1)
                   gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
-          break;
+          goto exe;
           case OP_JIF:
                if(arguments.byte2 == 0)
                   gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
-          break;
+          goto exe;
           case OP_RSHFT:
                {
                  svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
                       (((long) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, 
                       arguments.byte1)) >> (long) arguments.byte2), "");
                }
-          break;
+          goto exe;
           case OP_LSHFT:
                {
                  svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
                       (((long) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, 
                       arguments.byte1)) << (long) arguments.byte2), "");
                }
-          break;
+          goto exe;
+          case OP_THROW:
+               {
+                   stringstream clause, message;
+                   long clength = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+                   long mlength = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte2);
+                   long clause_address = arguments.byte1 + 1;
+                   long message_address = arguments.byte1 + 1;
+                   
+                   for(long i = 0; i < clength; i++)
+                       clause << (char)  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, clause_address++);
+                   
+                   for(long i = 0; i < mlength; i++)
+                       message << (char)  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, message_address++);
+                       
+                   Exception(message.str(), clause.str());
+               }
+          goto exe;
           case OP_CIN:
                {
                   system("stty raw");
@@ -380,22 +426,23 @@ void Scorpion_VMExecute(){
                   
                   svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, i, ""); 
                }
-          break;
+          goto exe;
        } // run each instr
        goto exe;
     group3:
        switch( i ) {
           default:
                if(i == OP_ISEQ || i == OP_ISNEQ || i == OP_ISLT || i == OP_ISNLT || i == OP_ISLE || i == OP_ISNLE
-                  || i == OP_ISGT || i == OP_ISNGT || i == OP_ISGE || i == OP_ISNGE)
+                  || i == OP_ISGT || i == OP_ISNGT || i == OP_ISGE || i == OP_ISNGE || i == OP_OR || i == OP_AND)
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, compare(i), "");
                else if(i == OP_IADD || i == OP_ISUB || i == OP_IMULT || i == OP_IDIV || i == OP_SADD
                   || i == OP_SSUB || i == OP_SMULT || i == OP_SDIV || i == OP_DADD
                   || i == OP_DSUB || i == OP_DMULT || i == OP_DDIV || i == OP_FADD
                   || i == OP_FSUB || i == OP_FMULT || i == OP_FDIV || i == OP_CADD
-                  || i == OP_CSUB || i == OP_CMULT || i == OP_CDIV)
+                  || i == OP_CSUB || i == OP_CMULT || i == OP_CDIV || i == OP_IMOD 
+                  || i == OP_SMOD || i == OP_CMOD)
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, math(i), "");
-          break;
+          goto exe;
        } // run each instr
        goto exe;
     group4:
@@ -409,7 +456,7 @@ void Scorpion_VMExecute(){
                  for(long i = 0; i < output.size(); i++)
                     svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr++, (int) output.at(i), "");
                }
-          break;
+          goto exe;
           case OP_COUT: // output data to the console
             {
               string output =  gSvm.appholder.getStr();
@@ -421,7 +468,7 @@ void Scorpion_VMExecute(){
                 else {
                    if(!((i + 1) < output.size())){
                       cout << (char) 244;
-                      break;
+                      goto exe;
                     }
                     
                    
@@ -429,23 +476,23 @@ void Scorpion_VMExecute(){
                    i++;
                    switch ( output.at(i) ){
                        case '$':
-                          cout << '$'; break;
+                          cout << '$'; goto exe;
                        case 'n':
-                          cout << endl; break;
+                          cout << endl; goto exe;
                        case 'b':
-                          cout << '\b'; break;
+                          cout << '\b'; goto exe;
                        case 't':
-                          cout << '\t'; break;
+                          cout << '\t'; goto exe;
                        case 'f':
-                          cout << '\f'; break;
+                          cout << '\f'; goto exe;
                        case 'r':
-                          cout << '\r'; break;
+                          cout << '\r'; goto exe;
                        case '[': // print variable data example:  $[v483|
                           {
                             i++;
                             if(!((i) < output.size())){
                               cout << bad_char;
-                              break;
+                              goto exe;
                             }
                             int form = output.at(i);
                             stringstream  ss;
@@ -458,7 +505,7 @@ void Scorpion_VMExecute(){
                                 else{
                                   if(ss.str() == ""){
                                      cout << bad_char;
-                                     break;
+                                     goto exe;
                                   }
                                   
                                   long addr = atoi(ss.str().c_str());
@@ -476,24 +523,24 @@ void Scorpion_VMExecute(){
                                     cout << (int) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
                                   else //form == v
                                     cout << svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
-                                  break;
+                                  goto exe;
                                 }
                             }
                             break;
                           }
                        case '#':
-                          cout << std::flush; break;
+                          cout << std::flush; goto exe;
                        case '!': // TODO: change color
                           {
-                            break;
+                            goto exe;
                           }
                        default:
-                          cout << bad_char; break;
+                          cout << bad_char; goto exe;
                    }
                 }
               }
             }
-          break;
+          goto exe;
        } // run each instr
        goto exe;
 
