@@ -445,6 +445,7 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
     gSvm.vm.flags[VFLAG_IFC] = 0;
     gSvm.vm.flags[VFLAG_IF_IGNORE] = 0;
     gSvm.vm.flags[VFLAG_IGNORE] = 0;
+    gSvm.vm.flags[VFLAG_NO] = 0;
     
     performSecuritySetup();
     gSvm.appolicy.preparePolicy();

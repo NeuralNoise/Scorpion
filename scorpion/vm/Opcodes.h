@@ -38,7 +38,7 @@
 #define SCORPION_VM_OPCODES
 
 // The max numeric value of a VM opcode
-#define sMaxOpcodeLimit 0x3c
+#define sMaxOpcodeLimit 0x3e
 
   enum Opcodes {
       OP_NOP = 0x0, 
@@ -91,10 +91,12 @@
       OP_CIN = 0x36,
       OP_COUT = 0x37,
       OP_HLT = 0x38,
-      OP_PTR = 0x39,
-      OP_JIT = 0x3a,
-      OP_JIF = 0x3b,
-      OP_LBL = 0x3c,
+      OP_JIT = 0x39,
+      OP_JIF = 0x3a,
+      OP_LBL = 0x3b,
+      OP_NO = 0x3c,
+      OP_ENDNO = 0x3d,
+      OP_IF = 0x3e,
   };
 
 #endif 

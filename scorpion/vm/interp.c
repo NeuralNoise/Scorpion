@@ -184,6 +184,7 @@ double math(long instruction){
 }
 
 // TODO: Finish implementing the rest of the instructions
+// TODO: Replace all break statements with goto exe;
 void Scorpion_VMExecute(){
   alog.ALOGD("running application.");
       
@@ -202,6 +203,12 @@ void Scorpion_VMExecute(){
     }
 
     // TODO: Check flags 
+    if(gSvm.vm.flags[VFLAG_NO] == 1 && i != OP_ENDNO) // do not run
+        goto exe;
+        
+    if(gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && (i != OP_END || i != OP_IF)) // do not run
+        goto exe; 
+        
     arguments = gSvm.appholder.getAgs();
     // TODO: Debugger run
 
@@ -224,17 +231,18 @@ void Scorpion_VMExecute(){
        switch( i ) {
           case OP_NOP: break; // do nothing
           case OP_END: 
-              if(gSvm.vm.flags[VFLAG_IFC] > 0 && !gSvm.vm.flags[VFLAG_IF_IGNORE])
+              if(gSvm.vm.flags[VFLAG_IFC] > 0)
                   gSvm.vm.flags[VFLAG_IFC]--;
-              if(gSvm.vm.flags[VFLAG_IF_IGNORE] == true){
+                  
+              if(gSvm.vm.flags[VFLAG_IF_IGNORE] && (gSvm.vm.flags[VFLAG_IFC] == gSvm.vm.flags[VFLAG_IF_DEPTH])){
                  gSvm.vm.flags[VFLAG_IGNORE] = false;
                  gSvm.vm.flags[VFLAG_IF_IGNORE] = false;
               }
-              
-              // for method ending
-              if(gSvm.vm.flags[VFLAG_IGNORE] == 1)
-                  gSvm.vm.flags[VFLAG_IGNORE] == 0;
           break;
+          case OP_NO:
+               gSvm.vm.flags[VFLAG_NO] == 1;
+          case OP_ENDNO:
+               gSvm.vm.flags[VFLAG_NO] == 0;
           case OP_HLT:
                Init_ShutdownScorpionVM();
        } // run each instr
@@ -246,6 +254,41 @@ void Scorpion_VMExecute(){
                   return_main();
                else
                  return_method(arguments.byte1); // TODO: return method
+          break;
+          case OP_IF:
+               /*
+               * VFLAG_IF_DEPTH
+               *
+               * This is a special flag that tells the Scorpion virtual machine 
+               * that here if where the if was rejected.
+               *
+               * The control flow system:
+               *
+               * Evertime an "if" statement is executed, 
+               * VFLAG_IFC is incremented. This flag holds the count 
+               * of the "depth", i.e. how many if statements are we inside.
+               *
+               * We need this number when determining when to allow instructions 
+               * to execute and when not to based on if the "if" statement evaluated to
+               * true.
+               *
+               * if an "if" statement evaluates to false we need to save the place or "depth"
+               * in which the if statement is in to preserve the block of code that should run after the 
+               * "false if" block of code has been skipped.
+               *
+               * else if an if statement evaluates to true, we do nothing
+               *
+               * we only set the VFLAG_IF_DEPTH flag if VFLAG_IF_IGNORE evaluates to false.
+               */
+               if(!gSvm.vm.flags[VFLAG_IF_IGNORE])
+                  gSvm.vm.flags[VFLAG_IF_DEPTH] = gSvm.vm.flags[VFLAG_IFC];
+                  
+               gSvm.vm.flags[VFLAG_IFC]++;
+               
+               if(!gSvm.vm.flags[VFLAG_IF_IGNORE] && !svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1)){
+                   gSvm.vm.flags[VFLAG_IF_IGNORE] = 1;
+                   gSvm.vm.flags[VFLAG_IGNORE] = 1;
+               }
           break;
           case OP_PUSH:
             {
@@ -276,36 +319,12 @@ void Scorpion_VMExecute(){
                    Exception("Failure to invoke unknown method.", "MethodInvocationFailure");
                }
           break;
-          case OP_MTHD: break; // this method does nothing, it was executed during vm init
-          case OP_LBL: break;
+          case OP_MTHD: break; // this instruction does nothing, it was executed during vm init
+          case OP_LBL: break;  // this instruction does nothing, it was executed during vm init
        } // run each instr
        goto exe;
     group2:
        switch( i ) {
-          case OP_CIN:
-               {
-                  system("stty raw");
-                  int i;
-                  
-                  if(arguments.byte2 == 0){ // do not print char to screen
-                    i = getchar();
-                    cout << "\b \b" << std::flush;
-                  }
-                  else
-                    i = getchar();
-                  system("stty cooked");
-                  
-                  svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, i, ""); 
-               }
-          break;
-          case OP_JIT:
-               if(arguments.byte2 == 1)
-                  gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
-          break;
-          case OP_JIF:
-               if(arguments.byte2 == 0)
-                  gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
-          break;
           case OP_ICONST:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (long) arguments.byte2, "");
           break;
@@ -324,6 +343,14 @@ void Scorpion_VMExecute(){
           case OP_CCONST:
                svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (char) arguments.byte2, "");
           break;
+          case OP_JIT:
+               if(arguments.byte2 == 1)
+                  gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+          break;
+          case OP_JIF:
+               if(arguments.byte2 == 0)
+                  gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+          break;
           case OP_RSHFT:
                {
                  svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
@@ -338,8 +365,21 @@ void Scorpion_VMExecute(){
                       arguments.byte1)) << (long) arguments.byte2), "");
                }
           break;
-          case OP_PTR:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, arguments.byte2, "");
+          case OP_CIN:
+               {
+                  system("stty raw");
+                  int i;
+                  
+                  if(arguments.byte2 == 0){ // do not print char to screen
+                    i = getchar();
+                    cout << "\b \b" << std::flush;
+                  }
+                  else
+                    i = getchar();
+                  system("stty cooked");
+                  
+                  svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, i, ""); 
+               }
           break;
        } // run each instr
        goto exe;
@@ -400,7 +440,7 @@ void Scorpion_VMExecute(){
                           cout << '\f'; break;
                        case 'r':
                           cout << '\r'; break;
-                       case '[': // print variable data
+                       case '[': // print variable data example:  $[v483|
                           {
                             i++;
                             if(!((i) < output.size())){
@@ -420,7 +460,6 @@ void Scorpion_VMExecute(){
                                      cout << bad_char;
                                      break;
                                   }
-                                  cout << "(" << ss.str() << ")";
                                   
                                   long addr = atoi(ss.str().c_str());
                                   if(form == 'c')

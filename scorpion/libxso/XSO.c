@@ -365,13 +365,13 @@ static int LastChar = ' ';
      if(!(CurTok > 0) && !(CurTok <= sMaxOpcodeLimit))
          preexecute_err();
          
-     if(CurTok == OP_NOP || CurTok == OP_END || CurTok == OP_HLT){  
+     if(CurTok == OP_NOP || CurTok == OP_END || CurTok == OP_HLT || CurTok == OP_NO || CurTok == OP_ENDNO){  
          setbyte(CurTok);
          getNextToken();
          return;
      }
      else if(CurTok == OP_RETURN  || CurTok == OP_PUSH || CurTok == OP_POP || CurTok == OP_JMP || CurTok == OP_CALL
-        || CurTok == OP_MTHD || CurTok == OP_LBL){
+        || CurTok == OP_MTHD || CurTok == OP_LBL || CurTok == OP_IF){
         double arg1 = atof(getheadertxt().c_str());
         setbyte(CurTok);
         setbyte(arg1);
@@ -387,7 +387,7 @@ static int LastChar = ' ';
        || CurTok == OP_ISLT || CurTok == OP_ISNLT || CurTok == OP_ISLE || CurTok == OP_ISNLE
        || CurTok == OP_ISGT || CurTok == OP_ISNGT || CurTok == OP_ISGE || CurTok == OP_ISNGE
        || CurTok == OP_SCONST || CurTok == OP_BCONST || CurTok == OP_CCONST || CurTok == OP_RSHFT 
-       || CurTok == OP_LSHFT || CurTok == OP_PTR || CurTok == OP_CIN || CurTok == OP_JIF 
+       || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF 
        || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST ){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());

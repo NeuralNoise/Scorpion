@@ -9,9 +9,8 @@
  using namespace std;
 
   #define HEAP_STANDARD 1000000  // 1,000 kb
-  #define GEN_REGS_NUM 12
   #define STAT_REGS_NUM 10
-  #define VM_FLAG_SIZE 5
+  #define VM_FLAG_SIZE 6
 
   // register Identifiers
   #define VREG_PC 0     // ---------------- Static Regs --------------------
@@ -24,6 +23,8 @@
   #define VFLAG_IFC 2
   #define VFLAG_IF_IGNORE 3
   #define VFLAG_LBL_IGNORE 4
+  #define VFLAG_NO 4 // do not run
+  #define VFLAG_IF_DEPTH 5
 
   class ScorpionEnv;
   class XSO;
