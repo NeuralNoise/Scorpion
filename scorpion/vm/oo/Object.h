@@ -170,7 +170,15 @@
     
     const char *name;
   
-    u1 address;
+    /* 
+    * This holds 2 key data dets
+    *
+    * 1. The return location
+    * 2. The jump location
+    *
+    * TODO: explain
+    */
+    u2 ref;
     
     /*
     * Wether or not this method is
@@ -192,14 +200,10 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status);
     svmInitHeapObject(obj, _tdef, sz, GC_CLEAN)
 
 /* debugging */
-void dvmDumpObject(Object **obj);
+void dvmDumpObject(Object **obj); // wait for GC cleanup
 
 void svmSetGenericValue(Object &obj, double value);
 
 double svmGetGenericValue(Object &obj);
- 
-void svmSetGenericArrayValue(Object &obj, long pos, double value);
-
-double svmGetGenericArrayValue(Object &obj, long pos);
  
 #endif // SCORPION_NATIVE_OBJECT

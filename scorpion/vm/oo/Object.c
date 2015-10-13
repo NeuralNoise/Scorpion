@@ -86,14 +86,6 @@ double svmGetGenericValue(Object &obj){
     return obj.obj->generic;
 }
 
-void svmSetGenericArrayValue(Object &obj, long pos, double value){
-    obj.obj[pos].generic = value;
-}
-
-double svmGetGenericArrayValue(Object &obj, long pos){
-    return obj.obj[pos].generic;
-}
-
 void dvmDumpObject(Object &obj){
   obj.init.byte1 = OBJECT_DEAD;
   obj.instanceData.byte2 = GC_DIRTY;

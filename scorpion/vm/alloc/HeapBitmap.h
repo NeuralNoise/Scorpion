@@ -61,7 +61,7 @@
  
  // TODO: apply comments
  // TODO: implement methods
- bool svmHeapBitmapStartup(HeapBitmap &bitmap, long base, long maxLimit, long methodLimit, long bitmapsz_t, long stacksz);
+ bool svmHeapBitmapInit(HeapBitmap &bitmap, long base, long maxLimit, long methodLimit, long bitmapsz_t, long stacksz);
 
  bool svmReallocBitmap(HeapBitmap &bitmap, long bitmapsz_t, long stacksz);
  
