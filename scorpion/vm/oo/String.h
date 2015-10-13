@@ -34,44 +34,21 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_HEAP_BITMAP
- #define SCORPION_HEAP_BITMAP
+ #ifndef SCORPION_OBJECT_STRING
+ #define SCORPION_OBJECT_STRING
  
- struct Object;
- struct StringObject;
- struct ArrayObject;
  
- #include "../oo/Object.h"
+ #include "Object.h"
+ #include <string>
  
- class ScorpionEnv;
- #define BITMAP_ALLOC (0x23)
+ using namespace std;
  
- struct HeapBitmap {
-     /* We set up some standard bitmap flags */
-     unsigned long size_t;
-     unsigned long base, MaxLimit;
-     
-     /*
-     * Have we initalized the Bitmap yet?
-     */
-     u1 init;
-     
-     Object* objs;
-   //  Method* mthds;
- };
+ unsigned int at(Object &obj, long pos);
  
- // TODO: apply comments
- // TODO: implement methods
- bool svmHeapBitmapInit(HeapBitmap &bitmap, long base, long maxLimit, long methodLimit, long bitmapsz_t, long stacksz);
-
- bool svmReallocBitmap(HeapBitmap &bitmap, long bitmapsz_t, long stacksz);
+ void assign(Object &obj, string data);
  
- long svmGetBitmapSize(HeapBitmap bitmap, int dataset);
-
- void svmBitmapMemoryShutdown(ScorpionEnv env);
+ unsigned int size(Object &obj);
  
- void svmClearBitmap(HeapBitmap bitmap);
+ void concat(Object &obj, string data);
  
- bool svmIsValidAddr(HeapBitmap bitmap, int dataset, long addr);
-
- #endif // SCORPION_HEAP_BITMAP
+ #endif // SCORPION_OBJECT_STRING

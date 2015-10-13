@@ -37,6 +37,8 @@
  #include "Object.h"
  #include "Array.h"
  
+ long str_location = 0;
+ // TODO: look at instance data
  unsigned int at(Object &obj, long pos){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
@@ -44,29 +46,30 @@
      return obj.obj->strobj[0].array->generic[pos];
  }
  
- void assign(Object &obj, string data, long index){
+ void assign(Object &obj, string data){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
         
-     obj.obj->strobj[index].array = tochararray(data);
-     obj.obj->strobj[index].length = obj.obj->strobj[index].array->length;
+     obj.obj->strobj[0].array = tochararray(data);
+     obj.obj->strobj[0].length = obj.obj->strobj[0].array->length;
  }
  
- int size(Object &obj, long index){
+ unsigned int size(Object &obj){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
         
-     return obj.obj->strobj[index].length;
+     return obj.obj->strobj[0].length;
  }
  
- void concat(Object &obj, long index, string data){
+ void concat(Object &obj, string data){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
        
      ArrayObject* aobj = new ArrayObject[1];
      aobj = tochararray(data);
      
-     obj.obj->strobj[index].array = ostr_arraymesh(obj.obj->strobj[index].array[default_loc], aobj[default_loc]);
+     obj.obj->strobj[default_loc].array = ostr_arraymesh(obj.obj->strobj[default_loc].array[default_loc], aobj[default_loc]);
+     obj.obj->strobj[default_loc].length = obj.obj->strobj[default_loc].array->length;
  }
  
  

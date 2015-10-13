@@ -62,11 +62,19 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
    obj.obj->strobj->array = new ArrayObject[0];
   }
   if(_typedef_ == TYPEDEF_GENERIC_ARRAY) {
-   obj.obj = new DataObject[objsz_t.byte1];
+   obj.obj = new DataObject[0];
+   obj.obj->arrayobj = new ArrayObject[0];
+   obj.obj->arrayobj->length = objsz_t.byte1;
+   obj.obj->arrayobj->generic = new double[objsz_t.byte1];
   }
   if(_typedef_ == TYPEDEF_STRING_ARRAY) {
    obj.obj = new DataObject[0];
-   obj.obj->strobj = new StringObject[objsz_t.byte1];
+   obj.obj->arrayobj = new ArrayObject[0];
+   obj.obj->arrayobj->length = objsz_t.byte1;
+   obj.obj->arrayobj->strobj = new StringObject[objsz_t.byte1];
+   
+   for(long i = 0; i < objsz_t.byte1; i++) // initalize all strings
+      obj.obj->arrayobj->strobj[i].array = new ArrayObject[0];
   }
    
   obj.size_t.byte1 = objsz_t.byte1;
@@ -80,8 +88,8 @@ void svmSetGenericValue(Object &obj, double value){
 }
 
 double svmGetGenericValue(Object &obj){
-    if(!svmObjectIsDead(obj)){}
-   //  Exception("Cross initalization of object.", "ObjectInitalizationFaulure");
+    if(svmObjectIsDead(obj)){}
+   //  Exception("Object was not initalized.", "DeadObjectException");
    
     return obj.obj->generic;
 }

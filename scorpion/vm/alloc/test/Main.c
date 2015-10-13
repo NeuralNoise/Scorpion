@@ -46,6 +46,8 @@
  #include <iostream>
  #include <sstream>
  #include "../HeapBitmap.h"
+ #include "../../oo/Array.h"
+ #include "../../oo/String.h"
  
  using namespace std;
  
@@ -75,8 +77,27 @@
     
     SVM_OBJECT_INIT(bitmap.objs[5], TYPEDEF_GENERIC_ARRAY, sz); // int *a = new int[1];
     
-    svmSetGenericArrayValue(bitmap.objs[5], 0, 34);
-    assert(svmGetGenericArrayValue(bitmap.objs[5], 0) == 34);
+    set(bitmap.objs[5], 0, 34);
+    assert(get(bitmap.objs[5], 0) == 34);
+    assert(length(bitmap.objs[5]) == 1);
+    
+    SVM_OBJECT_INIT(bitmap.objs[2], TYPEDEF_STRING, sz);
+    
+    assign(bitmap.objs[2], "hello");
+    assert(size(bitmap.objs[2]) == 5);
+    assert(fromchararray(bitmap.objs[2].obj[default_loc].strobj->array[default_loc]) == "hello");
+    
+    concat(bitmap.objs[2], " world");
+    assert(size(bitmap.objs[2]) == 11);
+    assert(fromchararray(bitmap.objs[2].obj[default_loc].strobj->array[default_loc]) == "hello world");
+    
+    
+    SVM_OBJECT_INIT(bitmap.objs[7], TYPEDEF_STRING_ARRAY,  sz);
+    assert(length(bitmap.objs[7]) == 1);
+    str_location = 0;
+    
+   // svmSetGenericArrayValue(bitmap.objs[5], 0, 34);
+    //assert(svmGetGenericArrayValue(bitmap.objs[5], 0) == 34);
     
     cout << "done.\n"; 
     return 0;

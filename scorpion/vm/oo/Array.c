@@ -82,23 +82,23 @@
  
  
  /* Generic array parsing stuff */
- double get(ArrayObject &arrayobj, long pos){
-     if(pos >= arrayobj.length){}
+ double get(Object &obj, long pos){
+     if(pos >= obj.obj->arrayobj->length){}
       // Exception("Index " + pos + " is not within bounds. Array size[" + arrayobj.length + "].", "ArrayIndexOutOfBoundsException");
      
-     return arrayobj.generic[pos];
+     return obj.obj->arrayobj->generic[pos];
  }
  
- void set(ArrayObject &arrayobj, long pos, double default_value){
-     if(pos >= arrayobj.length){}
+ void set(Object &obj, long pos, double default_value){
+     if(pos >= obj.obj->arrayobj->length){}
       // Exception("Index " + pos + " is not within bounds. Array size[" + arrayobj.length + "].", "ArrayIndexOutOfBoundsException");
       
-      arrayobj.generic[pos] = default_value;
+      obj.obj->arrayobj->generic[pos] = default_value;
  }
  
  
- int length(ArrayObject &arrayobj){
-     return arrayobj.length;
+ long length(Object &obj){
+     return obj.obj->arrayobj->length;
  }
  
  

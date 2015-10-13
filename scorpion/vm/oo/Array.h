@@ -49,9 +49,9 @@
  ArrayObject* ostr_arraymesh(ArrayObject &arrayobj, ArrayObject &arrayobj2);
  
  /* Generic array parsing stuff */
- double get(ArrayObject &arrayobj, long pos);
- void set(ArrayObject &arrayobj, long pos, double default_value);
+ double get(Object &obj, long pos);
+ void set(Object &obj, long pos, double default_value);
  
- int length(ArrayObject &arrayobj);
+ long length(Object &obj);
  
  #endif // SCORPION_OBJECT_ARRAY

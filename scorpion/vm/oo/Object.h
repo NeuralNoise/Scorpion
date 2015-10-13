@@ -164,9 +164,15 @@
    double *generic;
  };
 
-// TODO: apply comments
+ /*
+ * Methods in Scorpion are forms of runnable objects
+ * methods and lables are the only things that can directly
+ * modify memory placement.
+ * 
+ * This maintains the structure and flow of the program
+ */
  struct Method {
-    string clazz;
+    string clazz, module;
     
     const char *name;
   
@@ -176,7 +182,12 @@
     * 1. The return location
     * 2. The jump location
     *
-    * TODO: explain
+    * When calling a method, we jump to the 
+    * preprocessed location to which the method
+    * has been assigned. 
+    *
+    * The return location well also be set for 
+    * returning back to the position it was called.
     */
     u2 ref;
     
