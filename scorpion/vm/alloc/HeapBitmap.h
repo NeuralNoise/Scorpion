@@ -34,65 +34,43 @@
  * limitations under the License.
  *
  */
-#ifndef SCORPION_VM_GLOBALS
-#define SCORPION_VM_GLOBALS
-
+ #ifndef SCORPION_HEAP_BITMAP
+ #define SCORPION_HEAP_BITMAP
  
-
- #include "../clib/u4.h"
- #include "../clib/u2.h"
- #include "../clib/u1.h"
- #include "exception.h"
- #include "variable.h"
- #include "scorpionvm.h"
- #include "scorpion_env.h"
- #include "../libxso/xso.h"
- #include "policy.h"
- #include "imgholder.h"
- #include "permission.h"
- #include <sstream>
- #include <iostream>
- #include <string>
- using namespace std;
-
-class SecurityManager;
-
-/*
- * All fields are initialized to zero.
- *
- * Storage allocated here must be freed by a scheduled shutdown function.
- */
- struct SvmGlobals {
-  
-   int envptr;    // the pointer to which environment we are on
-   ScorpionEnv* env;
-   ScorpionVM vm;  // Our dear virtual machine
-  
-  
-   string image; // our full executable image
-   double* bytestream; // holds the image bytes to be processed
-
-   Permission *permissions;
-   int psize_t;
+ struct Object;
+ struct StringObject;
+ struct ArrayObject;
  
-   SecurityManager appmanager;
-   Policy appolicy;
-   ImageHolder appholder;
+ #include "../oo/Object.h"
  
-   header appheader; // application header
-   Variable* vars; // tempory created variables popped from the stack
-   int var_t; // the size of our temp vars
-
-   int vmCount;
-   int envCount;
-   long exitval;  // the value our program closes with
-
-   bool ForceShutdown; // force a VM shutdown
-   bool ethrow;  // true if an exception is being thrown
-   bool Debug;  // are we debugging this app
+ class ScorpionEnv;
+ #define BITMAP_ALLOC (0x23)
+ 
+ struct HeapBitmap {
+     /* We set up some standard bitmap flags */
+     unsigned long size_t;
+     unsigned long base, MaxLimit;
+     
+     /*
+     * Have we initalized the Bitmap yet?
+     */
+     u1 init;
+     
+     Object* objs;
  };
+ 
+ // TODO: apply comments
+ // TODO: implement methods
+ bool svmHeapBitmapStartup(HeapBitmap &bitmap, long base, long maxLimit, long methodLimit, long bitmapsz_t, long stacksz);
 
-extern struct SvmGlobals gSvm;
-extern string mod;
+ bool svmReallocBitmap(HeapBitmap &bitmap, long bitmapsz_t, long stacksz);
+ 
+ long svmGetBitmapSize(HeapBitmap bitmap, int dataset);
 
-#endif // SCORPION_VM_GLOBALS
+ void svmBitmapMemoryShutdown(ScorpionEnv env);
+ 
+ void svmClearBitmap(HeapBitmap bitmap);
+ 
+ bool svmIsValidAddr(HeapBitmap bitmap, int dataset, long addr);
+
+ #endif // SCORPION_HEAP_BITMAP

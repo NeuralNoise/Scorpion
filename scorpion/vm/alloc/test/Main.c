@@ -34,65 +34,54 @@
  * limitations under the License.
  *
  */
-#ifndef SCORPION_VM_GLOBALS
-#define SCORPION_VM_GLOBALS
-
- 
-
- #include "../clib/u4.h"
- #include "../clib/u2.h"
- #include "../clib/u1.h"
- #include "exception.h"
- #include "variable.h"
- #include "scorpionvm.h"
- #include "scorpion_env.h"
- #include "../libxso/xso.h"
- #include "policy.h"
- #include "imgholder.h"
- #include "permission.h"
- #include <sstream>
- #include <iostream>
- #include <string>
- using namespace std;
-
-class SecurityManager;
-
-/*
- * All fields are initialized to zero.
- *
- * Storage allocated here must be freed by a scheduled shutdown function.
+ /*
+ * Command line invocation of the Scorpion VM
  */
- struct SvmGlobals {
-  
-   int envptr;    // the pointer to which environment we are on
-   ScorpionEnv* env;
-   ScorpionVM vm;  // Our dear virtual machine
-  
-  
-   string image; // our full executable image
-   double* bytestream; // holds the image bytes to be processed
-
-   Permission *permissions;
-   int psize_t;
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
+ #include <assert.h>
+ #include <iostream>
+ #include <sstream>
+ #include "../HeapBitmap.h"
  
-   SecurityManager appmanager;
-   Policy appolicy;
-   ImageHolder appholder;
+ using namespace std;
  
-   header appheader; // application header
-   Variable* vars; // tempory created variables popped from the stack
-   int var_t; // the size of our temp vars
-
-   int vmCount;
-   int envCount;
-   long exitval;  // the value our program closes with
-
-   bool ForceShutdown; // force a VM shutdown
-   bool ethrow;  // true if an exception is being thrown
-   bool Debug;  // are we debugging this app
- };
-
-extern struct SvmGlobals gSvm;
-extern string mod;
-
-#endif // SCORPION_VM_GLOBALS
+ HeapBitmap bitmap;
+ 
+ void Init(){
+     bitmap.size_t = 10; // 10 objects
+     bitmap.base = 10;
+     bitmap.MaxLimit = 100;
+     
+     bitmap.init.byte1 = BITMAP_ALLOC;
+     
+     bitmap.objs = new Object[10]; 
+ }
+ 
+ // TODO: Test all newly created methods and apply all comments
+ int main(){
+    Init();
+    
+    
+    u1 sz;
+    sz.byte1 = 1;
+    SVM_OBJECT_INIT(bitmap.objs[default_loc], TYPEDEF_GENERIC, sz);
+    
+    svmSetGenericValue(bitmap.objs[default_loc], 32);
+    assert(svmGetGenericValue(bitmap.objs[default_loc]) == 32);
+    
+    SVM_OBJECT_INIT(bitmap.objs[5], TYPEDEF_GENERIC_ARRAY, sz); // int *a = new int[1];
+    
+    svmSetGenericArrayValue(bitmap.objs[5], 0, 34);
+    assert(svmGetGenericArrayValue(bitmap.objs[5], 0) == 34);
+    
+    cout << "done.\n"; 
+    return 0;
+ }
+ 
+ 
+ 
+ 

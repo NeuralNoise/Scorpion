@@ -34,65 +34,39 @@
  * limitations under the License.
  *
  */
-#ifndef SCORPION_VM_GLOBALS
-#define SCORPION_VM_GLOBALS
-
+ #include "Object.h"
+ #include "Array.h"
  
-
- #include "../clib/u4.h"
- #include "../clib/u2.h"
- #include "../clib/u1.h"
- #include "exception.h"
- #include "variable.h"
- #include "scorpionvm.h"
- #include "scorpion_env.h"
- #include "../libxso/xso.h"
- #include "policy.h"
- #include "imgholder.h"
- #include "permission.h"
- #include <sstream>
- #include <iostream>
- #include <string>
- using namespace std;
-
-class SecurityManager;
-
-/*
- * All fields are initialized to zero.
- *
- * Storage allocated here must be freed by a scheduled shutdown function.
- */
- struct SvmGlobals {
-  
-   int envptr;    // the pointer to which environment we are on
-   ScorpionEnv* env;
-   ScorpionVM vm;  // Our dear virtual machine
-  
-  
-   string image; // our full executable image
-   double* bytestream; // holds the image bytes to be processed
-
-   Permission *permissions;
-   int psize_t;
+ unsigned int at(Object &obj, long pos){
+     if(svmObjectIsDead(obj)){}
+        //Exception("String Object has not been created!", "DeadObjectException");
+        
+     return obj.obj->strobj[0].array->generic[pos];
+ }
  
-   SecurityManager appmanager;
-   Policy appolicy;
-   ImageHolder appholder;
+ void assign(Object &obj, string data, long index){
+     if(svmObjectIsDead(obj)){}
+        //Exception("String Object has not been created!", "DeadObjectException");
+        
+     obj.obj->strobj[index].array = tochararray(data);
+     obj.obj->strobj[index].length = obj.obj->strobj[index].array->length;
+ }
  
-   header appheader; // application header
-   Variable* vars; // tempory created variables popped from the stack
-   int var_t; // the size of our temp vars
-
-   int vmCount;
-   int envCount;
-   long exitval;  // the value our program closes with
-
-   bool ForceShutdown; // force a VM shutdown
-   bool ethrow;  // true if an exception is being thrown
-   bool Debug;  // are we debugging this app
- };
-
-extern struct SvmGlobals gSvm;
-extern string mod;
-
-#endif // SCORPION_VM_GLOBALS
+ int size(Object &obj, long index){
+     if(svmObjectIsDead(obj)){}
+        //Exception("String Object has not been created!", "DeadObjectException");
+        
+     return obj.obj->strobj[index].length;
+ }
+ 
+ void concat(Object &obj, long index, string data){
+     if(svmObjectIsDead(obj)){}
+        //Exception("String Object has not been created!", "DeadObjectException");
+       
+     ArrayObject* aobj = new ArrayObject[1];
+     aobj = tochararray(data);
+     
+     obj.obj->strobj[index].array = ostr_arraymesh(obj.obj->strobj[index].array[default_loc], aobj[default_loc]);
+ }
+ 
+ 

@@ -34,65 +34,11 @@
  * limitations under the License.
  *
  */
-#ifndef SCORPION_VM_GLOBALS
-#define SCORPION_VM_GLOBALS
-
+ #ifndef SCORPION_GARBAGE_COLLECTOR
+ #define SCORPION_GARBAGE_COLLECTOR
  
-
- #include "../clib/u4.h"
- #include "../clib/u2.h"
- #include "../clib/u1.h"
- #include "exception.h"
- #include "variable.h"
- #include "scorpionvm.h"
- #include "scorpion_env.h"
- #include "../libxso/xso.h"
- #include "policy.h"
- #include "imgholder.h"
- #include "permission.h"
- #include <sstream>
- #include <iostream>
- #include <string>
- using namespace std;
-
-class SecurityManager;
-
-/*
- * All fields are initialized to zero.
- *
- * Storage allocated here must be freed by a scheduled shutdown function.
- */
- struct SvmGlobals {
-  
-   int envptr;    // the pointer to which environment we are on
-   ScorpionEnv* env;
-   ScorpionVM vm;  // Our dear virtual machine
-  
-  
-   string image; // our full executable image
-   double* bytestream; // holds the image bytes to be processed
-
-   Permission *permissions;
-   int psize_t;
+ // TODO: apply gc comments
+ #define GC_DIRTY (0x472)
+ #define GC_CLEAN (0x482)
  
-   SecurityManager appmanager;
-   Policy appolicy;
-   ImageHolder appholder;
- 
-   header appheader; // application header
-   Variable* vars; // tempory created variables popped from the stack
-   int var_t; // the size of our temp vars
-
-   int vmCount;
-   int envCount;
-   long exitval;  // the value our program closes with
-
-   bool ForceShutdown; // force a VM shutdown
-   bool ethrow;  // true if an exception is being thrown
-   bool Debug;  // are we debugging this app
- };
-
-extern struct SvmGlobals gSvm;
-extern string mod;
-
-#endif // SCORPION_VM_GLOBALS
+ #endif // SCORPION_GARBAGE_COLLECTOR

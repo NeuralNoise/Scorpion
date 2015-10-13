@@ -42,7 +42,6 @@
  #include "../clib/binary.h"
  #include "../logservice/alog.h"
  #include "../vm/Globals.h"
- #include "../vm/alloc/BlockTable.h"
  #include "../vm/Opcodes.h"
  #include <sstream>
  #include <stdio.h>
@@ -335,8 +334,8 @@ static int LastChar = ' ';
      long l = atoi(getheadertxt().c_str());
      
    //  cout << "setting method " << methodname << " at location " << l << endl;
-     svmBlockToAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, l, 0, methodname);
-     svmBlockToAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, l + 1, streamcount, methodname);
+//     svmBlockToAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, l, 0, methodname);
+//     svmBlockToAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, l + 1, streamcount, methodname);
      setbyte(OP_MTHD);
      setbyte(l);
      

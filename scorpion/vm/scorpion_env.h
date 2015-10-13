@@ -44,14 +44,13 @@
 #include "scorpionvm.h"
 #include "../logservice/alog.h"
 #include "../libxso/xso.h"
-#include "alloc/BlockTable.h"
+ #include "alloc/HeapBitmap.h"
 #include <sstream>
 #include <iostream>
 #include <string>
 using namespace std;
  
 
-  extern bool BlockTableInitilized;
 
   /*
   * Scorpion Runtime Envirnment (SRE)
@@ -70,7 +69,9 @@ using namespace std;
   class ScorpionEnv {
         string name;
         long methodLimit;
-        BlockTable table; // every environment has its own tabel
+        
+        HeapBitmap memBitmap;
+   //     BlockTable table; // every environment has its own tabel
         
       #define nullptr ((void *)0)
       
@@ -86,13 +87,13 @@ using namespace std;
             alog.setClass("ScorpionEnv");
             alog.ALOGV("Setting up new environment.");
 
-            table = svmBlockTableStartup(table, minHeap, maxHeap, f.headerInf.method_size.byte1, blocksz, stacksz);
+            //table = svmBlockTableStartup(table, minHeap, maxHeap, f.headerInf.method_size.byte1, blocksz, stacksz);
             
-           if(!BlockTableInitilized){
+        /*   if(!BlockTableInitilized){
                alog.setClass("ScorpionEnv");
                alog.ALOGV("Environment was not created successfully. Have you requested too much memory?");
                return -1;
-           }
+           }*/
           
        //   svmBlockToAddr(table, 0, 12, 55, "");
        //   cout << table.mDataBlock[0].getChild(12) << endl;
@@ -117,8 +118,8 @@ using namespace std;
           Exception::trace.addproto("vm.internal.system.setMethodLimit", "ScorpionEnv", 1);
           methodLimit = l;
         }
-        BlockTable getBlockTable(){
-          return table;
+        HeapBitmap getHeapBitmap(){
+          return memBitmap;
         }
   };
 
