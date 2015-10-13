@@ -42,34 +42,55 @@
  unsigned int at(Object &obj, long pos){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
-        
-     return obj.obj->strobj[0].array->generic[pos];
+     
+     if(svmObjectHasInstance(obj, TYPEDEF_STRING))
+       return obj.obj->strobj[0].array->generic[pos];
+     else
+       return obj.obj->arrayobj->strobj[str_location].array->generic[pos];
  }
  
  void assign(Object &obj, string data){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
-        
-     obj.obj->strobj[0].array = tochararray(data);
-     obj.obj->strobj[0].length = obj.obj->strobj[0].array->length;
+     
+     if(svmObjectHasInstance(obj, TYPEDEF_STRING)){
+       obj.obj->strobj[0].array = tochararray(data);
+       obj.obj->strobj[0].length = obj.obj->strobj[0].array->length;
+     }
+     else {
+       obj.obj->arrayobj->strobj[str_location].array = tochararray(data);
+       obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
+     }
  }
  
  unsigned int size(Object &obj){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
         
-     return obj.obj->strobj[0].length;
+     if(svmObjectHasInstance(obj, TYPEDEF_STRING))
+       return obj.obj->strobj[0].length;
+     else
+       return obj.obj->arrayobj->strobj[str_location].length;
  }
  
  void concat(Object &obj, string data){
+      
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
-       
+        
      ArrayObject* aobj = new ArrayObject[1];
-     aobj = tochararray(data);
+     aobj = tochararray(data);  
      
-     obj.obj->strobj[default_loc].array = ostr_arraymesh(obj.obj->strobj[default_loc].array[default_loc], aobj[default_loc]);
-     obj.obj->strobj[default_loc].length = obj.obj->strobj[default_loc].array->length;
+     if(svmObjectHasInstance(obj, TYPEDEF_STRING)){  
+ 
+       obj.obj->strobj[default_loc].array = ostr_arraymesh(obj.obj->strobj[default_loc].array[default_loc], aobj[default_loc]);
+       obj.obj->strobj[default_loc].length = obj.obj->strobj[default_loc].array->length;
+     }
+     else {
+       obj.obj->arrayobj->strobj[str_location].array = 
+          ostr_arraymesh(obj.obj->arrayobj->strobj[str_location].array[default_loc], aobj[default_loc]);
+       obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
+     }
  }
  
  

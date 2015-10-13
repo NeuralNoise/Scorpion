@@ -63,6 +63,7 @@
      bitmap.objs = new Object[10]; 
  }
  
+ extern long str_location;
  // TODO: Test all newly created methods and apply all comments
  int main(){
     Init();
@@ -96,8 +97,13 @@
     assert(length(bitmap.objs[7]) == 1);
     str_location = 0;
     
-   // svmSetGenericArrayValue(bitmap.objs[5], 0, 34);
-    //assert(svmGetGenericArrayValue(bitmap.objs[5], 0) == 34);
+    assign(bitmap.objs[7], "hello");
+    assert(size(bitmap.objs[7]) == 5);
+    assert(fromchararray(bitmap.objs[7].obj->arrayobj->strobj[default_loc].array[default_loc]) == "hello");
+    
+    concat(bitmap.objs[7], " world");
+    assert(size(bitmap.objs[7]) == 11);
+    assert(fromchararray(bitmap.objs[7].obj->arrayobj->strobj[default_loc].array[default_loc]) == "hello world");
     
     cout << "done.\n"; 
     return 0;

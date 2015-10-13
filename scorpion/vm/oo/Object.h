@@ -201,6 +201,8 @@
 
 bool svmObjectIsDead(Object &obj);
 
+bool svmObjectHasInstance(Object &obj, int instance);
+
 void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status);
  
 /*

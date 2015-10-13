@@ -40,9 +40,12 @@
  using namespace std;
 
 // TODO: add memory protection for the Object methods
-// Finish String , object , and array methods
 bool svmObjectIsDead(Object &obj){
    return (obj.init.byte1 == OBJECT_ALIVE);
+}
+
+bool svmObjectHasInstance(Object &obj, int instance){
+   return (obj.instanceData.byte1 == instance);
 }
 
 void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
