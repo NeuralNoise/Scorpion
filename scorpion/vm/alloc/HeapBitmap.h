@@ -46,23 +46,49 @@
  class ScorpionEnv;
  #define BITMAP_ALLOC (0x23)
  
+ // Alloc fail reasons
+ #define ALLOC_OUT_OF_BOUNDS (0x11)
+ #define ALLOC_OUT_OF_MEMORY (0x7)
+ #define ALLOC_STACK_OVERLOAD (0x5)
+ 
+ 
+ // Other used bitmap variables
+ #define dataset_obj (0x48)
+ #define dataset_stack (0x58)
+ 
+ #define stack_limit (0x483)
+ 
  struct HeapBitmap {
      /* We set up some standard bitmap flags */
      unsigned long size_t;
      unsigned long base, MaxLimit;
+     long stsz_t;
      
      /*
      * Have we initalized the Bitmap yet?
      */
      u1 init;
      
+     /*
+     * What is the reason allocation failed?
+     */
+     u1 reason;
+     
      Object* objs;
-   //  Method* mthds;
+     ArrayObject* stack;
  };
  
  // TODO: apply comments
- // TODO: implement methods
- bool svmHeapBitmapInit(HeapBitmap &bitmap, long base, long maxLimit, long methodLimit, long bitmapsz_t, long stacksz);
+ 
+ /*
+ * Initalizes a HeapBitmap, This must be called before any other
+ * svm methods that interact with the bitmap.
+ *
+ * The heap bitmap holds 1 type of data
+ * the centerpoint of alll Scorpion data 
+ * called an Object
+ */
+ bool svmHeapBitmapInit(HeapBitmap &bitmap, long base, long maxLimit, long stack, long bitmapsz_t);
 
  bool svmReallocBitmap(HeapBitmap &bitmap, long bitmapsz_t, long stacksz);
  

@@ -38,7 +38,15 @@
  #include "Array.h"
  
  long str_location = 0;
- // TODO: look at instance data
+ 
+ bool isnull(Object &obj){
+    
+    if(svmObjectHasInstance(obj, TYPEDEF_STRING))
+       return (obj.obj->strobj[0].array == nullptr);
+    else
+       return (obj.obj->arrayobj->strobj[str_location].array == nullptr);
+ }
+ 
  unsigned int at(Object &obj, long pos){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
@@ -49,7 +57,7 @@
        return obj.obj->arrayobj->strobj[str_location].array->generic[pos];
  }
  
- void assign(Object &obj, string data){
+  void assign(Object &obj, string data){
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
      
@@ -61,6 +69,9 @@
        obj.obj->arrayobj->strobj[str_location].array = tochararray(data);
        obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
      }
+     
+     if(isnull(obj)){}
+      //Exception("String Object failed to be reassigned.", "NullpointerException");
  }
  
  unsigned int size(Object &obj){
@@ -78,8 +89,7 @@
      if(svmObjectIsDead(obj)){}
         //Exception("String Object has not been created!", "DeadObjectException");
         
-     ArrayObject* aobj = new ArrayObject[1];
-     aobj = tochararray(data);  
+     ArrayObject* aobj = tochararray(data);  
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING)){  
  
@@ -91,6 +101,9 @@
           ostr_arraymesh(obj.obj->arrayobj->strobj[str_location].array[default_loc], aobj[default_loc]);
        obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
      }
+     
+     if(isnull(obj)){}
+      //Exception("String Object failed to be reassigned.", "NullpointerException");
  }
  
  

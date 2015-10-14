@@ -40,5 +40,6 @@
  // TODO: apply gc comments
  #define GC_DIRTY (0x472)
  #define GC_CLEAN (0x482)
+ #define GC_IDLE (0x302)
  
  #endif // SCORPION_GARBAGE_COLLECTOR

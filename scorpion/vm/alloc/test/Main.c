@@ -60,7 +60,7 @@
      
      bitmap.init.byte1 = BITMAP_ALLOC;
      
-     bitmap.objs = new Object[10]; 
+     bitmap.objs = new (nothrow) Object[10]; 
  }
  
  extern long str_location;

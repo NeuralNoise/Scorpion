@@ -37,6 +37,10 @@
  #ifndef SCORPION_NATIVE_OBJECT
  #define SCORPION_NATIVE_OBJECT
  
+ struct StringObject;
+ struct ArrayObject;
+ struct Method;
+ 
  #include "../alloc/gc.h"
  #include "../../clib/u1.h"
  #include "../../clib/u2.h"
@@ -44,11 +48,9 @@
  #include <string>
  
  using namespace std;
-
  
- struct StringObject;
- struct ArrayObject;
- 
+  #define nullptr ((void *)0)
+  
  /*
  * we use this for assigning 
  * values with default locations
@@ -101,6 +103,28 @@
  /*
  * In Scorpion, all object must be instantiated before
  * use.
+ *
+ * Objects in Scorpion down to its lowest possible entity
+ * are all double. Objects are abstract containers that 
+ * can hold 1 of 4 different typedefs at any given time.
+ *
+ * A typedef in Scorpion is the primive "type" of a defined object.
+ * Each typedef has its own rules that must be followed to avoid an exception.
+ * There are 4 main types of typedefs:
+ * 
+ * typedef-string ::=   A string object
+ *                        - String Objects are simply a char[] of data which 
+ *                          represents the string.
+ *
+ * typedef-generic ::=  A "generic" object
+ *                        - Generic data in Scorpion represents any non-specific piece of 
+ *                          data that is used in the Scorpion.
+ *
+ * typedef-generic-array ::=  A "generic" array object
+ *                              - An array og generic data
+ *
+ * typedef-string-array  ::=  A string array object
+ *                              - An array of string objects
  *
  */
  struct Object {
@@ -159,7 +183,7 @@
    StringObject* strobj;
      
    /*
-   * Generic data (int, float, etc..)
+   * Generic data (**int, **float, etc..)
    */
    double *generic;
  };
@@ -218,5 +242,9 @@ void dvmDumpObject(Object **obj); // wait for GC cleanup
 void svmSetGenericValue(Object &obj, double value);
 
 double svmGetGenericValue(Object &obj);
+
+long __typedef(Object *obj);
+
+long __gcstatus(Object &obj);
  
 #endif // SCORPION_NATIVE_OBJECT

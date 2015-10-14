@@ -43,8 +43,8 @@
  using namespace std;
   
  ArrayObject* tochararray(string data){
-     ArrayObject* obj = new ArrayObject[0];
-     obj->generic = new double[data.size()];
+     ArrayObject* obj = new (nothrow) ArrayObject[0];
+     obj->generic = new (nothrow) double[data.size()];
      
      obj->length = data.size();
      
@@ -67,14 +67,11 @@
  }
  
  ArrayObject* ostr_arraymesh(ArrayObject &arrayobj, ArrayObject &arrayobj2){
-     ArrayObject* obj = new ArrayObject[0];
      
      stringstream ss;
      ss << fromchararray(arrayobj) << fromchararray(arrayobj2);
      
-     obj = tochararray(ss.str());
-     if(obj->length > STR_LIMIT){}
-       // Exception("Scring greater than max limit.", "StringOverloadException");
+     ArrayObject* obj = tochararray(ss.str());
        
      return obj;
  }
@@ -84,7 +81,7 @@
  /* Generic array parsing stuff */
  double get(Object &obj, long pos){
      if(pos >= obj.obj->arrayobj->length){}
-      // Exception("Index " + pos + " is not within bounds. Array size[" + arrayobj.length + "].", "ArrayIndexOutOfBoundsException");
+      // Exception("Index " + pos + " is not within bounds. Array size[" + obj.obj->arrayobj.length + "].", "ArrayIndexOutOfBoundsException");
      
      return obj.obj->arrayobj->generic[pos];
  }
