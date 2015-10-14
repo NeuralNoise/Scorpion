@@ -56,7 +56,7 @@
  #define dataset_obj (0x48)
  #define dataset_stack (0x58)
  
- #define stack_limit (0x483)
+ #define stack_limit (0xffff)
  
  struct HeapBitmap {
      /* We set up some standard bitmap flags */
@@ -92,12 +92,14 @@
 
  bool svmReallocBitmap(HeapBitmap &bitmap, long bitmapsz_t, long stacksz);
  
- long svmGetBitmapSize(HeapBitmap bitmap, int dataset);
+ long svmGetBitmapSize(HeapBitmap &bitmap, int dataset);
 
- void svmBitmapMemoryShutdown(ScorpionEnv env);
+ void svmBitmapMemoryShutdown(HeapBitmap &bitmap);
  
- void svmClearBitmap(HeapBitmap bitmap);
+ void svmClearBitmap(HeapBitmap &bitmap);
  
- bool svmIsValidAddr(HeapBitmap bitmap, int dataset, long addr);
+ bool svmIsValidAddr(HeapBitmap &bitmap, int dataset, long addr);
+ 
+ bool svmBitmapInitalized(HeapBitmap &bitmap);
 
  #endif // SCORPION_HEAP_BITMAP

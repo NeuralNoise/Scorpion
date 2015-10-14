@@ -37,11 +37,8 @@
  /*
  * Command line invocation of the Scorpion VM
  */
- #include <sys/types.h>
- #include <sys/stat.h>
  #include <stdlib.h>
  #include <stdio.h>
- #include <string.h>
  #include <assert.h>
  #include <iostream>
  #include <sstream>
@@ -66,7 +63,13 @@
  extern long str_location;
  // TODO: Test all newly created methods and apply all comments
  int main(){
-    Init();
+    cout << "------------------------------------------------\n";
+    cout << "     Scorpion Bitmap Memory Structure Test\n";
+    cout << "------------------------------------------------\n\n";
+  
+    svmHeapBitmapInit(bitmap, 10, 100, 10, 10);
+    cout << "Bitmap mapped with size " << svmGetBitmapSize(bitmap, dataset_obj) << endl;
+    cout << "Testing structure..  " << std::flush;
     
     
     u1 sz;
@@ -104,6 +107,8 @@
     concat(bitmap.objs[7], " world");
     assert(size(bitmap.objs[7]) == 11);
     assert(fromchararray(bitmap.objs[7].obj->arrayobj->strobj[default_loc].array[default_loc]) == "hello world");
+    
+    svmBitmapMemoryShutdown(bitmap);
     
     cout << "done.\n"; 
     return 0;

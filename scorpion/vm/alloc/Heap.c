@@ -45,6 +45,8 @@
 using namespace std;
  
  bool svmHeapBitmapInit(HeapBitmap &bitmap, long _base, long maxLimit, long stack, long bitmapsz_t){
+     if(svmBitmapInitalized(bitmap)){}
+       // Exception("Cannot re-initalize a previously initalized bitmap.", "IllegalStateExcpetion");
      
      if(stack > stack_limit){
          bitmap.reason.byte1 = ALLOC_STACK_OVERLOAD;
@@ -84,6 +86,8 @@ using namespace std;
  }
 
  bool svmReallocBitmap(HeapBitmap &bitmap, long bitmapsz_t, long stack){
+     if(!svmBitmapInitalized(bitmap)){}
+       // Exception("Failed to re-alloc non-initalized bitmap.", "IllegalStateExcpetion");
      
      if(bitmapsz_t < bitmap.base || bitmapsz_t > bitmap.MaxLimit){
         bitmap.reason.byte1 = ALLOC_OUT_OF_BOUNDS;
@@ -93,7 +97,7 @@ using namespace std;
        return svmHeapBitmapInit(bitmap, bitmap.base, bitmap.MaxLimit, stack, bitmapsz_t);   
  }
  
- long svmGetBitmapSize(HeapBitmap bitmap, int dataset){
+ long svmGetBitmapSize(HeapBitmap &bitmap, int dataset){
      if(dataset == dataset_obj)
         return bitmap.size_t;
      else if(dataset == dataset_stack)
@@ -102,20 +106,24 @@ using namespace std;
         return -1939828;
  }
  
-/* void svmBitmapMemoryShutdown(ScorpionEnv env){
-     
-       // TODO: check if bitmap is alive
+ void svmBitmapMemoryShutdown(HeapBitmap &bitmap){
+     if(!svmBitmapInitalized(bitmap)){}
+       // Exception("Failed to shutdown non-initalized bitmap.", "IllegalStateExcpetion");
+       
        // TODO: check if valid address
-       free(env.bitmap.objs);
-       free(env.bitmap.stack);
-       env.bitmap.init.byte1 = 0;
-       env.bitmap.base = 0;
-       env.bitmap.MaxLimit = 0;
-       env.bitmap.size_t = 0;
-       env.bitmap.stsz_t = 0;
- }*/
+       free(bitmap.objs);
+       free(bitmap.stack);
+       bitmap.init.byte1 = 0;
+       bitmap.base = 0;
+       bitmap.MaxLimit = 0;
+       bitmap.size_t = 0;
+       bitmap.stsz_t = 0;
+ }
  
- void svmClearBitmap(HeapBitmap bitmap) {
+ void svmClearBitmap(HeapBitmap &bitmap) {
+     if(!svmBitmapInitalized(bitmap)){}
+       // Exception("Failed to clear non-initalized bitmap.", "IllegalStateExcpetion");
+  
      free(bitmap.objs);
      free(bitmap.stack);
      
@@ -123,12 +131,15 @@ using namespace std;
       // Exception("Bitmap could not be cleared cleanley.", "MemoryFailureError");
  }
  
- bool svmIsValidAddr(HeapBitmap bitmap, int dataset, long addr){
+ bool svmIsValidAddr(HeapBitmap &bitmap, int dataset, long addr){
      if(dataset == dataset_obj)
        return addr >= bitmap.size_t;
      else
        return addr >= bitmap.stsz_t;
  }
  
+ bool svmBitmapInitalized(HeapBitmap &bitmap){
+    return (bitmap.init.byte1 == BITMAP_ALLOC);
+ }
  
  

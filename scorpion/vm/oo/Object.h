@@ -243,7 +243,7 @@ void svmSetGenericValue(Object &obj, double value);
 
 double svmGetGenericValue(Object &obj);
 
-long __typedef(Object *obj);
+long __typedef(Object &obj);
 
 long __gcstatus(Object &obj);
  
