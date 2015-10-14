@@ -50,18 +50,8 @@
  
  HeapBitmap bitmap;
  
- void Init(){
-     bitmap.size_t = 10; // 10 objects
-     bitmap.base = 10;
-     bitmap.MaxLimit = 100;
-     
-     bitmap.init.byte1 = BITMAP_ALLOC;
-     
-     bitmap.objs = new (nothrow) Object[10]; 
- }
- 
  extern long str_location;
- // TODO: Test all newly created methods and apply all comments
+ 
  int main(){
     cout << "------------------------------------------------\n";
     cout << "     Scorpion Bitmap Memory Structure Test\n";

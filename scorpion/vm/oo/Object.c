@@ -122,13 +122,16 @@ double svmGetGenericValue(Object &obj){
 
 long __typedef(Object &obj){
     return obj.instanceData.byte1;
-}
+} 
 
 long __gcstatus(Object &obj){
     return obj.instanceData.byte2;
 }
 
+// We perform a shallow delete
 void dvmDumpObject(Object &obj){
+  obj.size_t = 0;
+  obj.instanceData.byte1 = 0;
   obj.init.byte1 = OBJECT_DEAD;
   obj.instanceData.byte2 = GC_DIRTY;
 }

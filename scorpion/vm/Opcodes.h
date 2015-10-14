@@ -110,6 +110,7 @@
       OP_AT = 0x49,
       OP_STR_APND = 0x4a,
   };
+ // TODO: create kill, delete, and re design str_append  
 
 #endif 
 

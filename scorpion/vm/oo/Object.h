@@ -83,10 +83,10 @@
  * 
  * These are used for object instantiation
  */
- #define TYPEDEF_STRING (0x0)
- #define TYPEDEF_GENERIC_ARRAY (0x1)
- #define TYPEDEF_STRING_ARRAY (0x2)
- #define TYPEDEF_GENERIC (0x3)
+ #define TYPEDEF_STRING (0x12)
+ #define TYPEDEF_GENERIC_ARRAY (0x13)
+ #define TYPEDEF_STRING_ARRAY (0x14)
+ #define TYPEDEF_GENERIC (0x15)
  
  struct DataObject {
  
