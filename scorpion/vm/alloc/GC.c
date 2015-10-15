@@ -36,6 +36,7 @@
  */
  #include "HeapBitmap.h"
  #include "../oo/Object.h"
+ #include <stdlib.h>
  
  #include "gc.h"
  
@@ -43,7 +44,7 @@
       
  long gc_objc = 0;
  
- void setObjAvailable(Obj &obj){
+ void setObjAvailable(Object &obj){
      obj.instanceData.byte2 = GC_IDLE;
  }
  
@@ -53,7 +54,7 @@
         
      gc_objc = 0;
      for(long i = 0; i < bitmap.size_t; i++){
-         if(!objIsDirty(bitmap.objs[i]))
+         if(!svmObjectIsDead(bitmap.objs[i]) && !objIsDirty(bitmap.objs[i]))
              continue;
              
          free(bitmap.objs[i].obj);

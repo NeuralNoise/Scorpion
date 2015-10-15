@@ -48,6 +48,7 @@
  #include "scorpion_env.h"
  #include "../libxso/xso.h"
  #include "policy.h"
+ #include "oo/Object.h"
  #include "imgholder.h"
  #include "permission.h"
  #include <sstream>
@@ -71,6 +72,9 @@ class SecurityManager;
   
    string image; // our full executable image
    double* bytestream; // holds the image bytes to be processed
+   
+   Method* mtds;  // our shared method array
+   long methodc;
 
    Permission *permissions;
    int psize_t;

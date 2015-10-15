@@ -1,6 +1,5 @@
 #include "../clib/u1.h"
 #include "interp.h"
-#include "alloc/BlockTable.h"
 #include "imgholder.h"
 #include "Globals.h"
 #include "exception.h"
@@ -11,6 +10,10 @@
 #include <stdio.h>
 #include <cstdlib> 
 #include <iostream>
+
+#include "oo/Object.h"
+#include "oo/Array.h"
+#include "oo/String.h"
 using namespace std;
 
 bool includep = true, isnative = false;
@@ -20,43 +23,12 @@ stringstream mthdname, classname, modulename;
 int mthdptr = 0;
 
 void getMethodName(long ptr){
-    mthdname.str("");
-    classname.str("");
-    modulename.str("");
     
-    mthdptr = svmBlockFromAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, ptr + 1);
-    if(proto == "")
-       return;
-       
-    int pos = 0;
-    if(proto.at(0) == '~'){
-       pos = 1;
-       isnative = true;
-    }
-    
-    for(int i = pos; i < proto.size(); i++){
-        if(proto.at(i) == '&'){
-            pos++;
-            break;
-        }
-        else
-          mthdname << "" << proto.at(i);
-        pos++;
-    }
-    
-    for(int i = pos; i < proto.size(); i++){
-        if(proto.at(i) == '&'){
-            pos++;
-            break;
-        }
-        else
-          classname << "" << proto.at(i);
-        pos++;
-    }
-    
-    for(int i = pos; i < proto.size(); i++)
-          modulename << "" << proto.at(i);
-    
+    mthdname << gSvm.mtds[ptr].name;
+    classname << gSvm.mtds[ptr].clazz;
+    modulename << gSvm.mtds[ptr].module;
+    isnative = gSvm.mtds[ptr].native;
+    mthdptr = jmpLocation(gSvm.mtds[ptr]);
 }
 
 int Scorpion_InvokeMain(){
@@ -64,7 +36,7 @@ int Scorpion_InvokeMain(){
 }
 
 int Scorpion_InvokeMethod(long ptrValue){
-    if(!svmIsValidAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, ptrValue)){
+    if(ptrValue >= gSvm.methodc){
        stringstream ss;
        ss << "pointer to method: " << ptrValue << " is out of allocated method range.";
        Exception(ss.str(), "MethodNotFoundException");
@@ -73,8 +45,6 @@ int Scorpion_InvokeMethod(long ptrValue){
     if(includep){
     
         getMethodName(ptrValue);
-        if(mthdname.str() == "" || classname.str() == "" || modulename.str() == "")
-           return -1;
         
         stringstream s;
         s << modulename.str() << "." << mthdname.str();
@@ -86,10 +56,8 @@ int Scorpion_InvokeMethod(long ptrValue){
       includep = true;
     
     long pc = gSvm.vm.vStaticRegs[VREG_PC];
-    
-    isnative = false;
     gSvm.vm.vStaticRegs[VREG_PC] = mthdptr;
-    svmBlockToAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, ptrValue, pc, proto);
+    gSvm.mtds[ptrValue].ref.byte1 = pc;
     
      return 0;
 }
@@ -100,15 +68,21 @@ void return_main() // this is simple lol
 }
 
 void return_method(long addr){
+    if(addr >= gSvm.methodc){
+       stringstream ss;
+       ss << "pointer to method: " << addr << " is out of allocated method range.";
+       Exception(ss.str(), "MethodNotFoundException");
+    }
+    
     gSvm.vm.flags[VFLAG_MTHDC]--;
-    gSvm.vm.vStaticRegs[VREG_PC] = svmBlockFromAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, addr);
+    gSvm.vm.vStaticRegs[VREG_PC] = returnLocation(gSvm.mtds[addr]);
 }
 
 u4_d arguments; // our dedicated instruction arguments
 long compare(long instruction){
      double a,b;
-     a = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK,arguments.byte2);
-     b = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK,arguments.byte3);
+     a = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
+     b = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte3]);
      
      if(instruction == OP_ISEQ)
         return a == b;
@@ -140,8 +114,8 @@ long compare(long instruction){
 
 double math(long instruction){
      double a,b;
-     a = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK,arguments.byte2);
-     b = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK,arguments.byte3);
+     a = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
+     b = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte3]);
      
      if(instruction == OP_IADD)
         return (long) (a + b);
@@ -202,7 +176,7 @@ void Scorpion_VMExecute(){
   exe:
     i = gSvm.appholder.getNextInstr();
     g = gSvm.appholder.getGroup();
-
+    
     if(i == tok_eof){
       alog.ALOGV("fatal error: application attempting to close unexpectingly.");
       segfault();
@@ -265,12 +239,12 @@ void Scorpion_VMExecute(){
                  return_method(arguments.byte1);
           goto exe;
           case OP_INC:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
-                      svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1) + 1, "");
+               svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
+                      svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]) + 1);
           goto exe;
           case OP_DEC:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
-                      svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1) - 1, "");
+               svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
+                      svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]) - 1);
           goto exe;
           case OP_IF:
                /*
@@ -302,49 +276,49 @@ void Scorpion_VMExecute(){
                   
                gSvm.vm.flags[VFLAG_IFC]++;
                
-               if(!gSvm.vm.flags[VFLAG_IF_IGNORE] && !svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1)){
+               if(!gSvm.vm.flags[VFLAG_IF_IGNORE] && !svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1])){
                    gSvm.vm.flags[VFLAG_IF_IGNORE] = 1;
                    gSvm.vm.flags[VFLAG_IGNORE] = 1;
                }
           goto exe;
           case OP_PUSH:
             {
-               long stacksz = svmGetBlockAddr(gSvm.env->getBlockTable(), STACK_BLOCK);
+               long stacksz = gSvm.env->getBitmap().stack->length;
       
-               if(++gSvm.vm.vStaticRegs[VREG_SP] >= stacksz)
-                 Exception("The stack was filled with too much data.", "StackOverfowlException");
+               if(++gSvm.vm.vStaticRegs[VREG_SP] >= stacksz) 
+                 Exception("The stack has overflowed with too much data.", "StackOverfowlException");
                
-               svmBlockToAddr(gSvm.env->getBlockTable(), STACK_BLOCK, gSvm.vm.vStaticRegs[VREG_SP], 
-                      svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1), "");
+               gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]] = 
+                      svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
             }
           goto exe;
           case OP_POP:
-               if((gSvm.vm.vStaticRegs[VREG_SP] - 1) < -1)
+               if(gSvm.vm.vStaticRegs[VREG_SP] < 0)
                    Exception("Failure to pull data from empty stack.", "StackUnderflowException");
                 
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
-                      svmBlockFromAddr(gSvm.env->getBlockTable(), STACK_BLOCK, gSvm.vm.vStaticRegs[VREG_SP]--),"");    
+               svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
+                      gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]]);
           goto exe;
           case OP_JMP:
-               gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+               gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
           goto exe;
           case OP_CALL:
                {
                  gSvm.vm.flags[VFLAG_MTHDC]++;
-                 long m = Scorpion_InvokeMethod(arguments.byte1);
+                 long m = Scorpion_InvokeMethod((long) arguments.byte1);
                  if(m != 0)
                    Exception("Failure to invoke unknown method.", "MethodInvocationFailure");
                }
           goto exe;
           case OP_SLP:
                 {
-                    long time = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+                    long time = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
                     sleep(time);
                 }
           goto exe;
           case OP_USLP:
                {
-                   long time = svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+                   long time = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
                    usleep(time);
                }
           goto exe;
@@ -355,49 +329,79 @@ void Scorpion_VMExecute(){
     group2:
        switch( i ) {
           case OP_ICONST:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (long) arguments.byte2, "");
+               {
+                    u1 sz;
+                    sz.byte1 = 1;
+                    SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) arguments.byte1], TYPEDEF_GENERIC, sz);
+                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], (long) arguments.byte2);
+               }
           goto exe;
           case OP_DCONST:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (double) arguments.byte2, "");
+               {
+                    u1 sz;
+                    sz.byte1 = 1;
+                    SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) arguments.byte1], TYPEDEF_GENERIC, sz);
+                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], arguments.byte2);
+               }
           goto exe;
           case OP_FCONST:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (float) arguments.byte2, "");
+               {
+                    u1 sz;
+                    sz.byte1 = 1;
+                    SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arguments.byte1], TYPEDEF_GENERIC, sz);
+                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], (float) arguments.byte2);
+               }
           goto exe;
           case OP_SCONST:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (int) arguments.byte2, "");
+               {
+                    u1 sz;
+                    sz.byte1 = 1;
+                    SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arguments.byte1], TYPEDEF_GENERIC, sz);
+                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], (int) arguments.byte2);
+               }
           goto exe;
           case OP_BCONST:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (bool) arguments.byte2, "");
+               {
+                    u1 sz;
+                    sz.byte1 = 1;
+                    SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arguments.byte1], TYPEDEF_GENERIC, sz);
+                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], (bool) arguments.byte2);
+               }
           goto exe;
           case OP_CCONST:
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, (char) arguments.byte2, "");
+               {
+                    u1 sz;
+                    sz.byte1 = 1;
+                    SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arguments.byte1], TYPEDEF_GENERIC, sz);
+                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], (char) arguments.byte2);
+               }
           goto exe;
           case OP_JIT:
-               if(arguments.byte2 == 1)
-                  gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+               if(svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == 1)
+                  gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
           goto exe;
           case OP_JIF:
-               if(arguments.byte2 == 0)
-                  gSvm.vm.vStaticRegs[VREG_PC] =  svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1);
+               if(svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == 0)
+                  gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
           goto exe;
           case OP_RSHFT:
                {
-                 svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
-                      (((long) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, 
-                      arguments.byte1)) >> (long) arguments.byte2), "");
+                 long num = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
+                 num >> (long) arguments.byte2;
+                 svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2], num);
                }
           goto exe;
           case OP_LSHFT:
                {
-                 svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
-                      (((long) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, 
-                      arguments.byte1)) << (long) arguments.byte2), "");
+                 long num = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
+                 num << (long) arguments.byte2;
+                 svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2], num);
                }
           goto exe;
           case OP_THROW:
                    // TODO: Implement $ string processing in Exception()       
-                   Exception(svmDataBlockGetStr(gSvm.env->getBlockTable(), arguments.byte1), 
-                             svmDataBlockGetStr(gSvm.env->getBlockTable(), arguments.byte2));
+                   Exception(fromchararray(gSvm.env->getBitmap().objs[(long) arguments.byte1].obj->strobj->array[default_loc]), 
+                             fromchararray(gSvm.env->getBitmap().objs[(long) arguments.byte2].obj->strobj->array[default_loc]));
           goto exe;
           case OP_CIN:
                {
@@ -412,7 +416,7 @@ void Scorpion_VMExecute(){
                     i = getchar();
                   system("stty cooked");
                   
-                  svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, i, ""); 
+                  svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], i);
                }
           goto exe;
        } // run each instr
@@ -421,22 +425,21 @@ void Scorpion_VMExecute(){
        switch( i ) {
           case OP_AT:
                {
-                   string output = svmDataBlockGetStr(gSvm.env->getBlockTable(), arguments.byte2);
-                   svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, 
-                                 (char) output.at((long) arguments.byte3), "");
+                   svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
+                          at(gSvm.env->getBitmap().objs[(long) arguments.byte2], (long) arguments.byte3));
                }
           goto exe;
           default:
                if(i == OP_ISEQ || i == OP_ISNEQ || i == OP_ISLT || i == OP_ISNLT || i == OP_ISLE || i == OP_ISNLE
                   || i == OP_ISGT || i == OP_ISNGT || i == OP_ISGE || i == OP_ISNGE || i == OP_OR || i == OP_AND)
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, compare(i), "");
+               svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], compare(i));
                else if(i == OP_IADD || i == OP_ISUB || i == OP_IMULT || i == OP_IDIV || i == OP_SADD
                   || i == OP_SSUB || i == OP_SMULT || i == OP_SDIV || i == OP_DADD
                   || i == OP_DSUB || i == OP_DMULT || i == OP_DDIV || i == OP_FADD
                   || i == OP_FSUB || i == OP_FMULT || i == OP_FDIV || i == OP_CADD
                   || i == OP_CSUB || i == OP_CMULT || i == OP_CDIV || i == OP_IMOD 
                   || i == OP_SMOD || i == OP_CMOD)
-               svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, math(i), "");
+              svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], math(i));
           goto exe;
        } // run each instr
        goto exe;
@@ -445,18 +448,13 @@ void Scorpion_VMExecute(){
           case OP_STRCONST:
                {
                  string output =  gSvm.appholder.getStr();
-                 svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, output.size(), "");
-                 
-                 svmDataBlockSetStr(gSvm.env->getBlockTable(), arguments.byte1, output);
+                 assign(gSvm.env->getBitmap().objs[(long) arguments.byte1], output);
                }
           goto exe;
           case OP_STR_APND:
                {
-                 string strBefore = svmDataBlockGetStr(gSvm.env->getBlockTable(), arguments.byte1);
                  string output = gSvm.appholder.getStr();
-                 svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arguments.byte1, strBefore.size() + output.size(), "");
-                 
-                 svmDataBlockSetStr(gSvm.env->getBlockTable(), arguments.byte1, strBefore + output);
+                 concat(gSvm.env->getBitmap().objs[(long) arguments.byte1], output);
                }
           goto exe;
           case OP_COUT: // output data to the console
@@ -512,19 +510,21 @@ void Scorpion_VMExecute(){
                                   
                                   long addr = atoi(ss.str().c_str());
                                   if(form == 'c')
-                                    cout << (char) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
+                                    cout << (char) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
                                   else if(form == 'b')
-                                    cout << (bool) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
+                                    cout << (bool) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
                                   else if(form == 'f')
-                                    cout << (float) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
+                                    cout << (float) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
                                   else if(form == 'd')
-                                    cout << (double) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
+                                    cout << (double) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
                                   else if(form == 'i')
-                                    cout << (long) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
+                                    cout << (long) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
                                   else if(form == 's')
-                                    cout << (int) svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
+                                    cout << (int) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+                                  else if(form == 'S')
+                                    cout << fromchararray(gSvm.env->getBitmap().objs[addr].obj->strobj->array[default_loc]);
                                   else //form == v
-                                    cout << svmBlockFromAddr(gSvm.env->getBlockTable(), DATA_BLOCK, addr);
+                                    cout << svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
                                   goto exe;
                                 }
                             }

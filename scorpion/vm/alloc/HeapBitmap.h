@@ -42,6 +42,10 @@
  struct ArrayObject;
  
  #include "../oo/Object.h"
+ #include "../../clib/u1.h"
+ #include <string>
+ 
+ using namespace std;
  
  class ScorpionEnv;
  #define BITMAP_ALLOC (0x23)
@@ -96,6 +100,10 @@
  long svmGetBitmapSize(HeapBitmap &bitmap, int dataset);
 
  void svmBitmapMemoryShutdown(HeapBitmap &bitmap);
+ 
+ void svmObjectOk(HeapBitmap &bitmap, long pos, double numVal, string strVal);
+ 
+ void svmObjectAssign(Object &obj, Object &obj2);
  
  void svmClearBitmap(HeapBitmap &bitmap);
  

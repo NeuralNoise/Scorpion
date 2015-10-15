@@ -42,6 +42,7 @@
  #include "../clib/binary.h"
  #include "../logservice/alog.h"
  #include "../vm/Globals.h"
+ #include "../vm/oo/Object.h"
  #include "../vm/Opcodes.h"
  #include <sstream>
  #include <stdio.h>
@@ -325,6 +326,68 @@ static int LastChar = ' ';
      gSvm.bytestream[streamcount++] = byte;
  }
  
+ void svmInitMethod(long pos, string name, long jmp_adr){
+     if(pos >= gSvm.methodc){
+         alog.setClass("XSO");
+         alog.ALOGV("There are more methods than the expercted ammount. Have you compiled your application correctly?");
+         preexecute_err();
+     }
+     
+     stringstream mthdname;
+     stringstream classname;
+     stringstream modulename;
+     if(name == ""){
+         alog.setClass("XSO");
+         alog.ALOGV("Method name cannot be blank. Have you compiled your application correctly?");
+         preexecute_err();
+     }
+       
+    int index = 0;
+    bool isnative = false;
+    if(name.at(0) == '~'){
+       index = 1;
+       isnative = true;
+    }
+    
+    for(int i = index; i < name.size(); i++){
+        if(name.at(i) == '&'){
+            index++;
+            break;
+        }
+        else
+          mthdname << "" << name.at(i);
+        index++;
+    }
+    
+    for(int i = index; i < name.size(); i++){
+        if(name.at(i) == '&'){
+            index++;
+            break;
+        }
+        else
+          classname << "" << name.at(i);
+        index++;
+    }
+    
+    for(int i = index; i < name.size(); i++)
+          modulename << "" << name.at(i);
+          
+    if(mthdname.str() == "" || modulename.str() == "" || classname.str() == ""){
+         alog.setClass("XSO");
+         alog.ALOGV("Method name was missing required information. Have you compiled your application correctly?");
+         preexecute_err();
+    }
+     
+     gSvm.mtds[pos].name = mthdname.str().c_str();
+     gSvm.mtds[pos].clazz = classname.str();
+     gSvm.mtds[pos].module == modulename.str();
+     gSvm.mtds[pos].native = isnative;
+     gSvm.mtds[pos].ref.byte2 = jmp_adr;
+ }
+ 
+ #define InitMthd(l, name, jmp) \
+      svmInitMethod(l, name, jmp);
+ 
  void HandleMethod(){ // @^name0location0
      getNextToken();
      if(CurTok != OP_MTHD)
@@ -334,8 +397,8 @@ static int LastChar = ' ';
      long l = atoi(getheadertxt().c_str());
      
    //  cout << "setting method " << methodname << " at location " << l << endl;
-//     svmBlockToAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, l, 0, methodname);
-//     svmBlockToAddr(gSvm.env->getBlockTable(), METHOD_BLOCK, l + 1, streamcount, methodname);
+     InitMthd(l, methodname,streamcount);
+     
      setbyte(OP_MTHD);
      setbyte(l);
      
@@ -376,9 +439,12 @@ static int LastChar = ' ';
         setbyte(CurTok);
         setbyte(arg1);
         
-        if(CurTok == OP_LBL) // pre assign label locations
-            svmBlockToAddr(gSvm.env->getBlockTable(), DATA_BLOCK, arg1, streamcount, "");
-        
+        if(CurTok == OP_LBL) {// pre assign label locations
+            u1 sz;
+            sz.byte1 = 1;
+            SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arg1], TYPEDEF_GENERIC, sz);
+            svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arg1], streamcount);
+        }
         
         getNextToken();
         return;

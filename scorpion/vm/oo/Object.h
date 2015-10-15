@@ -76,7 +76,7 @@
  * OBJECT_ALIVE 0x1     when an object has been instantiated
  */
  #define OBJECT_DEAD (0x0)
- #define OBJECT_ALIVE (0x1)
+ #define OBJECT_ALIVE (0x14829)
  
  /*
  * Typedef values
@@ -222,6 +222,9 @@
     bool native;
   
  };
+
+  long jmpLocation(Method &m);
+  long returnLocation(Method &m);
 
 bool svmObjectIsDead(Object &obj);
 

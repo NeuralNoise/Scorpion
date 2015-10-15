@@ -41,7 +41,6 @@
  #include "../vm/scorpionvm.h" 
  #include "../vm/exception.h"
  #include "../vm/scorpion_env.h"
- #include "../vm/alloc/BlockTable.h"
  #include "../logservice/alog.h"
  #include "../logservice/filter.h"
  #include "../vm/Globals.h"

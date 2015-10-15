@@ -40,6 +40,8 @@
  #include "../oo/Object.h"
  #include "HeapBitmap.h"
  
+ struct HeapBitmap;
+ 
  /*
  * Scorpion Garbage Collector
  *
@@ -72,25 +74,22 @@
  #define GC_LIMIT ((64 * 16) * 12)
  
  
+ // The total count of all our Objects       
+ extern long gc_objc;
+ 
+ /* GC object control methods */      
+ void setObjAvailable(Object &obj); // sets Object to Idle state
+ 
+ void invalidateObjs(HeapBitmap &bitmap);
+ 
+ bool objIsDirty(Object &obj);
+
+ 
  /*
  * Check the obj count
  * if(true) invalidateObjects();
  */
  #define checkGC(bitmap) \
        invalidateObjs(bitmap);
- 
- // The total count of all our Objects       
- extern long gc_objc;
- 
- /* GC object control methods */      
- void freeObj(Obj &obj);
- 
- void setObjAvailable(Obj &obj); // sets Object to Idle state
- 
- void invalidateObjs(HeapBitmap &bitmap);
- 
- bool objIsDirty(Object &obj);
-       
- // TODO: create & implement all GC methods and apply comments
  
  #endif // SCORPION_GARBAGE_COLLECTOR

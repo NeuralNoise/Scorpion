@@ -36,6 +36,7 @@
  */
  #include "Object.h"
  #include "Array.h"
+ #include "../exception.h"
  
  long str_location = 0;
  
@@ -48,8 +49,8 @@
  }
  
  unsigned int at(Object &obj, long pos){
-     if(svmObjectIsDead(obj)){}
-        //Exception("String Object has not been created!", "DeadObjectException");
+     if(svmObjectIsDead(obj))
+        Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
        return obj.obj->strobj[0].array->generic[pos];
@@ -58,8 +59,8 @@
  }
  
   void assign(Object &obj, string data){
-     if(svmObjectIsDead(obj)){}
-        //Exception("String Object has not been created!", "DeadObjectException");
+     if(svmObjectIsDead(obj))
+        Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING)){
        obj.obj->strobj[0].array = tochararray(data);
@@ -70,13 +71,13 @@
        obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
      }
      
-     if(isnull(obj)){}
-      //Exception("String Object failed to be reassigned.", "NullpointerException");
+     if(isnull(obj))
+      Exception("String Object failed to be reassigned.", "NullpointerException");
  }
  
  unsigned int size(Object &obj){
-     if(svmObjectIsDead(obj)){}
-        //Exception("String Object has not been created!", "DeadObjectException");
+     if(svmObjectIsDead(obj))
+        Exception("String Object has not been created!", "DeadObjectException");
         
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
        return obj.obj->strobj[0].length;
@@ -86,8 +87,8 @@
  
  void concat(Object &obj, string data){
       
-     if(svmObjectIsDead(obj)){}
-        //Exception("String Object has not been created!", "DeadObjectException");
+     if(svmObjectIsDead(obj))
+        Exception("String Object has not been created!", "DeadObjectException");
         
      ArrayObject* aobj = tochararray(data);  
      
@@ -102,8 +103,8 @@
        obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
      }
      
-     if(isnull(obj)){}
-      //Exception("String Object failed to be reassigned.", "NullpointerException");
+     if(isnull(obj))
+      Exception("String Object failed to be reassigned.", "NullpointerException");
  }
  
  

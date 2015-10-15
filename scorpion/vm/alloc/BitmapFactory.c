@@ -37,6 +37,7 @@
  
 #include "HeapBitmap.h"
 #include "../oo/Object.h"
+#include "../exception.h"
 #include <string>
 #include <new>
 #include <iostream>
@@ -45,13 +46,14 @@
 using namespace std;
  
  bool svmHeapBitmapInit(HeapBitmap &bitmap, long _base, long maxLimit, long stack, long bitmapsz_t){
-     if(svmBitmapInitalized(bitmap)){}
-       // Exception("Cannot re-initalize a previously initalized bitmap.", "IllegalStateExcpetion");
+     if(svmBitmapInitalized(bitmap))
+        Exception("Cannot re-initalize a previously initalized bitmap.", "IllegalStateExcpetion");
      
      if(stack > stack_limit){
          bitmap.reason.byte1 = ALLOC_STACK_OVERLOAD;
-         return true;    
+         return false;    
      }
+     
      
      bitmap.base = _base;
      bitmap.MaxLimit = maxLimit;
@@ -59,12 +61,12 @@ using namespace std;
      bitmap.stsz_t = stack;
      
      bitmap.objs = new (nothrow) Object[_base];
-     bitmap.stack = new ArrayObject[0];
+     bitmap.stack = new (nothrow) ArrayObject[0];
          
      if(bitmap.stack == nullptr || bitmap.objs == nullptr)
          goto bail;
      
-     bitmap.stack->generic = new double[stack];
+     bitmap.stack->generic = new (nothrow) double[stack];
      bitmap.stack->length = stack;
      
      if(bitmap.stack->generic == nullptr)
@@ -86,8 +88,8 @@ using namespace std;
  }
 
  bool svmReallocBitmap(HeapBitmap &bitmap, long bitmapsz_t, long stack){
-     if(!svmBitmapInitalized(bitmap)){}
-       // Exception("Failed to re-alloc non-initalized bitmap.", "IllegalStateExcpetion");
+     if(!svmBitmapInitalized(bitmap))
+        Exception("Failed to re-alloc non-initalized bitmap.", "IllegalStateExcpetion");
      
      if(bitmapsz_t < bitmap.base || bitmapsz_t > bitmap.MaxLimit){
         bitmap.reason.byte1 = ALLOC_OUT_OF_BOUNDS;
@@ -107,10 +109,9 @@ using namespace std;
  }
  
  void svmBitmapMemoryShutdown(HeapBitmap &bitmap){
-     if(!svmBitmapInitalized(bitmap)){}
-       // Exception("Failed to shutdown non-initalized bitmap.", "IllegalStateExcpetion");
-       
-       // TODO: check if valid address
+     if(!svmBitmapInitalized(bitmap))
+        return;
+      
        free(bitmap.objs);
        free(bitmap.stack);
        bitmap.init.byte1 = 0;
@@ -121,14 +122,15 @@ using namespace std;
  }
  
  void svmClearBitmap(HeapBitmap &bitmap) {
-     if(!svmBitmapInitalized(bitmap)){}
-       // Exception("Failed to clear non-initalized bitmap.", "IllegalStateExcpetion");
+     if(!svmBitmapInitalized(bitmap))
+        Exception("Failed to clear non-initalized bitmap.", "IllegalStateExcpetion");
   
      free(bitmap.objs);
      free(bitmap.stack);
+     bitmap.init.byte1 = 0;
      
-     if(!svmHeapBitmapInit(bitmap, bitmap.base, bitmap.MaxLimit, bitmap.stsz_t, bitmap.size_t)){}
-      // Exception("Bitmap could not be cleared cleanley.", "MemoryFailureError");
+     if(!svmHeapBitmapInit(bitmap, bitmap.base, bitmap.MaxLimit, bitmap.stsz_t, bitmap.size_t))
+       Exception("Bitmap could not be cleared cleanley.", "MemoryFailureError");
  }
  
  bool svmIsValidAddr(HeapBitmap &bitmap, int dataset, long addr){
@@ -136,6 +138,20 @@ using namespace std;
        return addr >= bitmap.size_t;
      else
        return addr >= bitmap.stsz_t;
+ }
+ 
+ void svmObjectOk(HeapBitmap &bitmap, long pos){
+     if(!svmIsValidAddr(bitmap, dataset_obj, pos))
+       Exception("Cannot access Object at address " + pos, "IllegalAccessExcpetion");
+      
+     if(svmObjectIsDead(bitmap.objs[pos]))
+       Exception("Object is null.", "NullPointerException");
+ }
+ 
+ void svmObjectAssign(Object &obj, Object &obj2){
+     if(svmObjectIsDead(obj))
+       Exception("Object is null.", "NullPointerException");
+     obj = obj2; // we assume compiler did object checking
  }
  
  bool svmBitmapInitalized(HeapBitmap &bitmap){

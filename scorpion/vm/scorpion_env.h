@@ -44,7 +44,7 @@
 #include "scorpionvm.h"
 #include "../logservice/alog.h"
 #include "../libxso/xso.h"
- #include "alloc/HeapBitmap.h"
+#include "alloc/HeapBitmap.h"
 #include <sstream>
 #include <iostream>
 #include <string>
@@ -70,13 +70,13 @@ using namespace std;
         string name;
         long methodLimit;
         
-        HeapBitmap memBitmap;
    //     BlockTable table; // every environment has its own tabel
         
       #define nullptr ((void *)0)
       
       public:      
-        int InitEnvironmentSetup(string env_name, XSO f, long minHeap, long maxHeap, long blocksz, long stacksz){
+        HeapBitmap bitmap;
+        int InitEnvironmentSetup(string env_name, long minHeap, long maxHeap, long bitmap_sz, long stack){
             Exception::trace.addproto("vm.internal.system.InitEnvironmentSetup", "ScorpionEnv", 1);
             setName(env_name);
             
@@ -86,17 +86,13 @@ using namespace std;
             alog.ALOGD(ss.str());
             alog.setClass("ScorpionEnv");
             alog.ALOGV("Setting up new environment.");
-
-            //table = svmBlockTableStartup(table, minHeap, maxHeap, f.headerInf.method_size.byte1, blocksz, stacksz);
             
-        /*   if(!BlockTableInitilized){
+            
+           if(!svmHeapBitmapInit(bitmap, minHeap, maxHeap, stack, bitmap_sz)){
                alog.setClass("ScorpionEnv");
                alog.ALOGV("Environment was not created successfully. Have you requested too much memory?");
                return -1;
-           }*/
-          
-       //   svmBlockToAddr(table, 0, 12, 55, "");
-       //   cout << table.mDataBlock[0].getChild(12) << endl;
+           }
           
           alog.setClass("ScorpionEnv");
           alog.ALOGV("Environment was created successfully.");
@@ -118,8 +114,8 @@ using namespace std;
           Exception::trace.addproto("vm.internal.system.setMethodLimit", "ScorpionEnv", 1);
           methodLimit = l;
         }
-        HeapBitmap getHeapBitmap(){
-          return memBitmap;
+        HeapBitmap getBitmap(){
+          return bitmap;
         }
   };
 

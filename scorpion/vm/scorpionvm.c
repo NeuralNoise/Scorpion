@@ -417,15 +417,26 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
      alog.setClass("ScorpionEnv");
      alog.ALOGI("Setting up environment structures and memory.");
      
-     int status = env->InitEnvironmentSetup("ScorpionVirtualMachine", f[0], options.minHeap, options.maxHeap, options.minHeap, PROTOTYPE_LIMIT);
+     int status;
+     gSvm.mtds = new (nothrow) Method[f[0].headerInf.method_size.byte1];
+     
+     if(gSvm.mtds == nullptr)
+     {
+         status = -1;
+         goto err;
+     }
+     
+     status = env->InitEnvironmentSetup("ScorpionVirtualMachine", options.minHeap, options.maxHeap, options.minHeap, stack_limit);
+     gSvm.methodc = f[0].headerInf.method_size.byte1;
     
-     //vm = p_vm;
-    if (status != 0) {
-         alog.setClass("ScorpionVM");
-         alog.ALOGI("The Scorpion Virtual Machine was not created successfully.");
-        vmStatus = -1;
-        return;
-    }
+    err:
+      //vm = p_vm;
+      if (status != 0) {
+           alog.setClass("ScorpionVM");
+           alog.ALOGI("The Scorpion Virtual Machine was not created successfully.");
+          vmStatus = -1;
+          return;
+      }
     
      gSvm.env = env;
 
@@ -494,7 +505,8 @@ int Init_StartScorpionVM()
         alog.ALOGD("failed to invoke main() method.");
         return -1;
     }
-   
+
+    // TODO: Set the program args in ArrayObject   
     Scorpion_VMExecute();
  
     /*
@@ -576,15 +588,11 @@ void Init_ShutdownScorpionVM()
     //        fprintf(stderr, "Warning: Dalvik VM did not shut down cleanly\n");
     
       if(gSvm.env != nullptr){ // shut down all block table structures 
-         if(gSvm.vm.vStaticRegs != nullptr)
-             gSvm.exitval = svmBlockFromAddr(gSvm.env->getBlockTable(), STACK_BLOCK, gSvm.vm.vStaticRegs[VREG_SP]--); // simple stack pop
-             
-        if(gSvm.envCount > 1){
-            for(int i = 0; i < gSvm.envCount; i++)
-               svmBlockTableShutdown(gSvm.env[i]);
-        }
-        else
-          svmBlockTableShutdown(gSvm.env[0]); 
+         if(gSvm.vm.vStaticRegs != nullptr && (gSvm.vm.vStaticRegs[VREG_SP] >= 0))
+             gSvm.exitval = gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]--]; // simple stack pop
+           
+        alog.ALOGD("Shutting down environments.");     
+        svmBitmapMemoryShutdown(gSvm.env->bitmap); 
       }
       
       /*

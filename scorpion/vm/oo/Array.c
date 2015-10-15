@@ -37,6 +37,7 @@
  */
  #include "Object.h"
  #include "Array.h"
+ #include "../exception.h"
  #include <string>
  #include <sstream>
  
@@ -48,8 +49,8 @@
      
      obj->length = data.size();
      
-     if(obj->length > STR_LIMIT){}
-       // Exception("Scring greater than max limit.", "StringOverloadException");
+     if(obj->length > STR_LIMIT)
+        Exception("String greater than max limit.", "StringOverloadException");
        
      for(int i = 0; i < data.size(); i++)
        obj->generic[i] = (int) data.at(i);
@@ -80,15 +81,21 @@
  
  /* Generic array parsing stuff */
  double get(Object &obj, long pos){
-     if(pos >= obj.obj->arrayobj->length){}
-      // Exception("Index " + pos + " is not within bounds. Array size[" + obj.obj->arrayobj.length + "].", "ArrayIndexOutOfBoundsException");
+     if(pos >= obj.obj->arrayobj->length){
+       stringstream ss;
+       ss << "Index " << pos << " is not within bounds. Array size[" << length(obj) << "].";
+       Exception(ss.str(), "ArrayIndexOutOfBoundsException");
+     }
      
      return obj.obj->arrayobj->generic[pos];
  }
  
  void set(Object &obj, long pos, double default_value){
-     if(pos >= obj.obj->arrayobj->length){}
-      // Exception("Index " + pos + " is not within bounds. Array size[" + arrayobj.length + "].", "ArrayIndexOutOfBoundsException");
+     if(pos >= obj.obj->arrayobj->length){
+       stringstream ss;
+       ss << "Index " << pos << " is not within bounds. Array size[" << length(obj) << "].";
+       Exception(ss.str(), "ArrayIndexOutOfBoundsException");
+     }
       
       obj.obj->arrayobj->generic[pos] = default_value;
  }
