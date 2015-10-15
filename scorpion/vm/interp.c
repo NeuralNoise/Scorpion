@@ -14,6 +14,7 @@
 #include "oo/Object.h"
 #include "oo/Array.h"
 #include "oo/String.h"
+#include "alloc/gc.h"
 using namespace std;
 
 bool includep = true, isnative = false;
@@ -23,6 +24,10 @@ stringstream mthdname, classname, modulename;
 int mthdptr = 0;
 
 void getMethodName(long ptr){
+    
+    mthdname.str("");
+    classname.str("");
+    modulename.str("");
     
     mthdname << gSvm.mtds[ptr].name;
     classname << gSvm.mtds[ptr].clazz;
@@ -48,9 +53,8 @@ int Scorpion_InvokeMethod(long ptrValue){
         
         stringstream s;
         s << modulename.str() << "." << mthdname.str();
-        
+
         Exception::trace.addproto(s.str(), classname.str(), isnative);
-    
     }
     else
       includep = true;
@@ -66,7 +70,7 @@ void return_main() // this is simple lol
 {
    Init_ShutdownScorpionVM();
 }
-
+ 
 void return_method(long addr){
     if(addr >= gSvm.methodc){
        stringstream ss;
@@ -168,7 +172,7 @@ double math(long instruction){
 }
 
 // TODO: Finish implementing the rest of the instructions
-// TODO: Make the engine faster
+// TODO: implement GC check in instruction checkGC(gSvm.env->bitmap);      
 void Scorpion_VMExecute(){
   alog.ALOGD("running application.");
       
@@ -448,6 +452,9 @@ void Scorpion_VMExecute(){
           case OP_STRCONST:
                {
                  string output =  gSvm.appholder.getStr();
+                 u1 sz;
+                 sz.byte1 = 1;
+                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arguments.byte1], TYPEDEF_STRING, sz);
                  assign(gSvm.env->getBitmap().objs[(long) arguments.byte1], output);
                }
           goto exe;

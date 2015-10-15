@@ -4,6 +4,6 @@
 using namespace std;
 string currtime();
 
-static inline long getWallTimeInUsec();
+extern long getWallTimeInUsec();
 
 #endif

@@ -43,7 +43,7 @@ using namespace std;
 /*
  * Get the wall-clock date/time, in usec.
  */
-static inline long getWallTimeInUsec()
+long getWallTimeInUsec()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);

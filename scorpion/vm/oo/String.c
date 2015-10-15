@@ -49,7 +49,7 @@
  }
  
  unsigned int at(Object &obj, long pos){
-     if(svmObjectIsDead(obj))
+     if(!svmObjectIsDead(obj))
         Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
@@ -59,7 +59,7 @@
  }
  
   void assign(Object &obj, string data){
-     if(svmObjectIsDead(obj))
+     if(!svmObjectIsDead(obj))
         Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING)){
@@ -76,7 +76,7 @@
  }
  
  unsigned int size(Object &obj){
-     if(svmObjectIsDead(obj))
+     if(!svmObjectIsDead(obj))
         Exception("String Object has not been created!", "DeadObjectException");
         
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
@@ -87,8 +87,8 @@
  
  void concat(Object &obj, string data){
       
-     if(svmObjectIsDead(obj))
-        Exception("String Object has not been created!", "DeadObjectException");
+     if(!svmObjectIsDead(obj))
+        Exception("String Object is null!", "NullPointerException");
         
      ArrayObject* aobj = tochararray(data);  
      

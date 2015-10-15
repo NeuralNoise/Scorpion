@@ -36,22 +36,40 @@
  */
  #include "HeapBitmap.h"
  #include "../oo/Object.h"
+ #include "../../logservice/ctime.h"
+ #include "../../logservice/alog.h"
  #include <stdlib.h>
+ #include <sstream>
+ #include <string>
  
  #include "gc.h"
  
  using namespace std;
       
  long gc_objc = 0;
+ extern ALog alog;
  
  void setObjAvailable(Object &obj){
      obj.instanceData.byte2 = GC_IDLE;
  }
  
+ double getper(long val1, long val2){
+    double a = 1.0, b = 1.0, c;
+    a = a*val1;
+    b = b*val2;
+    
+    c = (a/b) * 100;
+    return (int) c;
+ }
+ 
  void invalidateObjs(HeapBitmap &bitmap){
      if(gc_objc < GC_LIMIT)
         return;
-        
+     
+     long bytes_free = 0;
+     u2 time;
+     time.byte1 = getWallTimeInUsec();
+     
      gc_objc = 0;
      for(long i = 0; i < bitmap.size_t; i++){
          if(!svmObjectIsDead(bitmap.objs[i]) && !objIsDirty(bitmap.objs[i]))
@@ -60,6 +78,20 @@
          free(bitmap.objs[i].obj);
          setObjAvailable(bitmap.objs[i]);
      }
+     
+     time.byte2 = getWallTimeInUsec();
+     if((time.byte2 - time.byte1) < 0){
+        time.byte1 = 1000 + (time.byte2 - time.byte1);
+     }
+     else
+       time.byte1 = (time.byte2 - time.byte1);
+     
+     stringstream ss;
+     ss << "GC_ALLOC freed " << bytes_free << " Objects, " << getper(bytes_free, bitmap.size_t) 
+           << "% free " << bytes_free << "Objs/" << bitmap.size_t << "Objs, paused " << time.byte1 << "ms"; 
+     
+     alog.setClass("scorpionvm");
+     alog.ALOGV(ss.str());
  }
  
  bool objIsDirty(Object &obj){

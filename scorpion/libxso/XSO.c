@@ -336,6 +336,11 @@ static int LastChar = ' ';
      stringstream mthdname;
      stringstream classname;
      stringstream modulename;
+     
+     
+     mthdname.str("");
+     classname.str("");
+     modulename.str("");
      if(name == ""){
          alog.setClass("XSO");
          alog.ALOGV("Method name cannot be blank. Have you compiled your application correctly?");
@@ -354,8 +359,9 @@ static int LastChar = ' ';
             index++;
             break;
         }
-        else
+        else {
           mthdname << "" << name.at(i);
+        }
         index++;
     }
     
@@ -378,9 +384,9 @@ static int LastChar = ' ';
          preexecute_err();
     }
      
-     gSvm.mtds[pos].name = mthdname.str().c_str();
+     gSvm.mtds[pos].name = mthdname.str();
      gSvm.mtds[pos].clazz = classname.str();
-     gSvm.mtds[pos].module == modulename.str();
+     gSvm.mtds[pos].module = modulename.str();
      gSvm.mtds[pos].native = isnative;
      gSvm.mtds[pos].ref.byte2 = jmp_adr;
  }
@@ -396,7 +402,7 @@ static int LastChar = ' ';
      string methodname = getheadertxt(); // get text from image
      long l = atoi(getheadertxt().c_str());
      
-   //  cout << "setting method " << methodname << " at location " << l << endl;
+    // cout << "setting method " << methodname << " at location " << l << endl;
      InitMthd(l, methodname,streamcount);
      
      setbyte(OP_MTHD);

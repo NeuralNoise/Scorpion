@@ -76,7 +76,7 @@
  * OBJECT_ALIVE 0x1     when an object has been instantiated
  */
  #define OBJECT_DEAD (0x0)
- #define OBJECT_ALIVE (0x14829)
+ #define OBJECT_ALIVE (0x129)
  
  /*
  * Typedef values
@@ -196,9 +196,7 @@
  * This maintains the structure and flow of the program
  */
  struct Method {
-    string clazz, module;
-    
-    const char *name;
+    string clazz, module, name;
   
     /* 
     * This holds 2 key data dets
