@@ -41,8 +41,6 @@
 #include <string>
 using namespace std;
 
-// TODO: Implement these methods
-
 /*
 * Invokes the main method; should be called before any other 
 * Scorpion_...() functions

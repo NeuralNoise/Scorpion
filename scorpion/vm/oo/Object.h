@@ -45,6 +45,7 @@
  #include "../../clib/u1.h"
  #include "../../clib/u2.h"
  #include "../alloc/HeapBitmap.h"
+ #include "../alloc/gc.h"
  #include <string>
  
  using namespace std;
@@ -238,7 +239,7 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status);
     svmInitHeapObject(obj, _tdef, sz, GC_CLEAN)
 
 /* debugging */
-void dvmDumpObject(Object **obj); // wait for GC cleanup
+void svmDumpObject(Object &obj); // wait for GC cleanup
 
 void svmSetGenericValue(Object &obj, double value);
 

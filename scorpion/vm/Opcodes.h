@@ -38,7 +38,7 @@
 #define SCORPION_VM_OPCODES
 
 // The max numeric value of a VM opcode
-#define sMaxOpcodeLimit 0x4a
+#define sMaxOpcodeLimit 0x4b
 
   enum Opcodes {
       OP_NOP = 0x0, 
@@ -109,6 +109,7 @@
       OP_THROW = 0x48,
       OP_AT = 0x49,
       OP_STR_APND = 0x4a,
+      OP_KILL = 0x4b,
   };
  // TODO: create kill, delete, and re design str_append  
 

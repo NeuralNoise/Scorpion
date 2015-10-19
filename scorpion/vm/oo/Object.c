@@ -137,7 +137,8 @@ long __gcstatus(Object &obj){
 }
 
 // We perform a shallow delete
-void dvmDumpObject(Object &obj){
+void svmDumpObject(Object &obj){
+  gc_objc++;
   obj.size_t.byte1 = 0;
   obj.instanceData.byte1 = 0;
   obj.init.byte1 = OBJECT_DEAD;

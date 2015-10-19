@@ -44,9 +44,9 @@
  using namespace std;
  
  enum Img_Token {
-    tok_instr = 0x1ff,  // this should be tyhe only expected thing passed back
-    tok_eof = 0xeff0, // end of image
-    tok_floating = 0xddf, // you do not want to get this back, this means that the instruction in the image index was not an instruction
+    tok_instr = 0x1fff,  // this should be tyhe only expected thing passed back
+    tok_eof = 0xefff0, // end of image
+    tok_floating = 0xddff, // you do not want to get this back, this means that the instruction in the image index was not an instruction
                         // a Seg fault will be thrown 
  };
 

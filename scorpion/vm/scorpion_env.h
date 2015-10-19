@@ -70,8 +70,6 @@ using namespace std;
         string name;
         long methodLimit;
         
-   //     BlockTable table; // every environment has its own tabel
-        
       #define nullptr ((void *)0)
       
       public:      

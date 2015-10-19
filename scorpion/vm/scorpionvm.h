@@ -28,8 +28,7 @@
 
   class ScorpionEnv;
   class XSO;
-
-  // TODO: setup entire Virtual machine (static constants, helper functions, flags &status identifiers)
+  
   class ScorpionVM {
       long SREG_SIZE;
          

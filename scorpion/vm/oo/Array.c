@@ -49,6 +49,9 @@
      
      obj->length = data.size();
      
+     if(obj == nullptr || obj->generic == nullptr)
+        return obj;
+     
      if(obj->length > STR_LIMIT)
         Exception("String greater than max limit.", "StringOverloadException");
        
@@ -71,10 +74,8 @@
      
      stringstream ss;
      ss << fromchararray(arrayobj) << fromchararray(arrayobj2);
-     
-     ArrayObject* obj = tochararray(ss.str());
        
-     return obj;
+     return tochararray(ss.str());
  }
  
  

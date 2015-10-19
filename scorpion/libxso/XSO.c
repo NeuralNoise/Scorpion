@@ -440,7 +440,7 @@ static int LastChar = ' ';
      }
      else if(CurTok == OP_RETURN  || CurTok == OP_PUSH || CurTok == OP_POP || CurTok == OP_JMP || CurTok == OP_CALL
         || CurTok == OP_MTHD || CurTok == OP_LBL || CurTok == OP_IF || CurTok == OP_INC || CurTok == OP_DEC || CurTok == OP_SLP 
-        || CurTok == OP_USLP){
+        || CurTok == OP_USLP || CurTok == OP_KILL){
         double arg1 = atof(getheadertxt().c_str());
         setbyte(CurTok);
         setbyte(arg1);

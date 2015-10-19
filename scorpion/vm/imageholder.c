@@ -47,7 +47,7 @@ extern long streamcount;
      }
      if(LastChar == OP_RETURN || LastChar == OP_PUSH || LastChar == OP_POP || LastChar == OP_JMP || LastChar == OP_CALL
        || LastChar == OP_MTHD || LastChar == OP_LBL || LastChar == OP_IF || LastChar == OP_INC || LastChar == OP_DEC || LastChar == OP_SLP
-       || LastChar == OP_USLP){ // push 7 or push *x
+       || LastChar == OP_USLP || LastChar == OP_KILL){ // push 7 or push *x
          instrgroup = 1;
          op_ags.byte1 = getb();
          return LastChar;

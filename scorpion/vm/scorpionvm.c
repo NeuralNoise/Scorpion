@@ -148,8 +148,6 @@ void process_ags(int argc, const char** args)
             Init_ShutdownScorpionVM();
          }
          else{  // time for running application
-           // if(!((i + 1) < argc))
-           //     return -1; 
             XSO_PATH=(1);
             options.XSOF = args[i];
             int program_args = (argc - i);
@@ -268,8 +266,7 @@ void process_ags(int argc, const char** args)
                 options.ags[curArg++] = args[x];
           
             SAR_PATH=(1);
-            alog.ALOGV("--- VM is down, process exiting.");
-            exit(0);
+            return;
          }
    }
    Exception("Failed to properly parse VM args.","RuntimeException");
@@ -303,7 +300,6 @@ void appIsCompatible(XSO f)
       }
 }
 
-// TODO: Figure out why gSvm.permissions is being used for permission processing
 int performSecuritySetup(){
     Exception::trace.addproto("vm.internal.system.setup", "SecurityManager", 1);
        
@@ -426,7 +422,7 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
          goto err;
      }
      
-     status = env->InitEnvironmentSetup("ScorpionVirtualMachine", options.minHeap, options.maxHeap, options.minHeap, stack_limit);
+     status = env->InitEnvironmentSetup("ScorpionVirtualMachine", options.minHeap, options.maxHeap, options.minHeap, stack_limit); 
      gSvm.methodc = f[0].headerInf.method_size.byte1;
     
     err:
@@ -508,60 +504,6 @@ int Init_StartScorpionVM()
 
     // TODO: Set the program args in ArrayObject   
     Scorpion_VMExecute();
- 
-    /*
-    * TODO: this is the todo list for this function
-    *
-    * Figure out how we can use gSvm.vm.status variable
-    *
-    * review dalvik's code for destroying the java VM as well as 
-    * starting up the vm (use that as help)
-    *
-    * invoke the main method from memory (should be set at mem addr 0)
-    *
-    * If VM cannot be started return -1
-    *
-    * Once main method is invoked call Scorpion_VMExecute() to execute bytestream data
-    *
-    * use goto statements in Scorpion_VMExecute() to make for faster execution
-    *
-    * int Scorpion_VMExecute() {
-    *
-    *   // prepare for execution
-    *  // if execution cannot be started return -1 to be hadled
-    * int i; // our instruction
-    *  exe:
-    *
-    *  if(gSvm.Debug)
-    *   // do debug stuff
-    *
-    *   // request next instr from imageholder and assign it to i
-    *  if(isg1(i))  // find faster way to check for i (possibly use XSO image code for how to pre process an instr)
-    *    goto igroup1;
-    *  else if(isg2(i))
-    *    goto igroup2;
-    *  else if(isg3(i))
-    *    goto igroup3;
-    *  else
-    *    goto segfault;
-    *  
-    *   igroup1: // for instructions that have no arguments
-    *     switch( i ){
-    *         case OP_HLT:
-    *         // shutdown
-    *         break;
-    *     }
-    *     goto exe;    // execute an instr and go back to top
-    *
-    *   segfault:
-    *     // crash app (do not fource shutdown!) note use same code used in XSO for preprocessing an img
-    *
-    *  after that fit the debugger into the exe engine
-    * have debugger work instr by instr
-    *
-    */
-    
-   // TODO: if PC is at end of program and hlt has not been called, automatically shutdown the VM (do not force close!)
    return 0;
 }
 

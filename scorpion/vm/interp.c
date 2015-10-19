@@ -175,7 +175,7 @@ double math(long instruction){
 // TODO: implement GC check in instruction checkGC(gSvm.env->bitmap);      
 void Scorpion_VMExecute(){
   alog.ALOGD("running application.");
-      
+  
   long i, g; // our dedicated instruction and igroup
   exe:
     i = gSvm.appholder.getNextInstr();
@@ -198,6 +198,8 @@ void Scorpion_VMExecute(){
         
     arguments = gSvm.appholder.getAgs();
     // TODO: Debugger run
+   // if(gSvm.Debug)
+      // do debug stuff
 
     if(g == 0)
       goto group0;
@@ -303,6 +305,10 @@ void Scorpion_VMExecute(){
                svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
                       gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]]);
           goto exe;
+          case OP_KILL:
+               svmDumpObject(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
+               checkGC(gSvm.env->bitmap);
+          goto exe;
           case OP_JMP:
                gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
           goto exe;
@@ -402,8 +408,7 @@ void Scorpion_VMExecute(){
                  svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2], num);
                }
           goto exe;
-          case OP_THROW:
-                   // TODO: Implement $ string processing in Exception()       
+          case OP_THROW: 
                    Exception(fromchararray(gSvm.env->getBitmap().objs[(long) arguments.byte1].obj->strobj->array[default_loc]), 
                              fromchararray(gSvm.env->getBitmap().objs[(long) arguments.byte2].obj->strobj->array[default_loc]));
           goto exe;
