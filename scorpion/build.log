@@ -1,0 +1,51 @@
+This is LuaTeX, Version beta-0.76.0-2013121407 (rev 4627)  (format=luatex 2015.6.10)  1 OCT 2015 13:29
+ restricted \write18 enabled.
+**la
+(./build.c
+! You can't use `macro parameter character #' in vertical mode.
+l.1 #
+   include <stdio.h>
+? ls
+Type <return> to proceed, S to scroll future error messages,
+R to run without stopping, Q to run quietly,
+I to insert something, E to edit your file,
+1 or ... or 9 to ignore the next 1 to 9 tokens of input,
+H for help, X to quit.
+? I
+insert>Hello
+! You can't use `macro parameter character #' in horizontal mode.
+l.2 #
+   include <iostream>
+? return
+OK, entering \nonstopmode...
+! You can't use `macro parameter character #' in horizontal mode.
+l.3 #
+   include <string>
+Sorry, but I'm not programmed to handle this case;
+I'll just pretend that you didn''t ask for it.
+If you're in the wrong mode, you might be able to
+return to the right one by typing `I}' or `I$' or `I\par'.
+
+! You can't use `macro parameter character #' in horizontal mode.
+l.4 #
+   include <sstream>
+Sorry, but I'm not programmed to handle this case;
+I'll just pretend that you didn''t ask for it.
+If you're in the wrong mode, you might be able to
+return to the right one by typing `I}' or `I$' or `I\par'.
+
+! You can't use `macro parameter character #' in horizontal mode.
+l.5 #
+   include <stdlib.h>
+Sorry, but I'm not programmed to handle this case;
+I'll just pretend that you didn''t ask for it.
+If you're in the wrong mode, you might be able to
+return to the right one by typing `I}' or `I$' or `I\par'.
+
+)
+! Emergency stop.
+<*> la
+   
+*** (job aborted, no legal \end found)
+
+!  ==> Fatal error occurred, no output PDF file produced!
