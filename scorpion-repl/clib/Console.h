@@ -34,25 +34,23 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_OBJECT_STRING
- #define SCORPION_OBJECT_STRING
- 
- 
- #include "Object.h"
- #include <string>
- 
- using namespace std;
- 
- extern long str_location;
- 
- unsigned int at(Object &obj, long pos);
- 
- void assign(Object &obj, string data);
- 
- unsigned int size(Object &obj);
- 
- void concat(Object &obj, string data);
- 
- string getstr(Object &obj);
- 
- #endif // SCORPION_OBJECT_STRING
+#ifndef SCORPION_CONSOLE
+#define SCORPION_CONSOLE
+
+struct Terminal {
+   int BLACK, DARK_GRAY,
+       LIGHT_BLUE, BLUE,
+       LIGHT_GREEN, GREEN, 
+       CYAN, LIGHT_CYAN,
+       RED, LIGHT_RED,
+       PURPLE, LIGHT_PURPLE,
+       BROWN, YELLOW,
+       WHITE, LIGHT_GRAY,
+       DEFAULT;
+};
+
+extern Terminal Color;
+
+void setTerminalColor(int color);
+
+#endif // SCORPION_CONSOLE

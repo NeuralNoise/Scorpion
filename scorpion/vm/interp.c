@@ -306,8 +306,13 @@ void Scorpion_VMExecute(){
                       gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]]);
           goto exe;
           case OP_KILL:
-               svmDumpObject(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
-               checkGC(gSvm.env->bitmap);
+               {
+                   if(!svmObjectIsDead(gSvm.env->getBitmap().objs[(long) arguments.byte1]))
+                     goto exe;
+                     
+                   svmDumpObject(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
+                   checkGC(gSvm.env->bitmap);
+               }
           goto exe;
           case OP_JMP:
                gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
@@ -334,6 +339,14 @@ void Scorpion_VMExecute(){
           goto exe;
           case OP_MTHD: goto exe; // this instruction does nothing, it was executed during vm init
           case OP_LBL: goto exe;  // this instruction does nothing, it was executed during vm init
+          default:
+             if(i == OP_DELETE || i == OP_DELETE_ARRY){
+                 if(!svmObjectIsDead(gSvm.env->getBitmap().objs[(long) arguments.byte1]))
+                         goto exe;
+                         
+                   freeObj(gSvm.env->getBitmap().objs[(long) arguments.byte1]); // arrays and generic objects can be freed the same way
+             }
+          goto exe;
        } // run each instr
        goto exe;
     group2:
@@ -436,6 +449,34 @@ void Scorpion_VMExecute(){
                {
                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
                           at(gSvm.env->getBitmap().objs[(long) arguments.byte2], (long) arguments.byte3));
+               }
+          goto exe;
+          case OP_ALOAD:
+               {
+                   long pos = (long) arguments.byte3;
+                   if(__typedef(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == TYPEDEF_GENERIC_ARRAY){
+                       svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2], 
+                           get(gSvm.env->getBitmap().objs[(long) arguments.byte2], pos));
+                   }
+                   else {
+                       str_location = pos;
+                       string data = getstr(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
+                       assign(gSvm.env->getBitmap().objs[(long) arguments.byte1], data);
+                   }
+               }
+          goto exe;
+          case OP_ASTORE:
+               {
+                   long pos = (long) arguments.byte3;
+                   if(__typedef(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == TYPEDEF_GENERIC_ARRAY){
+                       set(gSvm.env->getBitmap().objs[(long) arguments.byte1], pos,
+                           svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]));
+                   }
+                   else {
+                       str_location = pos;
+                       string data = getstr(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
+                       assign(gSvm.env->getBitmap().objs[(long) arguments.byte1], data);
+                   }
                }
           goto exe;
           default:

@@ -37,6 +37,9 @@
  #include "Object.h"
  #include "Array.h"
  #include "../exception.h"
+ #include <sstream>
+ using namespace std;
+ 
  
  long str_location = 0;
  
@@ -73,6 +76,22 @@
      
      if(isnull(obj))
       Exception("String Object failed to be reassigned.", "NullpointerException");
+ }
+ 
+ string getstr(Object &obj){
+    if(!svmObjectIsDead(obj))
+        Exception("String Object has not been created!", "DeadObjectException");
+     
+     if(svmObjectHasInstance(obj, TYPEDEF_STRING))
+       return fromchararray(obj.obj->strobj[0].array[0]);
+     else {
+       if(str_location >= obj.obj->arrayobj->length){
+           stringstream ss;
+           ss << "Index " << str_location << " is not within bounds. Array size[" << length(obj) << "].";
+           Exception(ss.str(), "ArrayIndexOutOfBoundsException");
+       }
+       return fromchararray(obj.obj->strobj[str_location].array[0]);
+     }
  }
  
  unsigned int size(Object &obj){

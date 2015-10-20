@@ -38,7 +38,7 @@
 #define SCORPION_VM_OPCODES
 
 // The max numeric value of a VM opcode
-#define sMaxOpcodeLimit 0x4b
+#define sMaxOpcodeLimit 0x4f
 
   enum Opcodes {
       OP_NOP = 0x0, 
@@ -51,7 +51,7 @@
       OP_CALL = 0X8,
       OP_ISEQ = 0x9,
       OP_ISNEQ = 0xa,
-      OP_ISLT = 0xb, // ISLT ISLE ISGT ISGE
+      OP_ISLT = 0xb,
       OP_ISNLT = 0xc,
       OP_ISLE = 0xd,
       OP_ISNLE = 0xe,
@@ -103,15 +103,18 @@
       OP_OR = 0x42,
       OP_INC = 0x43,
       OP_DEC = 0x44,
-      OP_AND = 0x45, // sleep array stuff and throw
+      OP_AND = 0x45,
       OP_SLP = 0x46,
       OP_USLP = 0x47,
       OP_THROW = 0x48,
       OP_AT = 0x49,
       OP_STR_APND = 0x4a,
       OP_KILL = 0x4b,
+      OP_DELETE = 0x4c,
+      OP_DELETE_ARRY = 0x4d,
+      OP_ALOAD = 0x4e,
+      OP_ASTORE = 0x4f,
   };
- // TODO: create kill, delete, and re design str_append  
 
 #endif 
 

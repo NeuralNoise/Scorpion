@@ -248,5 +248,9 @@ double svmGetGenericValue(Object &obj);
 long __typedef(Object &obj);
 
 long __gcstatus(Object &obj);
+
+bool isObjArray(Object &obj);
+
+void freeObj(Object &obj);
  
 #endif // SCORPION_NATIVE_OBJECT

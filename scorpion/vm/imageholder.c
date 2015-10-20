@@ -47,7 +47,7 @@ extern long streamcount;
      }
      if(LastChar == OP_RETURN || LastChar == OP_PUSH || LastChar == OP_POP || LastChar == OP_JMP || LastChar == OP_CALL
        || LastChar == OP_MTHD || LastChar == OP_LBL || LastChar == OP_IF || LastChar == OP_INC || LastChar == OP_DEC || LastChar == OP_SLP
-       || LastChar == OP_USLP || LastChar == OP_KILL){ // push 7 or push *x
+       || LastChar == OP_USLP || LastChar == OP_KILL || LastChar == OP_DELETE || LastChar == OP_DELETE_ARRY){ // push 7 or push *x
          instrgroup = 1;
          op_ags.byte1 = getb();
          return LastChar;
@@ -70,7 +70,7 @@ extern long streamcount;
        || LastChar == OP_FSUB || LastChar == OP_FMULT || LastChar == OP_FDIV || LastChar == OP_CADD
        || LastChar == OP_CSUB || LastChar == OP_CMULT || LastChar == OP_CDIV || LastChar == OP_IMOD
        || LastChar == OP_CMOD || LastChar == OP_SMOD || LastChar == OP_OR || LastChar == OP_AND
-       || LastChar == OP_AT){ //
+       || LastChar == OP_AT || LastChar == OP_ALOAD || LastChar == OP_ASTORE){ //
          instrgroup = 3;
          op_ags.byte1 = getb();
          op_ags.byte2 = getb();

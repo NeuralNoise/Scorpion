@@ -38,6 +38,7 @@
  #include "../exception.h"
  #include <iostream>
  #include <new>
+ #include <stdlib.h> 
  
  using namespace std;
 
@@ -134,6 +135,21 @@ long __typedef(Object &obj){
 
 long __gcstatus(Object &obj){
     return obj.instanceData.byte2;
+}
+
+bool isObjArray(Object &obj){
+    return (__typedef(obj) == TYPEDEF_GENERIC_ARRAY || __typedef(obj) == TYPEDEF_STRING_ARRAY);
+}
+
+void freeObj(Object &obj){
+    if(!svmObjectIsDead(obj))
+       return;
+       
+    free(obj.obj);
+    obj.instanceData.byte2 = GC_IDLE;
+    obj.size_t.byte1 = 0;
+    obj.instanceData.byte1 = 0;
+    obj.init.byte1 = OBJECT_DEAD;
 }
 
 // We perform a shallow delete

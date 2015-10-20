@@ -82,6 +82,9 @@
  
  /* Generic array parsing stuff */
  double get(Object &obj, long pos){
+     if(!svmObjectIsDead(obj))
+          segfault();
+  
      if(pos >= obj.obj->arrayobj->length){
        stringstream ss;
        ss << "Index " << pos << " is not within bounds. Array size[" << length(obj) << "].";
@@ -92,6 +95,9 @@
  }
  
  void set(Object &obj, long pos, double default_value){
+     if(!svmObjectIsDead(obj))
+          segfault();
+          
      if(pos >= obj.obj->arrayobj->length){
        stringstream ss;
        ss << "Index " << pos << " is not within bounds. Array size[" << length(obj) << "].";

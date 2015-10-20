@@ -440,7 +440,7 @@ static int LastChar = ' ';
      }
      else if(CurTok == OP_RETURN  || CurTok == OP_PUSH || CurTok == OP_POP || CurTok == OP_JMP || CurTok == OP_CALL
         || CurTok == OP_MTHD || CurTok == OP_LBL || CurTok == OP_IF || CurTok == OP_INC || CurTok == OP_DEC || CurTok == OP_SLP 
-        || CurTok == OP_USLP || CurTok == OP_KILL){
+        || CurTok == OP_USLP || CurTok == OP_KILL || CurTok == OP_DELETE || CurTok == OP_DELETE_ARRY){
         double arg1 = atof(getheadertxt().c_str());
         setbyte(CurTok);
         setbyte(arg1);
@@ -477,7 +477,7 @@ static int LastChar = ' ';
        || CurTok == OP_FSUB || CurTok == OP_FMULT || CurTok == OP_FDIV || CurTok == OP_CADD
        || CurTok == OP_CSUB || CurTok == OP_CMULT || CurTok == OP_CDIV || CurTok == OP_IMOD
        || CurTok == OP_CMOD || CurTok == OP_SMOD || CurTok == OP_OR || CurTok == OP_AND
-       || CurTok == OP_AT){
+       || CurTok == OP_AT || CurTok == OP_ALOAD || CurTok == OP_ASTORE){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
         double arg3 = atof(getheadertxt().c_str());
