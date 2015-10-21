@@ -1,0 +1,61 @@
+module Test;
+
+class Log
+   def Log() end
+
+   extern logprint(string *tag, string *data);
+   
+   def a(string tag, string message)
+   end
+
+   def e(string tag,string message)
+   end
+
+   def w(string tag,string message):
+   end
+
+   def i(string tag,string message):
+   end
+
+   def d(string tag,string message):
+   end
+
+   def v(string tag,string message):
+   end
+
+   def println(string TAG, string message):
+   end
+
+   def print(int priority, string tag, string message..):
+     for( i : 10 )
+     for( i : e )
+     for( i )
+     for( 10 )
+     for( ;; )
+     for( i ;; )
+     for( i ;; i++)
+     while( i )hello
+     while( 1 )#
+     while( true )
+     while( false )
+     try
+       int a = 4;
+       int a (4);
+       bool a = false;
+       short b = 3;
+       string m = "Hello  ";
+       string m("hello  ");
+       char s = 'S';
+       float f = 54.37;
+       double d = 393.2839;
+     catch(Exception e)
+     
+     end
+     catch(RuntimeException *e)
+     
+     end
+     
+   end
+
+endclass
+endclass
