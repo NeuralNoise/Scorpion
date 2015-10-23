@@ -1,65 +1,40 @@
-/*************************************************************************/
-/* SCZ_Compress_Lib.c - Compress files or buffers.  Simple compression.	*/
-/*
-/  This file contains the following user-callable routines:
-/    Scz_Compress_File( *infilename, *outfilename );
-/    Scz_Compress_Buffer2File( *buffer, N, *outfilename );
-/    Scz_Compress_Buffer2Buffer( *inbuffer, N, **outbuffer, *M, lastbuf_flag );
-/
-/  See below for formal definitions.
-
-  SCZ Method:
-   Finds the most frequent pairs, and least frequent chars.
-   Uses the least frequent char as 'forcing-char', and other infrequent 
-   char(s) as replacement for most frequent pair(s).
-
-   Advantage of working with pairs:  A random access incidence array 
-   can be maintained and rapidly searched.
-   Repeating the process builds effective triplets, quadruplets, etc..
-
-   At each stage, we are interested only in knowing the least used 
-   character(s), and the most common pair(s).
-
-   Process for pairs consumes: 256*256 = 65,536 words or 0.26-MB. 
-   (I.E. Really nothing on modern computers.)
-
-   Process could be expanded to triplets, with array of 16.7 words or 
-   67 MB.  Recommend going to trees after that.  But have not found
-   advantages to going above pairs. On the contrary, pairs are faster
-   to search and allow lower granularity replacement (compression).
- ---
-
- SCZ_Compress - LGPL License:
-  Copyright (C) 2001, Carl Kindman
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-  For updates/info, see:  http://sourceforge.net/projects/scz-compress/
-
-  Carl Kindman 11-21-2004     carlkindman@yahoo.com
-		7-5-2005	Added checksums and blocking.
-		9-14-2006       Freeing fixes by David Senterfitt.
-*************************************************************************/
-
-#include "scz_core.h"
-int *scz_freq2=0; 
+ /*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Portions of the code surrounded by "// Begin Dalvik code" and
+ * "// END Delvik code" are copyrighted and licensed separately, as
+ * follows:
+ *
+ * The core software depicted in this library goes to 
+ * the creator of SCZ(Simple Compression Utilities and Library)
+ *
+ * (http://scz-compress.sourceforge.net/) November 26, 2008
+ *
+ */
+ #include "zcore.h"
+ #include "zdecompress.h"
+ 
+ int *scz_freq2=0; 
 
 
 /*------------------------------------------------------------*/
 /* Add an item to a value-sorted list of maximum-length N.    */
 /* Sort from largest to smaller values.  (A descending list.) */
 /*------------------------------------------------------------*/
-void scz_add_sorted_nmax( struct scz_amalgam *list, unsigned char *phrase, int lngth, int value, int N )
-{
+ void scz_add_sorted_nmax( struct scz_amalgam *list, unsigned char *phrase, int lngth, int value, int N )
+ {
  int j, k=0, m;
 
  if (value <= list[N-1].value) return;
@@ -81,8 +56,8 @@ void scz_add_sorted_nmax( struct scz_amalgam *list, unsigned char *phrase, int l
 /* Add an item to a value-sorted list of maximum-length N.    */
 /* Sort from smaller to larger values.  (An ascending list.)  */
 /*------------------------------------------------------------*/
-void scz_add_sorted_nmin( struct scz_amalgam *list, unsigned char *phrase, int lngth, int value, int N )
-{
+ void scz_add_sorted_nmin( struct scz_amalgam *list, unsigned char *phrase, int lngth, int value, int N )
+ {
  int j, k=0, m;
 
  while ((k<N) && (list[k].value <= value)) k++;
@@ -102,8 +77,8 @@ void scz_add_sorted_nmin( struct scz_amalgam *list, unsigned char *phrase, int l
 /*----------------------------------------------------------------------*/
 /* Analyze a buffer to determine the frequency of characters and pairs. */
 /*----------------------------------------------------------------------*/
-void scz_analyze( struct scz_item *buffer0_hd, int *freq1, int *freq2 )
-{
+ void scz_analyze( struct scz_item *buffer0_hd, int *freq1, int *freq2 )
+ {
  int j, k;
  struct scz_item *ptr;
 
@@ -130,8 +105,8 @@ void scz_analyze( struct scz_item *buffer0_hd, int *freq1, int *freq2 )
 /*------------------------------------------------------*/
 /* Compress a buffer, step.  Called iteratively.	*/
 /*------------------------------------------------------*/
-int scz_compress_iter( struct scz_item **buffer0_hd )
-{
+ int scz_compress_iter( struct scz_item **buffer0_hd )
+ {
  int nreplace=250;
  int freq1[256], markerlist[256];
  int i, j, k, replaced, nreplaced, sz3=0, saved=0, saved_pairfreq[256], saved_charfreq[257];
@@ -386,8 +361,8 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
 /* Pass-in the buffer and its initial size, as sz1. 		   */
 /* Returns 1 on success, 0 on failure.				   */
 /*******************************************************************/
-int Scz_Compress_Seg( struct scz_item **buffer0_hd, int sz1 )
-{
+ int Scz_Compress_Seg( struct scz_item **buffer0_hd, int sz1 )
+ {
  struct scz_item *tmpbuf_hd=0, *tmpbuf_tl=0;
  int sz2, iter=0;
 
@@ -414,8 +389,8 @@ int Scz_Compress_Seg( struct scz_item **buffer0_hd, int sz1 )
 
 
 
-long Scz_get_file_length( FILE *fp )
-{
+ long Scz_get_file_length( FILE *fp )
+ {
   long len, cur;
   cur = ftell( fp );            /* remember where we are */
   fseek( fp, 0L, SEEK_END );    /* move to the end */
@@ -433,8 +408,8 @@ long Scz_get_file_length( FILE *fp )
 /*  name.  The two file names must be different.			*/
 /*									*/
 /************************************************************************/
-int Scz_Compress_File( char *infilename, char *outfilename )
-{
+ int Scz_Compress_File( char *infilename, char *outfilename )
+ {
  struct scz_item *buffer0_hd=0, *buffer0_tl=0, *bufpt;
  int sz1=0, sz2=0, szi, success=1, flen, buflen;
  unsigned char ch, chksum;
@@ -506,8 +481,8 @@ int Scz_Compress_File( char *infilename, char *outfilename )
 /*   very large data sets.)						*/
 /*									*/
 /************************************************************************/
-int Scz_Compress_Buffer2File( unsigned char *buffer, int N, char *outfilename )
-{
+ int Scz_Compress_Buffer2File( unsigned char *buffer, int N, char *outfilename )
+ {
  struct scz_item *buffer0_hd=0, *buffer0_tl=0, *bufpt;
  int sz1=0, sz2=0, szi, success=1, buflen;
  unsigned char chksum;
@@ -576,8 +551,8 @@ int Scz_Compress_Buffer2File( unsigned char *buffer, int N, char *outfilename )
 /*  This routine allocates the output array and passes back the size.	*/ 
 /*									*/
 /************************************************************************/
-int Scz_Compress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M, int lastbuf_flag )
-{
+ int Scz_Compress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M, int lastbuf_flag )
+ {
  struct scz_item *buffer0_hd=0, *buffer0_tl=0, *bufpt;
  int sz1=0, sz2=0, szi, success=1, buflen;
  unsigned char chksum;
@@ -623,3 +598,5 @@ int Scz_Compress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M,
  scz_freq2 = 0;
  return success;
 }
+
+ 

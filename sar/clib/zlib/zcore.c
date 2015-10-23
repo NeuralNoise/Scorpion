@@ -1,47 +1,45 @@
-/************************************************************************
- * SCZ_CORE.c - Core routines for SCZ compression methods.		*
- ************************************************************************/
+ /*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Portions of the code surrounded by "// Begin Dalvik code" and
+ * "// END Delvik code" are copyrighted and licensed separately, as
+ * follows:
+ *
+ * The core software depicted in this library goes to 
+ * the creator of SCZ(Simple Compression Utilities and Library)
+ *
+ * (http://scz-compress.sourceforge.net/) November 26, 2008
+ *
+ */
+ #include "zcore.h"
+ #include <stdio.h>
+ #include <stdlib.h> 
+ #include <string>
+ 
+ using namespace std;
+ 
+ int sczbuflen = 4 * 1048576;
+ 
+ scz_item *sczfreelist1=0;
 
-#ifndef SCZ_CORE
-#define SCZ_CORE 1
+ scz_item2 *sczphrasefreq[256], *scztmpphrasefreq, *sczfreelist2=0;
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "scz_core.h"
-#define SCZ_MAX_BUF  16777215
-#define SCZFREELSTSZ 2048
-#define nil 0
-int sczbuflen = 4 * 1048576;
+ scz_block_alloc *scz_allocated_blocks = 0, *scz_tmpblockalloc;
 
-struct scz_item		/* Data structure for holding buffer items. */
+ struct scz_item *new_scz_item()
  {
-   unsigned char ch;
-   struct scz_item *nxt;
- } *sczfreelist1=0;
-
-struct scz_amalgam	/* Data structure for holding markers and phrases. */
- {
-   unsigned char phrase[2];
-   int value;
- };
-
-struct scz_item2		/* Data structure for holding buffer items with index. */
- {
-   unsigned char ch;
-   int j;
-   struct scz_item2 *nxt;
- } *sczphrasefreq[256], *scztmpphrasefreq, *sczfreelist2=0;
-
-struct scz_block_alloc		/* List for holding references to blocks of allocated memory. */
-{
- void *mem_block;
- struct scz_block_alloc *next_block;
-} *scz_allocated_blocks = 0, *scz_tmpblockalloc;
-
-
-struct scz_item *new_scz_item()
-{
  int j;
  struct scz_item *tmppt;
 
@@ -66,9 +64,15 @@ struct scz_item *new_scz_item()
  return tmppt;
 }
 
+ void sczfree( struct scz_item *tmppt )
+ {
+ tmppt->nxt = sczfreelist1;
+ sczfreelist1 = tmppt;
+}
 
-struct scz_item2 *new_scz_item2()
-{
+
+ struct scz_item2 *new_scz_item2()
+ {
  int j;
  struct scz_item2 *tmppt;
 
@@ -93,21 +97,15 @@ struct scz_item2 *new_scz_item2()
  return tmppt;
 }
 
-void sczfree( struct scz_item *tmppt )
-{
- tmppt->nxt = sczfreelist1;
- sczfreelist1 = tmppt;
-}
-
-void sczfree2( struct scz_item2 *tmppt )
-{
- tmppt->nxt = sczfreelist2;
- sczfreelist2 = tmppt;
-}
+ void sczfree2( struct scz_item2 *tmppt )
+ {
+  tmppt->nxt = sczfreelist2;
+  sczfreelist2 = tmppt;
+ }
 
 
-void scz_cleanup()	/* Call after last SCZ call to free temporarily allocated */
-{			/*  memory which will all be on the free-lists now. */
+ void scz_cleanup()	/* Call after last SCZ call to free temporarily allocated */
+ {			/*  memory which will all be on the free-lists now. */
  while (scz_allocated_blocks!=0)
   {
    scz_tmpblockalloc = scz_allocated_blocks;
@@ -123,8 +121,8 @@ void scz_cleanup()	/* Call after last SCZ call to free temporarily allocated */
 /*-----------------------*/
 /* Add item to a buffer. */
 /*-----------------------*/
-void scz_add_item( struct scz_item **hd, struct scz_item **tl, unsigned char ch )
-{
+ void scz_add_item( struct scz_item **hd, struct scz_item **tl, unsigned char ch )
+ {
  struct scz_item *tmppt;
 
  tmppt = new_scz_item();
@@ -134,4 +132,7 @@ void scz_add_item( struct scz_item **hd, struct scz_item **tl, unsigned char ch 
  *tl = tmppt;
 }
 
-#endif
+ 
+ 
+ 
+ 

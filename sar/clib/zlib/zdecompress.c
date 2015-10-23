@@ -1,47 +1,37 @@
-/****************************************************************************/ 
-/* SCZ_Decompress_lib.c - Decompress what SCZ_Compress.c compresses.
-   Simple decompression algorithms for SCZ compressed data.
-
-   This file contains the following user-callable routines:
-     Scz_Decompress_File( *infilename, *outfilename );
-     Scz_Decompress_File2Buffer( *infilename, **outbuffer, *M );
-     Scz_Decompress_Buffer2Buffer( *inbuffer, *N, **outbuffer, *M );
-  See below for formal definitions and comments.
-
- SCZ_Compress - LGPL License:
-  Copyright (C) 2001, Carl Kindman
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-  For updates/info, see:  http://sourceforge.net/projects/scz-compress/
-
-  Carl Kindman 11-21-2004     carl_kindman@yahoo.com
-                7-5-2005        Added checksums and blocking.
-		9-14-2006	Freeing fixes by David Senterfitt.
-*****************************************************************************/
-
-#ifndef SCZ_DECOMPRESSLIB_DEFD
-#define SCZ_DECOMPRESSLIB_DEFD
-
-#include "scz_core.h"
-#include "scz_decompress_lib.h"
-
+/*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Portions of the code surrounded by "// Begin Dalvik code" and
+ * "// END Delvik code" are copyrighted and licensed separately, as
+ * follows:
+ *
+ * The core software depicted in this library goes to 
+ * the creator of SCZ(Simple Compression Utilities and Library)
+ *
+ * (http://scz-compress.sourceforge.net/) November 26, 2008
+ *
+ */
+ #include "zcore.h"
+ #include "zdecompress.h"
 
 /****************************************************************/
 /* Decompress - Decompress a buffer.  Returns 1 on success, 0 	*/
 /*  if failure.							*/
 /****************************************************************/
-int Scz_Decompress_Seg( struct scz_item **buffer0_hd )
-{
+ int Scz_Decompress_Seg( struct scz_item **buffer0_hd )
+ {
  unsigned char forcingchar, marker[257], phrase[256][256];
  int j, nreplaced, iterations, iter, markerlist[256];
  struct scz_item *bufpt, *tmpbuf, *oldptr;
@@ -123,19 +113,18 @@ int Scz_Decompress_Seg( struct scz_item **buffer0_hd )
 /*  name.  The two file names must be different.                        */
 /*                                                                      */
 /************************************************************************/
-int Scz_Decompress_File( char *infilename, char *outfilename )
-{
+ int Scz_Decompress_File( char *infilename, char *outfilename )
+ {
  int k, success, sz1=0, sz2=0, buflen, continuation;
  unsigned char ch, chksum, chksum0;
  struct scz_item *buffer0_hd, *buffer0_tl, *bufpt, *bufprv;
  FILE *infile=0, *outfile;
 
  infile = fopen(infilename,"rb");
- if (infile==0) {printf("ERROR: Cannot open input file '%s'.  Exiting\n", infilename);  return 0;}
+ if (infile==0) {return 1;} //
 
- printf("\n Writing output to file %s\n", outfilename);
  outfile = fopen(outfilename,"wb");
- if (outfile==0) {printf("ERROR: Cannot open output file '%s' for writing.  Exiting\n", outfilename); return 0;}
+ if (outfile==0) {return 2;} // ERROR: Cannot open output file
 
  do 
   { /*Segment*/
@@ -224,8 +213,8 @@ int Scz_Decompress_File( char *infilename, char *outfilename )
 /*  This routine allocates the output array and passes back the size.      */ 
 /*                                                                         */
 /**************************************************************************/
-int Scz_Decompress_File2Buffer( char *infilename, char **outbuffer, int *M )
-{
+ int Scz_Decompress_File2Buffer( char *infilename, char **outbuffer, int *M )
+ {
  int k, success, sz1=0, sz2=0, buflen, continuation, totalin=0, totalout=0;
  unsigned char ch, chksum, chksum0;
  struct scz_item *buffer0_hd, *buffer0_tl, *bufpt, *bufprv, *sumlst_hd=0, *sumlst_tl=0;
@@ -344,8 +333,8 @@ int Scz_Decompress_File2Buffer( char *infilename, char **outbuffer, int *M )
 /*  This routine allocates the output array and passes back the size.          */ 
 /*                                                                             */
 /*******************************************************************************/
-int Scz_Decompress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M )
-{
+ int Scz_Decompress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M )
+ {
  int k, success, sz1=0, sz2=0, buflen, continuation, totalin=0, totalout=0;
  unsigned char ch, chksum, chksum0;
  struct scz_item *buffer0_hd, *buffer0_tl, *bufpt, *bufprv, *sumlst_hd=0, *sumlst_tl=0;
@@ -438,5 +427,3 @@ int Scz_Decompress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *
  printf("Decompression ratio = %g\n", (float)totalout / (float)totalin );
  return 1;
 }
-
-#endif /* SCZ_DECOMPRESSLIB_DEFD */
