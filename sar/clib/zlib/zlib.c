@@ -24,36 +24,62 @@
  *
  */
  #include "zlib.h"
+ #include "zinclude.h"
+ #include <stdio.h>
+ #include <string.h>
+ #include <iostream>
+ #include <sstream>
+ #include <new>
+
+ using namespace std;
  
  
  ZLib_Response zres;
+ #define nil ((void *)0)
  
- void Zip::Compress(string file, string output){
-     
+ char* c_ptr(string data){
+    char *c = new (nothrow) char[data.size() + 1];
+    
+    if(c == nil){
+      char *c2 = new char[1];
+      c2[0] = 5;
+      return c2;
+    }
+    
+   for(long i = 0; i < data.size(); i++)
+      c[i] = data.at(i);
+   c[data.size()] = 0;
+    return c;
  }
  
- void Zip::Decompress(string file, string output){
-     
+ void Zlib::Compress(string file, string output){
+     zres.response = Scz_Compress_File( c_ptr(file), c_ptr(output) );
  }
  
- void Zip::Compress_Buffer2File(string buffer, string outfile){
-     
+ void Zlib::Decompress(string file, string output){
+     zres.response = Scz_Decompress_File( c_ptr(file), c_ptr(output) );
  }
  
- void Zip::Compress_Buffer2Buffer(string buffer, char** outbuffer, bool lastseg){
-     
+ void Zlib::Compress_Buffer2File(string buffer, string outfile){
+     char* c = c_ptr(buffer);
+     unsigned char *cBuffer = (unsigned char*) &c[0];
+     zres.response = Scz_Compress_Buffer2File( cBuffer, buffer.size(), c_ptr(outfile) );
  }
  
- void Zip::Decompress_File2Buffer(string file, char **buf){
-     
+ void Zlib::Compress_Buffer2Buffer(string buffer, stringstream &__obuff__, bool lastseg){
+     zres.response = Scz_Compress_Buffer2Buffer( c_ptr(buffer), buffer.size(), __obuff__, (int) lastseg );
  }
  
- void Zip::Decompress_Buffer2Buffer(string buffer, char** outbuffer){
-     
+ void Zlib::Decompress_File2Buffer(string file, stringstream &__buf){
+     zres.response = Scz_Decompress_File2Buffer( c_ptr(file), __buf );
  }
  
- void Zip::Cleanup(){
-     
+ void Zlib::Decompress_Buffer2Buffer(string buffer, stringstream &__outbuf_){
+     zres.response = Scz_Decompress_Buffer2Buffer( c_ptr(buffer), buffer.size(), __outbuf_ );
+ }
+ 
+ void Zlib::Cleanup(){
+     scz_cleanup();
  }
  
  

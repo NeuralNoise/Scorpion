@@ -25,6 +25,9 @@
  */
  #include "zcore.h"
  #include "zdecompress.h"
+ #include <sstream>
+ 
+ using namespace std;
  
  int *scz_freq2=0; 
 
@@ -551,7 +554,7 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
 /*  This routine allocates the output array and passes back the size.	*/ 
 /*									*/
 /************************************************************************/
- int Scz_Compress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M, int lastbuf_flag )
+ int Scz_Compress_Buffer2Buffer( char *inbuffer, int N, stringstream &__outbuf__, int lastbuf_flag )
  {
  struct scz_item *buffer0_hd=0, *buffer0_tl=0, *bufpt;
  int sz1=0, sz2=0, szi, success=1, buflen;
@@ -577,23 +580,20 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  sz2 = 0;	/* Get buffer size. */
  bufpt = buffer0_hd;
  while (bufpt!=0) { sz2++;  bufpt = bufpt->nxt;  }
- *outbuffer = (char *)malloc((sz2+2)*sizeof(char));
- sz2 = 0;
  while (buffer0_hd!=0)
   {
-   (*outbuffer)[sz2++] = buffer0_hd->ch;
+   __outbuf__ << buffer0_hd->ch;
    bufpt = buffer0_hd;
    buffer0_hd = buffer0_hd->nxt;
    sczfree(bufpt);
   }
- (*outbuffer)[sz2++] = chksum; 
- if (lastbuf_flag) (*outbuffer)[sz2++] = ']';	/* Place no-continuation marker. */
- else (*outbuffer)[sz2++] = '[';			/* Place continuation marker. */
+  
+ __outbuf__ << chksum; 
+ if (lastbuf_flag) __outbuf__ << ']';	/* Place no-continuation marker. */
+ else __outbuf__ << '[';			/* Place continuation marker. */
 
- *M = sz2;
-
- // printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
- // printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
+  printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
+  printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
  free(scz_freq2);
  scz_freq2 = 0;
  return success;

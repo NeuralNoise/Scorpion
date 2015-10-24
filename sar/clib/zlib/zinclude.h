@@ -34,6 +34,7 @@
 #ifndef Z_INCLUDE
 #define Z_INCLUDE 
 
+#include <sstream>
 #define SCZ_VERSION 1.8
 float scz_version=SCZ_VERSION;
 
@@ -66,7 +67,7 @@ int Scz_Compress_Buffer2File( unsigned char *buffer, int N, char *outfilename );
 /*  if last segment, otherwise set false if more segments to come.	*/
 /*  This routine allocates the output array and passes back the size.	*/ 
 /************************************************************************/
-int Scz_Compress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M, int lastbuf_flag );
+int Scz_Compress_Buffer2Buffer( char *inbuffer, int N, stringstream &outbuffer, int lastbuf_flag );
 
 
 /************************************************************************/
@@ -86,7 +87,7 @@ int Scz_Decompress_File( char *infilename, char *outfilename );
 /*  with return variable for array length. 				   */
 /*  This routine allocates the output array and passes back the size.      */ 
 /**************************************************************************/
-int Scz_Decompress_File2Buffer( char *infilename, char **outbuffer, int *M );
+int Scz_Decompress_File2Buffer( char *infilename, stringstream &__outbuff__);
 
 
 /*******************************************************************************/
@@ -97,7 +98,7 @@ int Scz_Decompress_File2Buffer( char *infilename, char **outbuffer, int *M );
 /*  the output buffer array, with return variable for array length.  	       */
 /*  This routine allocates the output array and passes back the size.          */ 
 /*******************************************************************************/
-int Scz_Decompress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M );
+int Scz_Decompress_Buffer2Buffer( char *inbuffer, int N, stringstream &__outbuff__ );
 
 
 void scz_cleanup();	/* Call after last SCZ call to free temporarily allocated memory. */

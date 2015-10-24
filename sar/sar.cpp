@@ -44,10 +44,7 @@ int main(int argc, const char**args)
               
               printf("\rsar:  packaging %lu file(s), %lu total bytes of data. (%lu/%lu)", h.sourcecount.byte1, h.filesize.byte1, bytestatus, h.filesize.byte1);
               
-              stringstream pfiles;
-              pfiles << packagefiles() << (char) 0;
-              
-              archive << pfiles.str();
+              archive << packagefiles() << (char) 0;
               stringstream fout;
               fout << packagefile << ".sar";
               FileStream::out(fout.str().c_str(), archive.str());

@@ -42,5 +42,6 @@ string packagefiles()
             check--;
     }
     
+    // zip data before returning
     return package.str();
 }

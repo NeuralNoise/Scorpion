@@ -29,8 +29,12 @@
  #include "../u2.h"
  #include "../u4.h"
  #include <string>
+ #include <sstream>
  
  using namespace std;
+ 
+ #define NEXT_SEGMENT false
+ #define LAST_SEGMENT true
  
  struct ZLib_Response {
      u2 size_t;
@@ -39,6 +43,7 @@
      
      u4 data;
      
+     stringstream _warnings_;
      string reason;
      int response;
  } ;
@@ -53,15 +58,15 @@
  * confusing concepts of the library.
  *
  */
- class Zip {
+ class Zlib {
      
      public:
         void Compress(string file, string output);
         void Decompress(string file, string output);
         void Compress_Buffer2File(string buffer, string outfile);
-        void Compress_Buffer2Buffer(string buffer, char** outbuffer, bool lastseg);
-        void Decompress_File2Buffer(string file, char **buf);
-        void Decompress_Buffer2Buffer(string buffer, char** outbuffer);
+        void Compress_Buffer2Buffer(string buffer, stringstream &__obuff__, bool lastseg);
+        void Decompress_File2Buffer(string file, stringstream &__buf);
+        void Decompress_Buffer2Buffer(string buffer, stringstream &__buf);
         void Cleanup();
  };
  

@@ -25,6 +25,8 @@
  */
  #include "zcore.h"
  #include "zdecompress.h"
+ #include <sstream>
+ using namespace std;
 
 /****************************************************************/
 /* Decompress - Decompress a buffer.  Returns 1 on success, 0 	*/
@@ -213,7 +215,7 @@
 /*  This routine allocates the output array and passes back the size.      */ 
 /*                                                                         */
 /**************************************************************************/
- int Scz_Decompress_File2Buffer( char *infilename, char **outbuffer, int *M )
+ int Scz_Decompress_File2Buffer( char *infilename, stringstream &__outbuf__ )
  {
  int k, success, sz1=0, sz2=0, buflen, continuation, totalin=0, totalout=0;
  unsigned char ch, chksum, chksum0;
@@ -299,19 +301,15 @@
   } /*Segment*/
  while (continuation);
 
- /* Convert list into buffer. */
- *outbuffer = (char *)malloc((totalout)*sizeof(char));
  sz2 = 0;
  while (sumlst_hd!=0)
   {
    bufpt = sumlst_hd;
-   (*outbuffer)[sz2++] = bufpt->ch;
+   __outbuf__ << bufpt->ch;
    sumlst_hd = bufpt->nxt;
    sczfree(bufpt);
   }
  if (sz2 > totalout) printf("Unexpected overrun error\n");
-
- *M = totalout;
 
  fclose(infile);
  printf("Decompression ratio = %g\n", (float)totalout / (float)totalin );
@@ -333,7 +331,7 @@
 /*  This routine allocates the output array and passes back the size.          */ 
 /*                                                                             */
 /*******************************************************************************/
- int Scz_Decompress_Buffer2Buffer( char *inbuffer, int N, char **outbuffer, int *M )
+ int Scz_Decompress_Buffer2Buffer( char *inbuffer, int N, stringstream &__outbuf__ )
  {
  int k, success, sz1=0, sz2=0, buflen, continuation, totalin=0, totalout=0;
  unsigned char ch, chksum, chksum0;
@@ -381,8 +379,7 @@
 
    /* Decode the 'end-marker'. */
    if (ch==']') continuation = 0;
-   else
-   if (ch=='[') continuation = 1;
+   else if (ch=='[') continuation = 1;
    else {printf("Error4: Reading compressed buffer. (%d)\n", ch);  return 0; }
 
    success = Scz_Decompress_Seg( &buffer0_hd );	/* Decompress the buffer !!! */
@@ -410,19 +407,15 @@
   } /*Segment*/
  while (continuation);
 
- /* Convert list into buffer. */
- *outbuffer = (char *)malloc((totalout)*sizeof(char));
  sz2 = 0;
  while (sumlst_hd!=0)
   {
    bufpt = sumlst_hd;
-   (*outbuffer)[sz2++] = bufpt->ch;
+   __outbuf__ << bufpt->ch;
    sumlst_hd = bufpt->nxt;
    sczfree(bufpt);
   }
  if (sz2 > totalout) printf("Unexpected overrun error\n");
-
- *M = totalout;
 
  printf("Decompression ratio = %g\n", (float)totalout / (float)totalin );
  return 1;
