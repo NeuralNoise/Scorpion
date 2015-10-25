@@ -54,7 +54,7 @@ int main(int argc, const char**args)
               fout.str("");
               cout << endl;
               printf("total time: %.3fs\n", c_time.gettime());
-              printf("bytes compressed from (%lu)->(%lu)\n", zres.size_t.byte1, zres.size_t.byte2);
+              printf("bytes compressed from (%lu) -> (%lu)\n", zres.size_t.byte1, zres.size_t.byte2);
               zlib.Cleanup();
          }
          else

@@ -61,7 +61,7 @@ DLog dlog;
 bool TRUE = true, FALSE = false;
 
 
-string build_version = "v1.0.0.0";
+string build_version = "v1.0_0";
 int revision_num = 7;
 
 string OPTION = "";
