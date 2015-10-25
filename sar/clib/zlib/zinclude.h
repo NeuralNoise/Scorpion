@@ -35,6 +35,7 @@
 #define Z_INCLUDE 
 
 #include <sstream>
+using namespace std;
 #define SCZ_VERSION 1.8
 float scz_version=SCZ_VERSION;
 

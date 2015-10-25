@@ -25,6 +25,7 @@
  */
  #include "zcore.h"
  #include "zdecompress.h"
+ #include "zlib.h"
  #include <sstream>
  
  using namespace std;
@@ -419,15 +420,24 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  FILE *infile=0, *outfile=0;
 
  infile = fopen(infilename,"rb");
- if (infile==0) {printf("ERROR: Cannot open input file '%s'.  Exiting\n", infilename); exit(1);}
+ if (infile==0) {
+  zres.reason << "zlib:  error: Cannot open input file '" << infilename << "'.\n";
+  return ZLIB_FAILURE;
+ }
 
  outfile = fopen(outfilename,"wb");
- if (outfile==0) {printf("ERROR: Cannot open output file '%s' for writing.  Exiting\n", outfilename); exit(1);}
+ if (outfile==0) {
+   zres.reason << "zlib:  error: Cannot open output file '" << outfilename << "' for writing.\n";
+  return ZLIB_FAILURE;
+ }
 
  flen = Scz_get_file_length( infile );
  buflen = flen / sczbuflen + 1;
  buflen = flen / buflen + 1;
- if (buflen>=SCZ_MAX_BUF) {printf("Error: Buffer length too large.\n"); exit(0);}
+ if (buflen>=SCZ_MAX_BUF) {
+   zres.reason << "zlib:  error: Buffer length too large.\n";
+  return ZLIB_FAILURE;
+ }
 
  /* Read file into linked list. */
  ch = getc(infile);
@@ -464,8 +474,11 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  fclose(infile);
  fclose(outfile);
 
- printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
- printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
+// printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
+// printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
+ zres.size_t.byte1 = sz1; // inital size
+ zres.size_t.byte2 = sz2; // final size
+ zres.compressionRatio = (float)sz1 / (float)sz2;
  free(scz_freq2);
  scz_freq2 = 0;
  return success;
@@ -492,11 +505,11 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  FILE *outfile=0;
 
  outfile = fopen(outfilename,"wb");
- if (outfile==0) {printf("ERROR: Cannot open output file '%s' for writing.  Exiting\n", outfilename); exit(1);}
+ if (outfile==0) { zres.reason << "zlib:  error: Cannot open output file '" << outfilename << "' for writing.\n"; return ZLIB_FAILURE; }
 
  buflen = N / sczbuflen + 1;
  buflen = N / buflen + 1;
- if (buflen>=SCZ_MAX_BUF) {printf("Error: Buffer length too large.\n"); exit(0);}
+ if (buflen>=SCZ_MAX_BUF) { zres.reason << "zlib:  error: Buffer length too large.\n"; return ZLIB_FAILURE; }
 
  while (sz1 < N)
   { /*outerloop*/
@@ -533,8 +546,11 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
   } /*outerloop*/
  fclose(outfile);
 
- printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
- printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
+// printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
+// printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
+ zres.size_t.byte1 = sz1; // inital size
+ zres.size_t.byte2 = sz2; // final size
+ zres.compressionRatio = (float)sz1 / (float)sz2;
  free(scz_freq2);
  scz_freq2 = 0;
  return success;
@@ -561,7 +577,7 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  unsigned char chksum;
 
  buflen = N;
- if (buflen>=SCZ_MAX_BUF) {printf("Error: Buffer length too large.\n"); exit(0);}
+ if (buflen>=SCZ_MAX_BUF) { zres.reason << "zlib:  error: Buffer length too large.\n"; return ZLIB_FAILURE;}
 
  chksum = 0;  szi = 0;
  if (N-szi < buflen) buflen = N-szi;
@@ -592,8 +608,11 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  if (lastbuf_flag) __outbuf__ << ']';	/* Place no-continuation marker. */
  else __outbuf__ << '[';			/* Place continuation marker. */
 
-  printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
-  printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
+ // printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
+ // printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
+ zres.size_t.byte1 = sz1; // inital size
+ zres.size_t.byte2 = sz2; // final size
+ zres.compressionRatio = (float)sz1 / (float)sz2;
  free(scz_freq2);
  scz_freq2 = 0;
  return success;

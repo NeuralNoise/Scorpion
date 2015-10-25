@@ -33,19 +33,58 @@
  
  using namespace std;
  
- #define NEXT_SEGMENT false
- #define LAST_SEGMENT true
+ #define ZLIB_NEXT_SEGMENT false
+ #define ZLIB_LAST_SEGMENT true
  
+ #define ZLIB_FAILURE -(0x503)
+ 
+ /*
+ * Zlib response data
+ *
+ * This data structure holds the response code from the 
+ * zlib functions. Use this to check for errors, warnings, 
+ * and to get useful information such as the compression size 
+ * of your data;
+ *
+ */
  struct ZLib_Response {
+     /* 
+     * u2 size_t
+     *
+     * This will hold the data for the 
+     * inital and final compression size 
+     *
+     * byte1 := the inital compression size
+     * byte2 := the final compressed size 
+     *
+     * The inital and final compressed size is calculated 
+     * in bytes 
+     *
+     */
      u2 size_t;
-     u2 compressionRatio;
-     u2 decompressionRatio;
      
-     u4 data;
+     /* The compression ratio of the data
+     *
+     * This ratio is a %ratio : 1
+     */
+     float compressionRatio,
+          decompressionRatio;
      
-     stringstream _warnings_;
-     string reason;
-     int response;
+     /* (Unused) */
+     u4 data;// if there is any extra data to be returned
+     
+     stringstream _warnings_; // our buffer for if there are any warnings
+     stringstream reason; // if compression fails, this will be populated with the reason why it failed
+     
+     /* 
+     * Compare this code to the 
+     * standard failure code (ZLIB_FAILURE)
+     *
+     * if (response == ZLIB_FAILURE) // compression failed
+     * else // continue
+     *
+     */
+     int response; // the response from our library
  } ;
  
  extern ZLib_Response zres;
@@ -61,6 +100,7 @@
  class Zlib {
      
      public:
+        static bool AUTO_CLEAN;
         void Compress(string file, string output);
         void Decompress(string file, string output);
         void Compress_Buffer2File(string buffer, string outfile);

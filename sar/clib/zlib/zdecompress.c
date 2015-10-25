@@ -25,6 +25,7 @@
  */
  #include "zcore.h"
  #include "zdecompress.h"
+ #include "zlib.h"
  #include <sstream>
  using namespace std;
 
@@ -42,10 +43,16 @@
  /* Expect magic number(s). */
  bufpt = *buffer0_hd;
  if ((bufpt==0) || (bufpt->ch!=101))
-  {printf("Error1a: This does not look like a compressed file.\n"); return 0;}
+  {
+   zres.reason << "zlib:  error: This does not look like a compressed file.\n"; 
+   return ZLIB_FAILURE;
+  }
  oldptr = bufpt;   bufpt = bufpt->nxt;   sczfree(oldptr);
  if ((bufpt==0) || (bufpt->ch!=98))
-  {printf("Error2a: This does not look like a compressed file.\n");  return 0;}
+  {
+   zres.reason << "zlib:  error: This does not look like a compressed file.\n";  
+   return ZLIB_FAILURE;
+  }
  oldptr = bufpt;   bufpt = bufpt->nxt;    sczfree(oldptr);
 
  /* Get the compression iterations count. */
@@ -67,8 +74,8 @@
     ch = bufpt->ch; 		oldptr = bufpt;  bufpt = bufpt->nxt;  sczfree(oldptr);
     if (ch!=91) /* Boundary marker. */
      {
-      printf("Error3: Corrupted compressed file. (%d)\n", ch); 
-      return 0;
+      zres.reason << "zlib:  error: Corrupted compressed file. (" << (int) ch << ")\n"; 
+      return ZLIB_FAILURE;
      }
 
     for (j=0; j!=256; j++) markerlist[j] = nreplaced;
@@ -137,27 +144,29 @@
    buffer0_hd = 0;  buffer0_tl = 0;  bufprv = 0;
 
    ch = getc(infile);   sz1++;		/* Byte 1, expect magic numeral 101. */
-   if (feof(infile)) printf("Premature eof\n");
-   if (ch!=101) {printf("Error1: This does not look like a compressed file. %d\n", ch); return 0;}
+   if (feof(infile)){ zres.reason << "zlib:  error: Premature eof\n"; return ZLIB_FAILURE; }
+   if (ch!=101) { zres.reason << "zlib:  error: This does not look like a compressed file. (" << (int) ch << ")\n"; return ZLIB_FAILURE;}
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = getc(infile);  sz1++;		/* Byte 2, expect magic numeral 98. */
-   if ((feof(infile)) || (ch!=98)) {printf("Error2: This does not look like a compressed file. (%d)\n", ch); return 0;}
+   if ((feof(infile)) || (ch!=98)) { 
+    zres.reason << "zlib:  error: This does not look like a compressed file. (" << (int) ch << ")\n"; return ZLIB_FAILURE;
+   }
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = getc(infile);  sz1++;		/* Byte 3, iteration-count. */
-   if (feof(infile)) {printf("Error3: This does not look like a compressed file.\n"); return 0;}
+   if (feof(infile)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    bufprv = buffer0_tl;
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = getc(infile);			/* Byte 4, MSB of segment buffer length. */
-   if (feof(infile)) {printf("Error3: This does not look like a compressed file.\n"); return 0;}
+   if (feof(infile)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    buflen = ch << 16;
    ch = getc(infile);			/* Byte 5, middle byte of segment buffer length. */
-   if (feof(infile)) {printf("Error3: This does not look like a compressed file.\n"); return 0;}
+   if (feof(infile)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    buflen = (ch << 8) | buflen;
    ch = getc(infile);			/* Byte 6, LSB of segment buffer length. */
-   if (feof(infile)) {printf("Error3: This does not look like a compressed file.\n"); return 0;}
+   if (feof(infile)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    buflen = ch | buflen;
 
    k = 0;
@@ -173,15 +182,15 @@
    chksum0 = ch;
    ch = getc(infile);
    // printf("End ch = '%c'\n", ch);
-   if (k<buflen) {printf("Error: Unexpectedly short file.\n");}
+   if (k<buflen) { zres.reason << "zlib:  error: Unexpectedly short file.\n"; }
    /* Decode the 'end-marker'. */
    if (ch==']') continuation = 0;
    else
    if (ch=='[') continuation = 1;
-   else {printf("Error4: Reading compressed file. (%d)\n", ch);  return 0; }
+   else { zres.reason << "zlib:  error: Reading compressed file. (" << (int) ch << ")\n";  return ZLIB_FAILURE; }
 
    success = Scz_Decompress_Seg( &buffer0_hd );	/* Decompress the buffer !!! */
-   if (!success) return 0;
+   if (!success) return ZLIB_FAILURE;
 
    /* Write the decompressed file out. */
    chksum = 0;
@@ -192,14 +201,15 @@
      sz2++;   chksum += bufpt->ch;
      bufpt = bufpt->nxt;
     }
-   if (chksum != chksum0) {printf("Error: Checksum mismatch (%dvs%d)\n", chksum, chksum0);}
+   if (chksum != chksum0) { zres._warnings_ << "zlib:  warning: Checksum mismatch (" << (long) chksum << "vs" << (long) chksum0 << ")\n"; }
 
   } /*Segment*/
  while (continuation);
 
  fclose(infile);
  fclose(outfile);
- printf("Decompression ratio = %g\n", (float)sz2 / (float)sz1 );
+// printf("Decompression ratio = %g\n", (float)sz2 / (float)sz1 );
+ zres.decompressionRatio = (float)sz2 / (float)sz1;
  return 1;
 }
 
@@ -223,7 +233,7 @@
  FILE *infile=0;
 
  infile = fopen(infilename,"rb");
- if (infile==0) {printf("ERROR: Cannot open input file '%s'.  Exiting\n", infilename);  return 0;}
+ if (infile==0) { zres.reason << "zlib:  error: Cannot open input file '" << infilename << "'.\n";  return ZLIB_FAILURE; }
 
  do 
   { /*Segment*/
@@ -234,25 +244,27 @@
    buffer0_hd = 0;  buffer0_tl = 0;
 
    ch = getc(infile);   sz1++;		/* Byte 1, expect magic numeral 101. */
-   if ((feof(infile)) || (ch!=101)) {printf("Error1: This does not look like a compressed file.\n"); return 0;}
+   if ((feof(infile)) || (ch!=101)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = getc(infile);  sz1++;		/* Byte 2, expect magic numeral 98. */
-   if ((feof(infile)) || (ch!=98)) {printf("Error2: This does not look like a compressed file. (%d)\n", ch); return 0;}
+   if ((feof(infile)) || (ch!=98)) { 
+     zres.reason << "zlib:  error: This does not look like a compressed file. (" << (long) ch << ")\n"; return ZLIB_FAILURE; 
+   }
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = getc(infile);  sz1++;		/* Byte 3, iteration-count. */
-   if (feof(infile)) {printf("Error3: This does not look like a compressed file.\n"); return 0;}
+   if (feof(infile)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = getc(infile);			/* Byte 4, MSB of segment buffer length. */
-   if (feof(infile)) {printf("Error3: This does not look like a compressed file.\n"); return 0;}
+   if (feof(infile)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    buflen = ch << 16;
    ch = getc(infile);			/* Byte 5, middle byte of segment buffer length. */
-   if (feof(infile)) {printf("Error3: This does not look like a compressed file.\n"); return 0;}
+   if (feof(infile)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    buflen = (ch << 8) | buflen;
    ch = getc(infile);			/* Byte 6, LSB of segment buffer length. */
-   if (feof(infile)) {printf("Error3: This does not look like a compressed file.\n"); return 0;}
+   if (feof(infile)) { zres.reason << "zlib:  error: This does not look like a compressed file.\n"; return ZLIB_FAILURE; }
    buflen = ch | buflen;
  
    k = 0;
@@ -268,16 +280,16 @@
    ch = getc(infile);
    // printf("End ch = '%c'\n", ch);
  
-   if (k<buflen) {printf("Error: Unexpectedly short file.\n");}
+   if (k<buflen) { zres._warnings_ << "zlib:  warning: Unexpectedly short file.\n"; }
    totalin = totalin + sz1 + 4;		/* (+4, because chksum+3buflen chars not counted above.) */
    /* Decode the 'end-marker'. */
    if (ch==']') continuation = 0;
    else
    if (ch=='[') continuation = 1;
-   else {printf("Error4: Reading compressed file. (%d)\n", ch);  return 0; }
+   else { zres.reason << "zlib:  error: Reading compressed file. (" << (int) ch << ")\n";  return ZLIB_FAILURE; }
 
    success = Scz_Decompress_Seg( &buffer0_hd );	/* Decompress the buffer !!! */
-   if (!success) return 0;
+   if (!success) return ZLIB_FAILURE;
 
    /* Check checksum and sum length. */
    sz2 = 0;       /* Get buffer size. */
@@ -290,7 +302,7 @@
      sz2++;  bufprv = bufpt;
      bufpt = bufpt->nxt;
     }
-   if (chksum != chksum0) {printf("Error: Checksum mismatch (%dvs%d)\n", chksum, chksum0);}
+   if (chksum != chksum0) { zres._warnings_ << "zlib:  warning: Checksum mismatch (" << chksum << "vs" << chksum0 << ")\n"; }
 
    /* Attach to tail of main list. */
    totalout = totalout + sz2;
@@ -309,10 +321,11 @@
    sumlst_hd = bufpt->nxt;
    sczfree(bufpt);
   }
- if (sz2 > totalout) printf("Unexpected overrun error\n");
+ if (sz2 > totalout) zres._warnings_ << "zlib:  warning: Unexpected overrun error\n";
 
  fclose(infile);
- printf("Decompression ratio = %g\n", (float)totalout / (float)totalin );
+// printf("Decompression ratio = %g\n", (float)totalout / (float)totalin );
+ zres.decompressionRatio = (float)totalout / (float)totalin;
  return 1;
 }
 
@@ -347,11 +360,11 @@
    totalin = totalin + N;
 
    ch = inbuffer[sz1++];		/* Byte 1, expect magic numeral 101. */
-   if ((sz1>8) || (ch!=101)) {printf("Error1: This does not look like a compressed buffer.\n"); return 0;}
+   if ((sz1>8) || (ch!=101)) { zres.reason << "zlib:  error: This does not look like a compressed buffer.\n"; return ZLIB_FAILURE;}
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = inbuffer[sz1++];		/* Byte 2, expect magic numeral 98. */
-   if (ch!=98) {printf("Error2: This does not look like a compressed buffer. (%d)\n", ch); return 0;}
+   if (ch!=98) { zres.reason << "zlib:  error: This does not look like a compressed buffer. (" << (int) ch << ")\n"; return ZLIB_FAILURE; }
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = inbuffer[sz1++];		/* Byte 3, iteration-count. */
@@ -366,7 +379,7 @@
  
    k = 0;
    ch = inbuffer[sz1++];
-   if (N<buflen+sz1+1) {printf("Error: Unexpectedly short buffer.\n");  buflen = N - sz1 - 1;}
+   if (N<buflen+sz1+1) { zres._warnings_ << "zlib:  warning: Unexpectedly short buffer.\n";  buflen = N - sz1 - 1; }
    while (k<buflen)
     {
      scz_add_item( &buffer0_hd, &buffer0_tl, ch );
@@ -380,10 +393,10 @@
    /* Decode the 'end-marker'. */
    if (ch==']') continuation = 0;
    else if (ch=='[') continuation = 1;
-   else {printf("Error4: Reading compressed buffer. (%d)\n", ch);  return 0; }
+   else { zres.reason << "zlib:  error: Reading compressed buffer. (" << (int) ch << ")\n";  return ZLIB_FAILURE; }
 
    success = Scz_Decompress_Seg( &buffer0_hd );	/* Decompress the buffer !!! */
-   if (!success) return 0;
+   if (!success) return ZLIB_FAILURE;
 
    /* Check checksum and sum length. */
    sz2 = 0;       /* Get buffer size. */
@@ -396,7 +409,7 @@
      sz2++;  bufprv = bufpt;
      bufpt = bufpt->nxt;
     }
-   if (chksum != chksum0) {printf("Error: Checksum mismatch (%dvs%d)\n", chksum, chksum0);}
+   if (chksum != chksum0) { zres._warnings_ << "zlib:  warning: Checksum mismatch (" << chksum << "vs" << chksum0 << ")\n"; }
 
    /* Attach to tail of main list. */
    totalout = totalout + sz2;
@@ -415,8 +428,9 @@
    sumlst_hd = bufpt->nxt;
    sczfree(bufpt);
   }
- if (sz2 > totalout) printf("Unexpected overrun error\n");
+ if (sz2 > totalout) zres._warnings_ << "zlib:  warning: Unexpected overrun error\n";
 
- printf("Decompression ratio = %g\n", (float)totalout / (float)totalin );
+ //printf("Decompression ratio = %g\n", (float)totalout / (float)totalin );
+ zres.decompressionRatio = (float)totalout / (float)totalin;
  return 1;
 }

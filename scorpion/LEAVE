@@ -2,6 +2,9 @@ This is a message for the Scorpion Virtual Machine Leave.
 
 DISABLE SUPPORT FOR SAR FILES IN THE SCORPION VM
 
+Create a install.sh file to install scorpion
+learn how to programin sh
+
 Scorpion VM parts
 - Hardware Manager
 - Notification Interface

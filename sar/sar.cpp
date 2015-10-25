@@ -6,6 +6,7 @@
 #include "sarheader.h"
 #include "clib/filestream.h"
 #include "clib/time.h"
+#include "clib/zlib/zlib.h"
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -19,6 +20,7 @@ extern long bytes;
 extern string packagefiles();
 
 Timer c_time;
+extern Zlib zlib;
 
 int main(int argc, const char**args)
 {
@@ -52,6 +54,8 @@ int main(int argc, const char**args)
               fout.str("");
               cout << endl;
               printf("total time: %.3fs\n", c_time.gettime());
+              printf("bytes compressed from (%lu)->(%lu)\n", zres.size_t.byte1, zres.size_t.byte2);
+              zlib.Cleanup();
          }
          else
             return -1;

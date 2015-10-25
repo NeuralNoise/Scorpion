@@ -35,6 +35,7 @@
  
  
  ZLib_Response zres;
+ bool Zlib::AUTO_CLEAN = false;
  #define nil ((void *)0)
  
  char* c_ptr(string data){
@@ -53,32 +54,57 @@
  }
  
  void Zlib::Compress(string file, string output){
+     if(AUTO_CLEAN)
+       Cleanup();
+       
      zres.response = Scz_Compress_File( c_ptr(file), c_ptr(output) );
  }
  
  void Zlib::Decompress(string file, string output){
+     if(AUTO_CLEAN)
+       Cleanup();
+       
      zres.response = Scz_Decompress_File( c_ptr(file), c_ptr(output) );
  }
  
  void Zlib::Compress_Buffer2File(string buffer, string outfile){
+     if(AUTO_CLEAN)
+       Cleanup();
+       
      char* c = c_ptr(buffer);
      unsigned char *cBuffer = (unsigned char*) &c[0];
      zres.response = Scz_Compress_Buffer2File( cBuffer, buffer.size(), c_ptr(outfile) );
  }
  
  void Zlib::Compress_Buffer2Buffer(string buffer, stringstream &__obuff__, bool lastseg){
+     if(AUTO_CLEAN)
+       Cleanup();
+       
      zres.response = Scz_Compress_Buffer2Buffer( c_ptr(buffer), buffer.size(), __obuff__, (int) lastseg );
  }
  
  void Zlib::Decompress_File2Buffer(string file, stringstream &__buf){
+     if(AUTO_CLEAN)
+       Cleanup();
+       
      zres.response = Scz_Decompress_File2Buffer( c_ptr(file), __buf );
  }
  
  void Zlib::Decompress_Buffer2Buffer(string buffer, stringstream &__outbuf_){
+     if(AUTO_CLEAN)
+       Cleanup();
+       
      zres.response = Scz_Decompress_Buffer2Buffer( c_ptr(buffer), buffer.size(), __outbuf_ );
  }
  
  void Zlib::Cleanup(){
+     zres.size_t.byte1=0;
+     zres.size_t.byte2=0;
+     zres.compressionRatio=0;
+     zres.decompressionRatio=0;
+     zres._warnings_.str("");
+     zres.reason.str("");
+     zres.response=0;
      scz_cleanup();
  }
  
