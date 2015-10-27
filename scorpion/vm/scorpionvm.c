@@ -42,7 +42,6 @@
 #include "../libxso/xso.h"
 #include "scorpion_env.h"
 #include "Globals.h"
-#include "../logservice/dlog.h"
 #include <stdlib.h>
 #include "../logservice/alog.h"
 #include "interp.h"
@@ -57,11 +56,10 @@ using namespace std;
 extern void printusage();
 
 string *ags;
-DLog dlog;
 bool TRUE = true, FALSE = false;
 
 
-string build_version = "v1.0.0.0";
+string build_version = "v1.0_5";
 int revision_num = 7;
 
 string OPTION = "";
@@ -403,7 +401,7 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
       
       // setup application Logging service
       alog.ALOGD("Usr log service setup running.");
-      dlog.setup(f[0], f[0].headerInf.log_precedence.byte1);
+      gSvm.dlog.setup(f[0], f[0].headerInf.log_precedence.byte1);
       
       // setup environment structures
       if (gSvm.vmCount > 1)

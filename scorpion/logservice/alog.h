@@ -44,6 +44,9 @@
 #include "../clib/filestream.h"
 using namespace std;
 
+ 
+ #define SCORPION_DEVELOPMENT
+
  class ALog {
    int precedence;
    string file, stackmsg, Class, BaseClass;
@@ -52,7 +55,15 @@ using namespace std;
    
    public:
      void setup(int p){
-         file= "/usr/share/scorpion/vm/log/out.log";
+         string SCORPION_LOG_OUTPUT;
+         #ifdef SCORPION_DEVELOPMENT
+            SCORPION_LOG_OUTPUT = "/usr/share/scorpion/vm/log/out.log";
+         #endif
+         #ifdef SCORPION_RUNTIME
+            SCORPION_LOG_OUTPUT "/usr/share/scorpion/sre/vm/log/out.log";
+         #endif
+         
+         file = SCORPION_LOG_OUTPUT;
          bufferthreshold = 126 * (1000);  // 126 kb
          Class = "System";
          BaseClass = Class;
