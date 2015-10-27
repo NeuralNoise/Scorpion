@@ -8,7 +8,7 @@
 using namespace std;
 
 string build_version = "v0.1.0.12";
-#define NUM_OPTIONS 3
+#define NUM_OPTIONS 4
 string args[ NUM_OPTIONS ];
 
 string OPTION = "";
@@ -21,6 +21,7 @@ void setup()
    args[0] = "--help";
    args[1] = "-version";
    args[2] = "-a";
+   args[3] = "-showversion";
 }
 
 bool isarg(string arg)
@@ -49,7 +50,9 @@ void help()
    cout << "Usage: sar [-options] [source-files...]\n" << endl;
    cout << "Source file must have a .scorpion extension to be packaged\n" << endl;
    cout << "[-options]\n\n    -version          print the current product version and exit" << endl;
+   cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    -a<file>          set the output archive file. Default is lib.sar." << endl;
+   cout <<               "    --help            display this help message." << endl;
    exit(1);
 }
 
@@ -63,6 +66,7 @@ void parseargs(int argc, const char **args)
          else if(hasdash(data))
          {
             cout << "Unrecognized command line option: " << data << endl;
+            cout << "Try 'sar --help' for more information.\n";
             exit(1);
          }
          else{  // time for running application
@@ -74,11 +78,19 @@ void parseargs(int argc, const char **args)
             help();
          else if(OPTION == "-version"){
             cout << "sar build version: \"" << build_version << "\"" << endl;
-            exit(1);
+            exit(0);
          }
+         else if(OPTION == "-showversion")
+            cout << "sar build version: \"" << build_version << "\"" << endl;
          else if(OPTION == "-a"){
             i++;
             file_start++;
+            
+            if(!(i < argc)){
+               cout << "Error: could not start sar. \nA fatal Error has occurred, shutting down." << endl;
+               exit(1);   
+            }
+            
             data = args[i];
             packagefile = data;
          }

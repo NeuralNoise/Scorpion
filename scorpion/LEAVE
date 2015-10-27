@@ -11,6 +11,9 @@ Add file compilation for(.scorpion, .xso.sl) files upon packaging
 
 Add file compression for(.xso, .xso.sl) files
 
+Create a Scorpion debugger( make it act like the Java debugger [refrence old debugger for Scorpion & dalvik debugger])
+    - Only activate if debugging is enabled
+
 Scorpion VM parts
 - Hardware Manager
 - Notification Interface

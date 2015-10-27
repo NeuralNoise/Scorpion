@@ -59,9 +59,9 @@
  
 void printusage()
 {
-  string product_website = "https://github.com/AndroDevcd/Scorpion/wiki";
+  string product_website = "https://github.com/AndroDevcd/Scorpion-Dist/wiki";
   
-  printf("Usage scorpion [-options] xso [args...]\n");    
+  printf("Usage: scorpion [-options] xso [args...]\n");    
   printf("           (to execute scorpion object file)\n");
   printf("or    scorpion [-options] -sar sarfile [args...]\n");
   printf("           (to execute a sar file)\n\n");
