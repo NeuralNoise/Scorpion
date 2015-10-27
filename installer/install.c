@@ -39,8 +39,7 @@ void splitproducts(string data, info_cfg &icfg)
         if(data.at(i) == ':')
            icfg.product_size_t++;
     }
-    icfg.product_size_t++;
-    icfg.products = new string[icfg.product_size_t];
+    icfg.products = new string[++icfg.product_size_t];
     
     for(int i = 0; i < data.size(); i++){
         if(data.at(i) == ':' || !(i + 1 < data.size())){
@@ -57,9 +56,6 @@ void splitproducts(string data, info_cfg &icfg)
 void parsecontent(string content, info_cfg &icfg){
     
     stringstream tag, value;
-    icfg.productflav ="";
-    icfg.company = "";
-    icfg.version = 0.0;
     for(int i = 0; i < content.size(); i++){
         tag.str("");
         value.str("");
@@ -83,29 +79,32 @@ void parsecontent(string content, info_cfg &icfg){
         }
               
         for(int i2 = i; i < content.size(); i++){
-            if(content.at(i) == '\n')
+            if(content.at(i) == '\n' || !(i + 1 < content.size()) || content.at(i) == '#'){
+              if(content.at(i) == '#')
+                 i--;
               break;
+            }
             else
               value << content.at(i);
         }
         
         if(tag.str() == "products")
-        {
            splitproducts(value.str(), icfg);
-        }
         else if(tag.str() == "productFlavor")
-        {
            icfg.productflav = value.str();
-        }
         else if(tag.str() == "version")
-        {
             icfg.version = atof(value.str().c_str());
-        }
         else if(tag.str() == "company")
-        {
             icfg.company = value.str();
-        }
     }
+}
+
+int err(string folder){
+    stringstream ss;
+    ss.str("");
+    ss << "rm -r /usr/share/scorpion/sdk/" << folder;
+    system(ss.str().c_str());
+    return 1;
 }
 
 /* UNIX install script */
@@ -116,6 +115,8 @@ int main()
     cout << "###################################\n\n";
     cout << "Product installer: Scorpion Development Kit(SDK)\n";
     
+    
+    stringstream folder, sstream, dir;
     string package;
     int exit_val;
     char answer;
@@ -126,7 +127,7 @@ int main()
     if(FileStream::exists(package.c_str())){
         if(FileStream::endswith(".tar.gz", package)){
             
-            cout << "> This will overide any currently installed Scorpion software. Ok to install(Y/n)? ";
+            cout << "> Warning: this will overide any currently installed Scorpion software. Ok to install(Y/n)? ";
             cin >>answer;
             
             if(answer != 'Y' && answer != 'y')
@@ -135,22 +136,17 @@ int main()
                 return 0;
             }
             
-            exit_val = system("mkdir -p /usr/share/scorpion/sdk");
+            cout << "> Extracting files...\n";
+            
+            for(int i = 0; i < package.size() - 7; i++)
+                folder << package.at(i);
+                
+            sstream << "mkdir -p /usr/share/scorpion/sdk/" << folder.str();
+            exit_val = system(sstream.str().c_str());
             if(exit_val != 0){
                 cout << "> install:  error: could not create instillation path. Do you have root?\n";
                 return 1;
             }
-            
-            cout << "Extracting files...\n";
-            
-            
-            stringstream folder;
-            for(int i = 0; i < package.size() - 7; i++)
-                folder << package.at(i);
-            
-            stringstream sstream;
-            sstream << "mkdir -p /usr/share/scorpion/sdk/" << folder.str();
-            system(sstream.str().c_str());
             
             sstream.str("");
             sstream << "tar -zxvf " << package << " -C /usr/share/scorpion/sdk/" << folder.str();
@@ -158,27 +154,26 @@ int main()
             exit_val = system(sstream.str().c_str());
             if(exit_val != 0){
                 cout << "> install:  error: could not properly extract the file.\n";
-                return 1;
+                return err(folder.str());
             }
             
             cout << "> Setting up SDK directories...\n";
             system("mkdir -p /usr/share/scorpion/libs /usr/share/scorpion/vm/log");
             
-            stringstream dir;
             dir << "/usr/share/scorpion/sdk/" << folder.str();
 
             chdir(dir.str().c_str());
             
             if(!FileStream::exists("info.cfg")){
                 cout << "install:  error: could not find 'info.cfg' file. Is this a Scorpion distribution package?\n";
-                return 1;
+                return err(folder.str());
             }
             
             info_cfg cfg, icfg;
             parsecontent(FileStream::getfile("info.cfg"), cfg);
            if(cfg.productflav.compare(prodflav) != 0){
                 cout << " install:  error: the disribution package you are trying to install does not look like a SDK distribution, exiting.\n";
-                return 1;
+                return err(folder.str());
             }
             
             // TODO: rebuild .tar.gz file
@@ -195,7 +190,7 @@ int main()
                     if(answer != 'Y' && answer != 'y')
                     {
                         cout << "Exiting installer.\n";
-                        return 0;
+                        return (1 - err(folder.str()));
                     }
                 }
                 
@@ -213,7 +208,7 @@ int main()
                    cout << "productFlavor=" << icfg.productflav << endl;
                    cout << "version=" << icfg.version << endl;
                    cout << "owner=" << icfg.company << endl;
-                   cout << "> uninstalling...\n";
+                   cout << "> Uninstalling...\n";
                    
                    system("rm info.cfg");
                    for(int i = 0; i < icfg.product_size_t; i++){
@@ -238,7 +233,7 @@ int main()
                 if(uninstall)
                 {
                    cout << "install:  warning: a config file was not found but Scorpion software was detected.\n";
-                   cout << "> uninstalling...\n";
+                   cout << "> Uninstalling...\n";
                    
                    for(int i = 0; i < cfg.product_size_t; i++){
                       stringstream ss;
@@ -259,7 +254,7 @@ int main()
             exit_val = system(sstream.str().c_str());
             if(exit_val != 0){
                 cout << "install:  error: could not properly extract the file.\n";
-                return 1;
+                return err(folder.str());
             }
             
             cout << "install:  info: check out examples/ for examples of the the Scorpion programming language.\n";
@@ -298,12 +293,14 @@ int main()
             cout << "version=" << cfg.version << endl;
             cout << "owner=" << cfg.company << endl << endl;
             
+            system("nano release.txt");
+            
         }
         else
-          cout << "> install:  error: distribution package must be a '.tar.gz' file.\n";
+          cout << "install:  error: distribution package must be a '.tar.gz' file.\n";
     }
     else
-      cout << "> install:  error: '" << package << "' is no such file.\n";
+      cout << "install:  error: '" << package << "' is no such file.\n";
     return 0;
 }
 

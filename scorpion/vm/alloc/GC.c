@@ -38,6 +38,7 @@
  #include "../oo/Object.h"
  #include "../../logservice/ctime.h"
  #include "../../logservice/alog.h"
+ #include "../Globals.h"
  #include <stdlib.h>
  #include <sstream>
  #include <string>
@@ -92,6 +93,8 @@
      
      alog.setClass("scorpionvm");
      alog.ALOGV(ss.str());
+     
+     gSvm.dlog.DLOGV("scorpionvm", ss.str());
  }
  
  bool objIsDirty(Object &obj){

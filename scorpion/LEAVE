@@ -5,6 +5,12 @@ DISABLE SUPPORT FOR SAR FILES IN THE SCORPION VM
 Create a install.sh file to install scorpion
 learn how to programin sh
 
+Compile Scorpion for 32 bit and 64 bit operating systems
+
+Add file compilation for(.scorpion, .xso.sl) files upon packaging
+
+Add file compression for(.xso, .xso.sl) files
+
 Scorpion VM parts
 - Hardware Manager
 - Notification Interface

@@ -47,6 +47,7 @@
  #include "scorpionvm.h"
  #include "scorpion_env.h"
  #include "../libxso/xso.h"
+ #include "../logservice/dlog.h"
  #include "policy.h"
  #include "oo/Object.h"
  #include "imgholder.h"
@@ -94,6 +95,8 @@ class SecurityManager;
    bool ForceShutdown; // force a VM shutdown
    bool ethrow;  // true if an exception is being thrown
    bool Debug;  // are we debugging this app
+   
+   DLog dlog; // User log service
  };
 
 extern struct SvmGlobals gSvm;
