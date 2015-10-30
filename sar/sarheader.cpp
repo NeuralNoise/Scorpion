@@ -51,8 +51,10 @@ string scount()
 {
     stringstream ss, ss1;
     ss1 << (long) h.sourcecount.byte1;
-    
-    ss << (char) _source_count << Binary::encode_str(ss1.str());
+    stringstream __ostreambuf__;
+    Binary::encode_str(ss1.str(), __ostreambuf__);
+        
+    ss << (char) _source_count << __ostreambuf__;
     return ss.str();
 }
 
@@ -120,6 +122,7 @@ int sarheader::makeheader(int size, string *files)
 
         h.sourcecount.byte1 = size;
         h.sourcefiles = new string[size];
+        h.filesize.byte1=0;
 
         string contents; 
         int ret = 0;
@@ -145,6 +148,7 @@ int sarheader::makeheader(int size, string *files)
                       cout << "Error:  file: " << files[i] << " is too large!" << endl;
                       ret = -1;
                    }
+                   contents ="";
                }
                else {
                    cout << "Error:  file: " << files[i] << " is not a scorpion source file." << endl;

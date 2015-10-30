@@ -7,6 +7,8 @@
  #include "security.h"
 
  using namespace std;
+ 
+  #define nullptr ((void *)0)
 
   #define HEAP_STANDARD 1000000  // 1,000 kb
   #define STAT_REGS_NUM 10

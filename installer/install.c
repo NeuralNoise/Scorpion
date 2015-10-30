@@ -5,11 +5,13 @@
 #include <stdlib.h>
 #include "clib/filestream.h" 
 #include <unistd.h>
+#include <limits.h>
 #include <sstream>
 
 using namespace std;
 
 #define prodflav "SDK\r"
+bool removedir = true;
 
 char getch(){
     system("stty raw");
@@ -103,26 +105,20 @@ int err(string folder){
     stringstream ss;
     ss.str("");
     ss << "rm -r /usr/share/scorpion/sdk/" << folder;
-    system(ss.str().c_str());
+    if(removedir)
+      system(ss.str().c_str());
     return 1;
 }
 
-/* UNIX install script */
-int main()
-{
-    cout << "###################################\n";
-    cout << "   Scorpion Install Script (UNIX)\n";
-    cout << "###################################\n\n";
-    cout << "Product installer: Scorpion Development Kit(SDK)\n";
-    
-    
+extern string distributionPackage, reinstallDir;
+
+int install(){
     stringstream folder, sstream, dir;
     string package;
     int exit_val;
     char answer;
     
-    cout << "> Type the linux distribution package you would like to install: ";
-    cin >> package;
+    package = distributionPackage;
     
     if(FileStream::exists(package.c_str())){
         if(FileStream::endswith(".tar.gz", package)){
@@ -141,8 +137,9 @@ int main()
             for(int i = 0; i < package.size() - 7; i++)
                 folder << package.at(i);
                 
-            sstream << "mkdir -p /usr/share/scorpion/sdk/" << folder.str();
+            sstream << "mkdir -p \"/usr/share/scorpion/sdk/" << folder.str() << "\"";
             exit_val = system(sstream.str().c_str());
+            
             if(exit_val != 0){
                 cout << "> install:  error: could not create instillation path. Do you have root?\n";
                 return 1;
@@ -190,6 +187,7 @@ int main()
                     if(answer != 'Y' && answer != 'y')
                     {
                         cout << "Exiting installer.\n";
+                        removedir=false;
                         return (1 - err(folder.str()));
                     }
                 }
@@ -301,6 +299,234 @@ int main()
     }
     else
       cout << "install:  error: '" << package << "' is no such file.\n";
+    return 0;
+}
+
+int _uninstall()
+{
+    
+    stringstream folder, sstream, dir;
+    string package;
+    int exit_val, u_ok = 0;
+    char answer;
+    info_cfg icfg;
+    
+    cout << "> Warning: this will remove any currently installed Scorpion software from your machine. Ok to uninstall(Y/n)? ";
+    cin >>answer;
+            
+    if(answer != 'Y' && answer != 'y')
+    {
+        cout << "Exiting installer.\n";
+        return 0;
+    }
+            
+    cout << "> Awh :/ Uninstalling Scorpion...\n";
+            chdir("/usr/share/scorpion/");
+            
+            if(FileStream::exists("info.cfg")){
+                parsecontent(FileStream::getfile("info.cfg"), icfg);
+                
+                bool uninstall = false;
+                chdir("/sbin/");
+                for(int i = 0; i < icfg.product_size_t; i++){
+                    if(FileStream::exists(icfg.products[i].c_str()))
+                      uninstall = true;
+                }
+                chdir("/usr/share/scorpion/");
+                
+                if(uninstall)
+                {
+                   cout << "Scorpion software was detected:\n";
+                   cout << "productFlavor=" << icfg.productflav << endl;
+                   cout << "version=" << icfg.version << endl;
+                   cout << "owner=" << icfg.company << endl;
+                   
+                   remove("info.cfg");
+                   chdir("/sbin/");
+                   for(int i = 0; i < icfg.product_size_t; i++){
+                      stringstream ss;
+                      ss << "/sbin/" <<icfg.products[i];
+                      if(FileStream::exists(icfg.products[i].c_str())){
+                        exit_val = remove(ss.str().c_str());
+                        if(exit_val != 0){
+                            cout << "install:  error: failed to uninstall product.\n";
+                            u_ok = 1;
+                        }
+                      }
+                   }
+                   
+                   if(!u_ok)
+                   {
+                       cout << "> Bye bye :(\n";
+                   }
+                }
+                else
+                    cout << "install:  warning: a config file was found but no software was detected.\n";
+            }
+            else {
+               cout << "install:  error: uninstillation failure. The config file was not found.\n";  
+               cout << "Exiting installer.\n";
+               removedir=false;
+               return (1 - err(""));
+            }
+    return u_ok;
+}
+
+
+extern bool _install, uninstall, reinstall;
+
+int _reinstall()
+{
+    
+    stringstream folder, sstream, dir;
+    string package;
+    int exit_val, i_ok = 0;
+    char answer;
+    info_cfg icfg;
+    
+    exit_val = chdir(reinstallDir.c_str());
+    if(exit_val != 0){
+        cout << "install:  error: failed to cd into " << reinstallDir << ".\n";
+        return 1;
+    }
+    
+    if(FileStream::exists("info.cfg")){
+        parsecontent(FileStream::getfile("info.cfg"), icfg);
+        
+        cout << "> Warning: this will overide any currently installed Scorpion software. Ok to install(Y/n)? ";
+        cin >>answer;
+            
+        if(answer != 'Y' && answer != 'y')
+        {
+            cout << "Exiting installer.\n";
+            return 0;
+        }
+            
+        bool install = false;
+        
+                exit_val = system("cp info.cfg /usr/share/scorpion/");
+                if(exit_val != 0){
+                    cout << "install:  error: failed to add info.cfg to path.\n";
+                    return 1;
+                }
+                
+                exit_val = chdir("bin/");
+                if(exit_val != 0){
+                    cout << "install:  error: failed to cd into bin/.\n";
+                    return 1;
+                }
+    
+                for(int i = 0; i < icfg.product_size_t; i++){
+                    if(FileStream::exists(icfg.products[i].c_str()))
+                      install = true;
+                }
+                
+                
+                if(install)
+                {
+                   cout << "Scorpion software was detected:\n";
+                   cout << "productFlavor=" << icfg.productflav << endl;
+                   cout << "version=" << icfg.version << endl;
+                   cout << "owner=" << icfg.company << endl;
+
+                   for(int i = 0; i < icfg.product_size_t; i++){
+                      stringstream ss;
+                      ss << "cp " << icfg.products[i] << " /sbin/";
+                      if(FileStream::exists(icfg.products[i].c_str())){
+                        exit_val = system(ss.str().c_str());
+                        if(exit_val != 0){
+                            cout << "install:  error: failed to install product.\n";
+                            i_ok = 1;
+                        }
+                      }
+                   }
+                   
+                   if(!i_ok)
+                   {
+                        chdir("../");
+                        exit_val = system("cp -a libs/. /usr/share/scorpion/libs/");
+                        if(exit_val != 0){
+                            cout << "install:  error: failed to apply libraries.\n";
+                            return 1;
+                        }
+                        
+                    cout << "> Scorpion was successfully reinstalled!\n";
+                   }
+                }
+                else
+                    cout << "install:  warning: a config file was found but no software was detected.\n";
+    }
+    else {
+      cout << "install:  error: reinstillation failure. The config file was not found.\n";  
+      cout << "Exiting installer.\n";
+      removedir=false;
+      return (1 - err(""));
+    }
+    
+    return i_ok;
+}
+
+
+void parseargs(int argc, const char **args);
+void help();
+void setup();
+
+std::string getexepath()
+{
+  char result[ PATH_MAX ];
+  ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+  return std::string( result, (count > 0) ? count : 0 );
+}
+
+/* UNIX install script */
+int main(int argc, const char**args)
+{
+    setup();
+    if(argc >= 2)
+       parseargs(argc, args);
+    else if(argc == 1)
+       help();
+       
+    if(!uninstall && !reinstall && !_install){
+        cout << "Error: could not start installer. \nA fatal Error has occurred, shutting down." << endl;
+        return 1;   
+    }
+
+    
+    cout << "###################################\n";
+    cout << "   Scorpion Install Script (UNIX)\n";
+    cout << "###################################\n\n";
+    cout << "Product installer: Scorpion Development Kit(SDK)\n";
+    int status;
+    
+    stringstream ss;
+    std::string path = getexepath();
+    for(int i = 0; i < path.size() - 7; i++)
+         ss <<  path.at(i);
+    
+    if(uninstall)
+    {
+        status = _uninstall();
+        if(status != 0)
+          return status;
+        chdir(ss.str().c_str());
+    }
+    
+    if(reinstall)
+    {
+        status = _reinstall();
+        if(status != 0)
+          return status;
+        chdir(ss.str().c_str());
+    }
+    
+    if(_install)
+    {
+        status = install();
+        if(status != 0)
+          return status;
+    }
+    
     return 0;
 }
 

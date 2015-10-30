@@ -610,8 +610,9 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
 
  // printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
  // printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
- zres.size_t.byte1 = sz1; // inital size
- zres.size_t.byte2 = sz2; // final size
+ zres.size_t.byte1 += sz1; // inital size
+ zres.size_t.byte2 += sz2; // final size
+ 
  zres.compressionRatio = (float)sz1 / (float)sz2;
  free(scz_freq2);
  scz_freq2 = 0;

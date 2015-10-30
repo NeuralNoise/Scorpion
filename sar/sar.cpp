@@ -44,17 +44,13 @@ int main(int argc, const char**args)
          if(sarheader::makeheader(fsize, files) == 0){
               delete[] files;
               
-              printf("\rsar:  packaging %lu file(s), %lu total bytes of data. (%lu/%lu)", h.sourcecount.byte1, h.filesize.byte1, bytestatus, h.filesize.byte1);
-              
               archive << packagefiles() << (char) 0;
               stringstream fout;
               fout << packagefile << ".sar";
               FileStream::out(fout.str().c_str(), archive.str());
               archive.str("");
               fout.str("");
-              cout << endl;
               printf("total time: %.3fs\n", c_time.gettime());
-              printf("bytes compressed from (%lu) -> (%lu)\n", zres.size_t.byte1, zres.size_t.byte2);
               zlib.Cleanup();
          }
          else

@@ -7,14 +7,15 @@
 #include <string>
 using namespace std;
 
-string build_version = "v0.1.0.12";
-#define NUM_OPTIONS 4
+string build_version = "v0.1.0.17";
+#define NUM_OPTIONS 6
 string args[ NUM_OPTIONS ];
 
 string OPTION = "";
 int file_start = 0, fsize;
 
 string packagefile = "lib";
+bool verbose = false;
 
 void setup()
 {
@@ -22,6 +23,8 @@ void setup()
    args[1] = "-version";
    args[2] = "-a";
    args[3] = "-showversion";
+   args[4] = "-v";
+   args[5] = "-?";
 }
 
 bool isarg(string arg)
@@ -52,7 +55,8 @@ void help()
    cout << "[-options]\n\n    -version          print the current product version and exit" << endl;
    cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    -a<file>          set the output archive file. Default is lib.sar." << endl;
-   cout <<               "    --help            display this help message." << endl;
+   cout <<               "    -v                \"verbose mode\"; print out file packaging info." << endl;
+   cout <<               "    --help -?         display this help message." << endl;
    exit(1);
 }
 
@@ -66,7 +70,7 @@ void parseargs(int argc, const char **args)
          else if(hasdash(data))
          {
             cout << "Unrecognized command line option: " << data << endl;
-            cout << "Try 'sar --help' for more information.\n";
+            cout << "Try 'sar --help' or 'sar -?' for more information.\n";
             exit(1);
          }
          else{  // time for running application
@@ -74,7 +78,7 @@ void parseargs(int argc, const char **args)
             return;
          }
 
-         if(OPTION == "--help")
+         if(OPTION == "--help" || OPTION == "-?")
             help();
          else if(OPTION == "-version"){
             cout << "sar build version: \"" << build_version << "\"" << endl;
@@ -82,6 +86,8 @@ void parseargs(int argc, const char **args)
          }
          else if(OPTION == "-showversion")
             cout << "sar build version: \"" << build_version << "\"" << endl;
+         else if(OPTION == "-v")
+            verbose=true;
          else if(OPTION == "-a"){
             i++;
             file_start++;

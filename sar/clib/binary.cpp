@@ -18,65 +18,7 @@ int percentage()
     return (int) c;
 }
 
-std::string Binary::encode_str( const std::string &binary ) {
-
-        
-        const unsigned char enctab[91] = {
-            // // rlyeh's modification
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', //00..12
-            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', //13..25
-            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', //26..38
-            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', //39..51
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '!', '#', '$', //52..64
-            '%', '&', '(', ')', '*', '+', ',', '.', '/', ':', ';', '-', '=', //65..77
-            '\\','?', '@', '[', ']', '^', '_', '`', '{', '|', '}', '~', '\'' //78..90
-        };
-
-        std::string ob;
-        const unsigned char *ib = (unsigned char *) binary.c_str();
-
-        unsigned long queue = 0;
-        unsigned int nbits = 0;
-
-        for( size_t len = binary.size(); len--; ) {
-             bytestatus++;
-            printf("\rsar:  packaging %lu file(s), %lu total bytes of data.  %d%s (%lu/%lu)", h.sourcecount.byte1,  h.filesize.byte1, percentage(), "%", bytestatus,  h.filesize.byte1);
-            //usleep(5);
-            cout << std::flush;
-              
-            queue |= *ib++ << nbits;
-            nbits += 8;
-            if (nbits > 13) {   /* enough bits in queue */
-                unsigned int val = queue & 8191;
-
-                if (val > 88) {
-                    queue >>= 13;
-                    nbits -= 13;
-                } else {    /* we can take 14 bits */
-                    val = queue & 16383;
-                    queue >>= 14;
-                    nbits -= 14;
-                }
-                ob.push_back( enctab[val % 91] );
-                ob.push_back( enctab[val / 91] );
-            }
-        }
-
-        /* process remaining bits from bit queue; write up to 2 bytes */
-        if (nbits) {
-            ob.push_back( enctab[queue % 91] );
-            if (nbits > 7 || queue > 90)
-                ob.push_back( enctab[queue / 91] );
-        }
-
-        /* return text data */
-        return ob;
-}
-
-std::string Binary::decode_str( const std::string &text ) {
-        
-           
-        const unsigned char dectab[256] = {
+const unsigned char dectab[256] = {
             // // rlyeh's modification
             91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, //000..015
             91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, //016..031
@@ -96,7 +38,56 @@ std::string Binary::decode_str( const std::string &text ) {
             91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91  //240..255
         };
 
-        std::string ob;
+const unsigned char enctab[91] = {
+            // // rlyeh's modification
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', //00..12
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', //13..25
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', //26..38
+            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', //39..51
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '!', '#', '$', //52..64
+            '%', '&', '(', ')', '*', '+', ',', '.', '/', ':', ';', '-', '=', //65..77
+            '\\','?', '@', '[', ']', '^', '_', '`', '{', '|', '}', '~', '\'' //78..90
+        };
+
+void Binary::encode_str( const std::string &binary, stringstream &__outbuf__) {
+
+     //   const unsigned char *ib = (unsigned char *) binary.c_str();
+
+        unsigned long queue = 0;
+        unsigned int nbits = 0;
+        unsigned long i = 0;
+
+        for( size_t len = binary.size(); len--; ) {
+              
+            queue |= binary.at(i++) << nbits;
+            nbits += 8;
+            if (nbits > 13) {   /* enough bits in queue */
+                unsigned int val = queue & 8191;
+
+                if (val > 88) {
+                    queue >>= 13;
+                    nbits -= 13;
+                } else {    /* we can take 14 bits */
+                    val = queue & 16383;
+                    queue >>= 14;
+                    nbits -= 14;
+                }
+                __outbuf__ << enctab[val % 91];
+                __outbuf__ << enctab[val / 91];
+            }
+        }
+
+        /* process remaining bits from bit queue; write up to 2 bytes */
+        if (nbits) {
+            __outbuf__ << enctab[queue % 91];
+            if (nbits > 7 || queue > 90)
+                __outbuf__ << enctab[queue / 91];
+        }
+        
+}
+
+void Binary::decode_str( const std::string &text, stringstream &__outbuf__) {
+        
         const unsigned char *ib = (unsigned char *) text.c_str();
 
         unsigned long queue = 0;
@@ -114,7 +105,7 @@ std::string Binary::decode_str( const std::string &text ) {
                 queue |= val << nbits;
                 nbits += (val & 8191) > 88 ? 13 : 14;
                 do {
-                    ob.push_back( char( queue ) );
+                    __outbuf__ << (char) queue;
                     queue >>= 8;
                     nbits -= 8;
                 } while (nbits > 7);
@@ -124,8 +115,5 @@ std::string Binary::decode_str( const std::string &text ) {
  
         /* process remaining bits; write at most 1 byte */
         if (val != -1)
-            ob.push_back( char( queue | val << nbits ) );
-
-        /* return original binary data */
-        return ob;
+            __outbuf__ << (char) (queue | val << nbits );
 }
