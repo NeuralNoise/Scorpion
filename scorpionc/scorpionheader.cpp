@@ -57,32 +57,31 @@ int methodsize         = 0xD9;
 string fsize()
 {
     stringstream ss, ss1;
-    bool restore = Binary::show;
-    Binary::show = false;
     ss1 << (long) h.filesize.byte1;
-    ss << (char) file_size << Binary::encode_str(ss1.str());
-    Binary::show = restore;
+    
+    stringstream __ostream_buf__;
+    Binary::encode_str(ss1.str(), __ostream_buf__);
+    
+    ss << (char) file_size << __ostream_buf__;
     return ss.str();
 }
 
 string appname()
 {
     stringstream ss;
-    bool restore = Binary::show;
-    Binary::show = false;
     ss << (char) nameflag << h.name;
-    Binary::show = restore;
     return ss.str();
 }
 
 string methodsz()
 {
     stringstream ss, ss1;
-    bool restore = Binary::show;
-    Binary::show = false;
     ss1 << (long) h.method_size.byte1;
-    ss << (char) methodsize << Binary::encode_str(ss1.str());
-    Binary::show = restore;
+    
+    stringstream __ostream_buf__;
+    Binary::encode_str(ss1.str(), __ostream_buf__);
+    
+    ss << (char) methodsize << __ostream_buf__;
     return ss.str();
 }
 
@@ -102,11 +101,11 @@ string min_dev_vers()
 
 string vers_num()
 {
+    stringstream __ostream_buf__;
+    Binary::encode_str(h.version_number, __ostream_buf__);
+    
     stringstream ss;
-    bool restore = Binary::show;
-    Binary::show = false;
-    ss << (char) version_number << Binary::encode_str(h.version_number);
-    Binary::show = restore;
+    ss << (char) version_number << __ostream_buf__;
     return ss.str();
 }
 
@@ -133,36 +132,34 @@ string logpd()
 
 string logfl()
 {
+    stringstream __ostream_buf__;
+    Binary::encode_str(h.log_file, __ostream_buf__);
+    
     stringstream ss;
-    bool restore = Binary::show;
-    Binary::show = false;
-    ss << (char) log_file << Binary::encode_str(h.log_file);
-    Binary::show = restore;
+    ss << (char) log_file << __ostream_buf__;
     return ss.str();
 }
 
 string appid()
 {
+    stringstream __ostream_buf__;
+    Binary::encode_str(h.application_id, __ostream_buf__);
+    
     stringstream ss;
-    bool restore = Binary::show;
-    Binary::show = false;
-    ss << (char) application_id << Binary::encode_str(h.application_id);
-    Binary::show = restore;
+    ss << (char) application_id << __ostream_buf__;
     return ss.str();
 }
 
 string prmns()
 {
     stringstream ss;
-    bool restore = Binary::show;
-    Binary::show = false;
     ss << (char) permissions;
     for(int i = 0; i < permission_size; i++){
        stringstream ss1;    
        ss1 << h.permissions[i] << ";";
-       ss << Binary::encode_str(ss1.str());
+       Binary::encode_str(ss1.str(), ss);
     }
-    Binary::show = restore;
+    
     return ss.str();
 }
 
@@ -195,9 +192,9 @@ string magic()
 string offset(int offset)
 {
     stringstream ss;
-    char nill = 0;
+    char nil = 0;
     for(int i = 0; i < offset; i++)
-        ss << (char) nill;
+        ss << (char) nil;
    return ss.str();
 }
 

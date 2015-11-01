@@ -64,7 +64,7 @@ int main(int argc, const char **args)
              int ret = 0;
              for(int i = 0; i < fsize; i++){
                  if(!FileStream::exists(files[i].c_str())){
-                     cout << "Error: file '" << files[i] << "' is no such file or directory." << endl;
+                     cout << "Error: file '" << files[i] << "' is no such file." << endl;
                      ret = -1;
                  }
                  else{
@@ -122,7 +122,7 @@ int main(int argc, const char **args)
                      // TODO: build and finish app make
                  }
                  else{
-                    cout << "Error: could not find build script file. \nA fatal Error has occurred, shutting down." << endl;
+                    cout << "Error: could not locate build script file. \nA fatal Error has occurred, shutting down." << endl;
                     return -1;
                  }
               }   
@@ -137,6 +137,6 @@ int main(int argc, const char **args)
          }
     }
     else
-      cout << "Error: could not start scorpionc. \nA fatal Error has occurred, shutting down." << endl;
+      cout << "Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." << endl;
   return 0;
 }

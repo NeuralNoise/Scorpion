@@ -9,6 +9,7 @@
 #include <sstream>
 using namespace std;
 
+
 bool FileStream::exists(const char *file)
 {
     std::ifstream infile(file);
@@ -17,29 +18,45 @@ bool FileStream::exists(const char *file)
 
 int FileStream::out(const char *file, string data)
 {
-    ofstream f (file);
-     if (f.is_open())
-    {
-       f << data;
-       f.close();
-       return 0;
+    try {
+        ofstream f (file);
+         if (f.is_open())
+        {
+           f << data;
+           f.close();
+           return 0;
+        }
+         else
+           return -1;
     }
-     else
-       return -1;
+    catch(std::bad_alloc& ba){
+         return -1;
+    }
 }
 
 string FileStream::getfile(const char *file)
 {
-     string tmp;
-     stringstream f;
-    ifstream input(file);
-
-    while(!input.eof()) {
-        tmp = "";
-        getline(input, tmp);
-        f << tmp;
-        f << "\n";
+    stringstream f;
+    f << "";
+    
+    try {
+        string tmp;
+        ifstream input(file);
+    
+        while(!input.eof()) {
+            tmp = "";
+            getline(input, tmp);
+            f << tmp;
+            f << "\n";
+        }
     }
+    catch(std::bad_alloc& ba){
+        return f.str();  
+    }
+    catch(std::exception& e){
+        return f.str();
+    }
+    
     return f.str();
 }
 

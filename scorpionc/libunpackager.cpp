@@ -64,9 +64,10 @@ int readheader(string file)
                                 break;
                             }
                         }
+                        stringstream __ostream_buf__;
+                        Binary::decode_str(ss.str(), __ostream_buf__);
                         
-                        Binary::show = false;
-                        lh.sourcecount.byte1 = atoi(Binary::decode_str(ss.str()).c_str());
+                        lh.sourcecount.byte1 = atoi(__ostream_buf__.str().c_str());
                         // source files
                         if(equals(get(i++), 0xBD)){
                             stringstream sfiles;
@@ -124,7 +125,6 @@ long bytestatus = 0, bytesize = 0;
 int splitfiles()
 {
     int scount = 0;
-    Binary::show = true;
     stringstream str;
     for(int i = 0; i < s_files.size(); i++){
         if(s_files.at(i) == ';'){
@@ -187,7 +187,9 @@ int unpack(string file)
          filecount = 0;
          printf("\rsar:  unpacking %lu file(s), %lu total bytes of data. (%lu/%lu)", lh.sourcecount.byte1, bytesize, bytestatus, bytesize);
          for(int i = 0; i < lh.sourcecount.byte1; i++){
-               fmap[filecount].contents = Binary::decode_str(fmap[filecount].contents);
+               stringstream __ostream_buf__;
+               Binary::decode_str(fmap[filecount].contents, __ostream_buf__);
+               fmap[filecount].contents = __ostream_buf__.str();
                filecount++;
          }
     }

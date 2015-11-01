@@ -6,6 +6,7 @@
 #define SCORPION_BINARY_H
 
 #include <string>
+#include <sstream>
 using namespace std;
 
 /*
@@ -19,9 +20,8 @@ using namespace std;
 */
 class Binary {
      public:
-        static std::string encode_str( const std::string &binary );
-        static std::string decode_str( const std::string &text );
-        static bool show;
+        static void encode_str( const std::string &binary, stringstream &__outbuf__);
+        static void decode_str( const std::string &text, stringstream &__outbuf__);
 };
 
 #endif //SCORPION_BINARY_H

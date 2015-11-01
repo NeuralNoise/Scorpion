@@ -1,0 +1,7 @@
+module org.application.main;
+
+
+def __init_(string** args){
+    int size_t = args.self;
+    return 0;
+}

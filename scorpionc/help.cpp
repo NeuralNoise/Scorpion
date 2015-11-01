@@ -7,8 +7,8 @@
 #include <string>
 using namespace std;
 
-string build_version = "v0.0.1.0";
-#define NUM_OPTIONS 4
+string build_version = "v0.1.0.3";
+#define NUM_OPTIONS 6
 string args[ NUM_OPTIONS ];
 
 string OPTION = "";
@@ -24,7 +24,9 @@ void setup()
    args[0] = "--help";
    args[1] = "-version";
    args[2] = "--build";
-   args[3] = "-xso";
+   args[3] = "-o";
+   args[4] = "-showversion";
+   args[5] = "-?";
 }
 
 bool isarg(string arg)
@@ -50,11 +52,14 @@ bool hasdash(string arg)
 
 void help()
 {
-   cout << "Usage: scorpionc [-options] [source-files...]\n" << endl;
+   cout << "Usage: scorpionc [-options] [build-file] [source-files...]" << endl;
+   cout << "or     scorpionc [build-file] [source-files...]\n\n";
    cout << "Source file must have a .scorpion extension to be packaged\n" << endl;
    cout << "[-options]\n\n    -version          print the current product version and exit" << endl;
+   cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    --build<file>     set the dev build scipt file. This option is required." << endl;
-   cout <<               "    -o<file>        set the output .xso file. Default is application.xso." << endl;
+   cout <<               "    -o<file>          set the output object file. Default is application.xso." << endl;
+   cout <<               "    --help -?         display this help message." << endl;
    exit(1);
 }
 
@@ -68,6 +73,7 @@ void parseargs(int argc, const char **args)
          else if(hasdash(data))
          {
             cout << "Unrecognized command line option: " << data << endl;
+            cout << "Try 'scorpionc --help' or 'scorpionc -?' for more information.\n";
             exit(1);
          }
          else{  // time for running application
@@ -75,24 +81,36 @@ void parseargs(int argc, const char **args)
             return;
          }
 
-         if(OPTION == "--help")
+         if(OPTION == "--help" || OPTION == "-?")
             help();
          else if(OPTION == "-version"){
             cout << "Scorpion(TM) Compiler build version: \"" << build_version << "\"" << endl;
             exit(1);
          }
+         else if(OPTION == "-showversion")
+            cout << "Scorpion(TM) Compiler build version: \"" << build_version << "\"" << endl;
          else if(OPTION == "--build"){
             i++;
             file_start++;
-            data = args[i];
-            build_file = data;
+            
+            if(!(i < argc)){
+               cout << "Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." << endl;
+               exit(1);   
+            }
+            
+            build_file = args[i];
             hasbuild = true;
          }
          else if(OPTION == "-o"){
             i++;
             file_start++;
-            data = args[i];
-            application_file = data;
+            
+            if(!(i < argc)){
+               cout << "Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." << endl;
+               exit(1);   
+            }
+            
+            application_file = args[i];
          }
 
 

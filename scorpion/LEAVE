@@ -2,8 +2,6 @@ This is a message for the Scorpion Virtual Machine Leave.
 
 learn how to programin sh
 
-Compile Scorpion for 32 bit and 64 bit operating systems
-
 Add file compilation for(.scorpion, .xso.sl) files upon packaging
 
 Add file compression for(.xso, .xso.sl) files
