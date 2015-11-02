@@ -95,8 +95,8 @@ void parsecontent(string content, info_cfg &icfg){
         else if(tag.str() == "productFlavor")
            icfg.productflav = value.str();
         else if(tag.str() == "version"){
-            float f = atof(value.str().c_str());
-            icfg.version = f;
+            icfg.version = 0;
+            icfg.version+=atof(value.str().c_str());
         }
         else if(tag.str() == "company")
             icfg.company = value.str();
