@@ -90,14 +90,12 @@ void parsecontent(string content, info_cfg &icfg){
               value << content.at(i);
         }
         
-        cout << "tag: " << tag.str() << " version: " << value.str() << endl;
-        
         if(tag.str() == "products")
            splitproducts(value.str(), icfg);
         else if(tag.str() == "productFlavor")
            icfg.productflav = value.str();
         else if(tag.str() == "version")
-            icfg.version = atof(value.str().c_str());
+            icfg.version = (float) atof(value.str().c_str());
         else if(tag.str() == "company")
             icfg.company = value.str();
     }
@@ -502,14 +500,15 @@ int main(int argc, const char**args)
     cout << "Product installer: Scorpion Development Kit(SDK)\n";
     int status;
     
-    std::string path = getpath();
+    stringstream path;
+    path << "" << getpath();
 
     if(uninstall)
     {
         status = _uninstall();
         if(status != 0)
           return status;
-        chdir(path.c_str());
+        chdir(path.str().c_str());
     }
 
     
@@ -518,7 +517,7 @@ int main(int argc, const char**args)
         status = _reinstall();
         if(status != 0)
           return status;
-        chdir(path.c_str());
+        chdir(path.str().c_str());
     }
     
     
