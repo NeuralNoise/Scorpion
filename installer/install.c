@@ -94,8 +94,10 @@ void parsecontent(string content, info_cfg &icfg){
            splitproducts(value.str(), icfg);
         else if(tag.str() == "productFlavor")
            icfg.productflav = value.str();
-        else if(tag.str() == "version")
-            icfg.version = (float) atof(value.str().c_str());
+        else if(tag.str() == "version"){
+            float f = atof(value.str().c_str());
+            icfg.version = f;
+        }
         else if(tag.str() == "company")
             icfg.company = value.str();
     }
@@ -129,7 +131,7 @@ int install(){
             if(answer != 'Y' && answer != 'y')
             {
                 cout << "Exiting installer.\n";
-                return 0;
+                return 1;
             }
             
             cout << "> Extracting files...\n";
@@ -188,7 +190,7 @@ int install(){
                     {
                         cout << "Exiting installer.\n";
                         removedir=false;
-                        return (1 - err(folder.str()));
+                        return (err(""));
                     }
                 }
                 
@@ -317,7 +319,7 @@ int _uninstall()
     if(answer != 'Y' && answer != 'y')
     {
         cout << "Exiting installer.\n";
-        return 0;
+        return 1;
     }
             
     cout << "> Awh :/ Uninstalling Scorpion...\n";
@@ -367,7 +369,7 @@ int _uninstall()
                cout << "install:  error: uninstillation failure. The config file was not found.\n";  
                cout << "Exiting installer.\n";
                removedir=false;
-               return (1 - err(""));
+               return (err(""));
             }
     return u_ok;
 }
@@ -399,7 +401,7 @@ int _reinstall()
         if(answer != 'Y' && answer != 'y')
         {
             cout << "Exiting installer.\n";
-            return 0;
+            return 1;
         }
             
         bool install = false;
@@ -460,7 +462,7 @@ int _reinstall()
       cout << "install:  error: reinstillation failure. The config file was not found.\n";  
       cout << "Exiting installer.\n";
       removedir=false;
-      return (1 - err(""));
+      return (err(""));
     }
     
     return i_ok;
