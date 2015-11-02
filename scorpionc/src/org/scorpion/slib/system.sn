@@ -1,0 +1,31 @@
+/*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Scorpion Micro Systems and/or its affiliates. All rights reserved.
+ * SMS PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+ module org.scorpion.slib;
+ 
+ class System {
+ 
+     @ its really simple lol
+    def exit(int value){
+	   asm {
+	      push value
+	      halt
+	   }
+	}
+ }
+ 
+ 
