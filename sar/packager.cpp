@@ -41,16 +41,17 @@ string packagefiles()
         __instream_buf__ << (char) _next_file;
         
         if(verbose)
-           cout << "adding: " << h.sourcefiles[i];
+           cout << "adding: " << h.sourcefiles[i] << std::flush;
            
         Binary::encode_str(FileStream::getfile(h.sourcefiles[i].c_str()), __instream_buf__);
+        
         if(!((i + 1) < h.sourcecount.byte1))
           zlib.Compress_Buffer2Buffer(__instream_buf__.str(), __ostream_buf__, ZLIB_LAST_SEGMENT);
         else
           zlib.Compress_Buffer2Buffer(__instream_buf__.str(), __ostream_buf__, ZLIB_NEXT_SEGMENT);
         
         if(verbose)
-           cout << " (stdin=" << zres.size_t.byte1 << ") (stdout=" << zres.size_t.byte2 << ")  comp. ratio (" << zres.compressionRatio << "%)\n";
+           cout << " (stdin=" << zres.size_t.byte1 << ") (stdout=" << zres.size_t.byte2 << ")  comp. ratio (" << zres.compressionRatio << "%)\n" << std::flush;
         
         if(zres.response == ZLIB_FAILURE){
            cout << "\n" << zres.reason.str() << "Shutting down.\n";

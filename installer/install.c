@@ -504,21 +504,25 @@ int main(int argc, const char**args)
     for(int i = 0; i < path.size() - 7; i++)
          ss <<  path.at(i);
     
+    cout << "path " << ss.str() << endl;
+    
     if(uninstall)
     {
         status = _uninstall();
         if(status != 0)
           return status;
-        chdir(ss.str().c_str());
     }
+    
+        chdir(ss.str().c_str());
     
     if(reinstall)
     {
         status = _reinstall();
         if(status != 0)
           return status;
-        chdir(ss.str().c_str());
     }
+    
+        chdir(ss.str().c_str());
     
     if(_install)
     {
