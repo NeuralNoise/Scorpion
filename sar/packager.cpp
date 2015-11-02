@@ -51,7 +51,7 @@ string packagefiles()
           zlib.Compress_Buffer2Buffer(__instream_buf__.str(), __ostream_buf__, ZLIB_NEXT_SEGMENT);
         
         if(verbose)
-           cout << " (stdin=" << zres.size_t.byte1 << ") (stdout=" << zres.size_t.byte2 << ")  comp. ratio (" << zres.compressionRatio << "%)\n" << std::flush;
+           cout << " (stdin=" << zres.size_t.byte1 << ") (stdout=" << zres.size_t.byte2 << ")  comp. ratio (" << (float) zres.compressionRatio << "%)\n" << std::flush;
         
         if(zres.response == ZLIB_FAILURE){
            cout << "\n" << zres.reason.str() << "Shutting down.\n";
@@ -66,7 +66,7 @@ string packagefiles()
         __instream_buf__.str("");
     }
     
-    cout << "overall: (stdin=" << _stdin << ") (stdout=" << _stdout << ")  comp. ratio (" << (((float) _stdout / (float) _stdin)*10000) << "%)\n";
+    cout << "overall: (stdin=" << _stdin << ") (stdout=" << _stdout << ")  comp. ratio (" << (float) (((float) _stdout / (float) _stdin)*10000) << "%)\n";
     return __ostream_buf__.str();
 }
 

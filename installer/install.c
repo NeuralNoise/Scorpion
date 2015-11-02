@@ -90,6 +90,8 @@ void parsecontent(string content, info_cfg &icfg){
               value << content.at(i);
         }
         
+        cout << "tag: " << tag.str() << " version: " << value.str() << endl;
+        
         if(tag.str() == "products")
            splitproducts(value.str(), icfg);
         else if(tag.str() == "productFlavor")
@@ -471,11 +473,12 @@ void parseargs(int argc, const char **args);
 void help();
 void setup();
 
-std::string getexepath()
+std::string getpath()
 {
-  char result[ PATH_MAX ];
-  ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
-  return std::string( result, (count > 0) ? count : 0 );
+  char *path=NULL;
+  size_t size;
+  path=getcwd(path,size);
+  return std::string(path);
 }
 
 /* UNIX install script */
@@ -499,30 +502,25 @@ int main(int argc, const char**args)
     cout << "Product installer: Scorpion Development Kit(SDK)\n";
     int status;
     
-    stringstream ss;
-    std::string path = getexepath();
-    for(int i = 0; i < path.size() - 7; i++)
-         ss <<  path.at(i);
-    
-    cout << "path " << ss.str() << endl;
-    
+    std::string path = getpath();
+
     if(uninstall)
     {
         status = _uninstall();
         if(status != 0)
           return status;
+        chdir(path.c_str());
     }
-    
-        chdir(ss.str().c_str());
+
     
     if(reinstall)
     {
         status = _reinstall();
         if(status != 0)
           return status;
+        chdir(path.c_str());
     }
     
-        chdir(ss.str().c_str());
     
     if(_install)
     {
