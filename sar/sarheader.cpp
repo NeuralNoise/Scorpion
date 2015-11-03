@@ -128,7 +128,8 @@ int sarheader::makeheader(int size, string *files)
         int ret = 0;
         for(int i = 0; i < size; i++){
             if(FileStream::exists(files[i].c_str())){
-               if(FileStream::endswith(".scorpion", files[i]) || FileStream::endswith(".xso", files[i])){
+               if(FileStream::endswith(".scorpion", files[i]) || FileStream::endswith(".xso", files[i]) 
+                  || FileStream::endswith(".sn", files[i])){
                    contents = FileStream::getfile(files[i].c_str());
                    if(!(contents.size() >= MAX_SIZE)){
                        if(!isdup(files[i], size)){

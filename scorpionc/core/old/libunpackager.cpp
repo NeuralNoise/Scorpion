@@ -1,6 +1,7 @@
 #include "clib/filestream.h"
 #include "libheader.h"
 #include "clib/binary.h"
+#include "clib/zlib/zlib.h"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -15,6 +16,8 @@ string lib;
 stringstream library;
 string s_files;
 long lastchar = 1, len;
+
+Zlib zlib;
 
 int unpack(string file);
 
@@ -84,21 +87,19 @@ int readheader(string file)
                             s_files = sfiles.str();
                             i += 34; // skip null
                             
-                        //    cout << "sfiles " << s_files << endl;
+                            cout << "sfiles " << s_files << endl;
                             // get packaged file content
                             stringstream l;
-                            for(int f = i; f < file.size(); f++){
-                                
-                                if(get(i) == 25935)
-                                   return -1;
-                                   
-                                if(get(i) != 0x0)
-                                    l << get(i++);
-                                else
-                                  break;
-                            }
+                            for(int f = i; f < file.size(); f++)
+                                    l << file.at(f);
                             
-                            if(unpack(l.str()) != 0)
+                            
+                            stringstream __ostream_buf__;
+                            zlib.Decompress_Buffer2Buffer(l.str(), __ostream_buf__);
+                            
+                            cout << "decompressed " << __ostream_buf__.str() << endl;
+                            
+                            if(unpack(__ostream_buf__.str()) != 0)
                                return -1;
                         }
                         else
@@ -165,12 +166,11 @@ int unpack(string file)
     
     long filecount = 0;
     
-    // TODO: Take out new lines in unpackaged content
     stringstream filecontent;
     for(long count = lastchar; count < file.size(); count++){
         
         if((file.at(count) == ((char) 0xAA)) || !((count + 1) < file.size())){
-            fmap[filecount++].contents = rm_nwln(filecontent.str());
+            fmap[filecount++].contents = filecontent.str();
             filecontent.str("");
         }
         else
@@ -190,6 +190,8 @@ int unpack(string file)
                stringstream __ostream_buf__;
                Binary::decode_str(fmap[filecount].contents, __ostream_buf__);
                fmap[filecount].contents = __ostream_buf__.str();
+               cout << "file " << fmap[filecount].name << "\ncontents " << __ostream_buf__.str() << endl;;
+               __ostream_buf__.str("");
                filecount++;
          }
     }

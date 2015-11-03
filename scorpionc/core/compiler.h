@@ -35,23 +35,49 @@
  * limitations under the License.
  *
  */
-#ifndef SCORPION_COMPILER_H
-#define SCORPION_COMPILER_H
+#ifndef SCORPION_C_H
+#define SCORPION_C_H
 
+#include "clib/filestream.h"
+#include <iostream>
 #include <string>
 using namespace std;
 
-struct option {
-    string build_file;
-    string output_file;
-    string *ags;
-    int ags_t;
+class Compiler {
+    
+    string* libraries;
+    int size_t, libPos;
+    
+    public:
+      void libSize(int size){
+          size_t = size;
+          libPos = 0;
+          libraries = new string[size];
+      }
+      int loadLibrary(string lib){
+          if(libPos >= size_t){
+              cout << "scorpionc:  error: failure to load library " << lib << " max library limit reached.\n";
+              return -1;
+          }
+          
+          if(FileStream::endswith(".sar", lib)){
+              if(FileStream::exists(lib.c_str()))
+                  libraries[libPos++] = lib;
+              else {
+                  cout << "scorpionc:  error: library " << lib << " is is no such file.\n";
+                  return -1;
+              }
+          }
+          else {
+              cout << "scorpionc:  error: library " << lib << " is not a Scorpion archive file.\n";
+              return -1;
+          }
+          
+          return 0;
+      }
+      int compile();
 };
-  
-extern option options;
-extern void parseargs(int argc, const char **args);
-extern void setup();
-extern void help();
-extern int file_start;
-  
-#endif // SCORPION_COMPILER_H
+
+#endif // SCORPION_C_H
+
+

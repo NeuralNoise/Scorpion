@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2015 The Scorpion Programming Language
  *
@@ -35,23 +34,18 @@
  * limitations under the License.
  *
  */
-#ifndef SCORPION_COMPILER_H
-#define SCORPION_COMPILER_H
-
+#include "scorpionc.h"
+#include "clib/filestream.h"
+#include "compiler.h"
+#include <iostream>
+#include <stdio.h>
+#include <sstream>
 #include <string>
 using namespace std;
 
-struct option {
-    string build_file;
-    string output_file;
-    string *ags;
-    int ags_t;
-};
-  
-extern option options;
-extern void parseargs(int argc, const char **args);
-extern void setup();
-extern void help();
-extern int file_start;
-  
-#endif // SCORPION_COMPILER_H
+
+int Compiler::compile(){
+    cout << "compiling.\n";
+    return 0;
+}
+
