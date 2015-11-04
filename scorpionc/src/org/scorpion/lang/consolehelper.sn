@@ -1,0 +1,133 @@
+/*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Scorpion Micro Systems and/or its affiliates. All rights reserved.
+ * SMS PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+ module org.scorpion.lang;
+ 
+ import org.scorpion.slib.stdio;
+ import org.scorpion.slib.system;
+ import org.scorpion.slib.String;
+ 
+ class ConsoleHelper {
+	
+    string* build_version = "0.1.0_0";
+	
+	int NUM_OPTIONS = 6;
+	String** options = new String[NUM_OPTIONS];
+	
+	string option;
+	String build_file;
+	String application_file = "application";
+	
+	def setup() {
+	   options[0] = "--help";
+	   options[1] = "-version";
+	   options[2] = "--build";
+	   options[3] = "-o";
+	   options[4] = "-showversion";
+	   options[5] = "-?";
+	}
+	
+	def isarg(String arg)
+    {
+	  for(int i = 0; i < NUM_OPTIONS; i++)
+	  {
+		 if(arg == args[i]){
+			option = arg;
+			return true;
+		 }
+	  }
+
+      return false;
+    }
+
+	def hasdash(String arg)
+	{
+	   if(arg.at(0) == '-')
+		 return true;
+
+	  return false;
+	}
+	
+	static def help(){
+	   ostream_out("Usage: scorpionc [-options] [build-file] [source-files...]" + endl);
+	   ostream_out("or     scorpionc [build-file] [source-files...]\n\n";
+	   ostream_out("Source file must have a .scorpion extension to be packaged\n" + endl);
+	   ostream_out("[-options]\n\n    -version          print the current product version and exit" + endl);
+	   ostream_out(          "    -showversion      print the current product version and continue." + endl);
+	   ostream_out(          "    --build<file>     set the dev build scipt file. This option is required." + endl);
+	   ostream_out(          "    -o<file>          set the output object file. Default is application.xso." + endl);
+	   ostream_out(          "    --help -?         display this help message." + endl);
+	   exit(1);
+	}
+	
+	def eval(int argc, String** args)
+	{
+	   String data = "";
+	   for(int i = 0; i < argc; i++)
+	   {
+	      data = args[i];
+		  
+		  if(isarg(data)) {}
+          else if(hasdash(data))
+          {
+            ostream_out("Unrecognized command line option: " + data + endl);
+            ostream_out("Try 'scorpionc --help' or 'scorpionc -?' for more information.\n");
+            System.exit(1);
+			try catch 
+          }
+          else {  @ time for running application
+		  
+            return;
+          }
+		  
+		  if(option == "--help" || option == "-?"){
+            help();
+		  }
+          else if(option == "-version"){
+            ostream_out("Scorpion(TM) Compiler build version: $"" + build_version + "$"" + endl);
+            System.exit(1);
+          }
+         else if(option == "-showversion")
+            ostream_out("Scorpion(TM) Compiler build version: $"" + build_version + "$"" + endl);
+         else if(option == "--build"){
+            i++;
+            
+            if(!(i < argc)){
+               ostream_out("Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." + endl);
+               System.exit(1);   
+            }
+            
+            build_file = args[i];
+         }
+         else if(option == "-o"){
+            i++;
+            
+            if(!(i < argc)){
+               ostream_out("Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." + endl);
+               System.exit(1);   
+            }
+            
+            application_file = args[i];
+         }
+
+	   }
+	}
+ }
+ 
+ 
+ 
+ 

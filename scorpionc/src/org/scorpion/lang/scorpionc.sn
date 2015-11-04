@@ -1,0 +1,50 @@
+/*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Scorpion Micro Systems and/or its affiliates. All rights reserved.
+ * SMS PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+ module org.scorpion.lang;
+ 
+ import org.scorpion.lang.consolehelper;
+ import org.scorpion.slib.String;
+ 
+ static ConsoleHelper mConsoleHelper;
+ 
+ 
+ /**
+ * Simple docx example
+ *
+ * @argument args
+ * the arguments passed to the 
+ * compiler
+ *
+ * @method __init() 
+ * This method is the starting point of every 
+ * scorpion application 
+ *
+ */
+ def __init(String** args)
+ {
+     int argc = args.self;
+     if(argc == 1){
+	   ConsoleHelper.help();
+	 }  
+	 else {
+	   mConsoleHelper.eval(args);
+	 }
+	 
+	 return 0;
+ }
+ 

@@ -1,0 +1,89 @@
+/*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Scorpion Micro Systems and/or its affiliates. All rights reserved.
+ * SMS PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+ module org.scorpion.slib;
+ 
+ import org.scorpion.slib.Exception;
+ 
+ /*
+ * Scorpion String class*
+ * 
+ * We define this class's type definition 
+ * as a string. This extends the classes functionality.
+ *
+ * This still acts as a class, but is extended to also 
+ * behave qas a string
+ *
+ *
+ */
+ typedef<string> class String {
+       int size_t;
+	   
+	   /*
+	   * We define this as the variable that will
+	   * hold the extended classes value
+	   */
+	   char* this.value;
+	   
+	   /*
+	   * Class construcutr when the class is created
+	   * this method is discreatly called
+	   *
+	   * This is only called after the class has been 
+	   * initalized or set
+	   *
+	   * You cannot call class constuctor methods
+	   */
+	   def String(){
+	      if(value != null)
+		  {
+		     size_t = sizeof(value);
+		  }
+	   }
+	   
+	   def size(){ return size_t; }
+	   
+	   def at(int index) { 
+	      if(index >= size_t)
+		  {
+		     throw "Index " + pos + " is not within bounds. Array size[" + size_t + "]." : "IndexOutOfBoundsException";
+		  }
+		  
+	      return value[index]; 
+	   }
+	   
+	   def append(String data){
+	      int len = size_t + data.size();
+	      char* newStr = new char[len];
+		  
+		  @ first part of the string
+		  for(int i = 0; i < size_t; i++)
+		  {
+		     newStr[i] = value[i];
+		  }
+		  
+		  @ Second par of the string
+		  for(int i = 0; i < len; i++)
+		  {
+		     newStr[i] = data.at(i);
+		  }
+		  
+		  this.size_t = len;
+		  this.value = newStr;
+	   }
+	   
+ }

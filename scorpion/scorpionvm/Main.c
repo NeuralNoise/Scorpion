@@ -67,7 +67,7 @@ void printusage()
   printf("           (to execute a sar file)\n\n");
   printf("   -version        print the current product version and exit.\n");
   printf("   -showversion    print the current product version and continue.\n");
-  printf("   -help -?        display this help screen.\n");
+  printf("   -help -?        display this help message.\n");
   printf("   -da -disableassertions\n");
   printf("                   disable assertions.\n");
   printf("   -Xms <size>     set the minimum heap size.\n");

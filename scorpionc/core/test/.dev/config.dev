@@ -1,0 +1,4 @@
+{ # application hierarchy builder
+   app: ('/home/ubuntu/workspace/scorpionc/core/test/app/')
+   src: ('/home/ubuntu/workspace/scorpionc/core/test/app/src/')
+}

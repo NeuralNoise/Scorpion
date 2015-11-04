@@ -51,8 +51,10 @@ string scount()
 {
     stringstream ss, ss1;
     ss1 << (long) h.sourcecount.byte1;
-    
-    ss << (char) _source_count << Binary::encode_str(ss1.str());
+    stringstream __ostreambuf__;
+    Binary::encode_str(ss1.str(), __ostreambuf__);
+        
+    ss << (char) _source_count << __ostreambuf__.str();
     return ss.str();
 }
 
@@ -117,15 +119,17 @@ int sarheader::makeheader(int size, string *files)
 
         h.major_version.byte1 = 0x10;
         h.major_version.byte2 = 0x11;
-
-        h.sourcecount.byte1 = size;
+        
         h.sourcefiles = new string[size];
+        h.filesize.byte1=0;
+        h.sourcecount.byte1=0;
 
         string contents; 
         int ret = 0;
         for(int i = 0; i < size; i++){
             if(FileStream::exists(files[i].c_str())){
-               if(FileStream::endswith(".scorpion", files[i]) || FileStream::endswith(".xso", files[i])){
+               if(FileStream::endswith(".scorpion", files[i]) || FileStream::endswith(".xso", files[i]) 
+                  || FileStream::endswith(".sn", files[i])){
                    contents = FileStream::getfile(files[i].c_str());
                    if(!(contents.size() >= MAX_SIZE)){
                        if(!isdup(files[i], size)){
@@ -134,17 +138,19 @@ int sarheader::makeheader(int size, string *files)
                                ret = -1;
                           }
                           else{
+                              h.sourcecount.byte1++;
                               h.sourcefiles[i] = files[i];
                               h.filesize.byte1 += contents.size(); // increment
                           }
                        }
                        else
-                         cout << "warning: diplicate file: " << files[i] << " skipping." << endl;
+                         cout << "sar:  warning: diplicate file: " << files[i] << " skipping." << endl;
                    }
                    else {
                       cout << "Error:  file: " << files[i] << " is too large!" << endl;
                       ret = -1;
                    }
+                   contents ="";
                }
                else {
                    cout << "Error:  file: " << files[i] << " is not a scorpion source file." << endl;
@@ -152,7 +158,7 @@ int sarheader::makeheader(int size, string *files)
                }
             }
             else {
-               cout << "Error:  file: " << files[i] << " is no such file or directory." << endl;
+               cout << "Error:  file: " << files[i] << " is no such file." << endl;
                ret = -1;
             }
         }
