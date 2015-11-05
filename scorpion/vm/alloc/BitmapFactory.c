@@ -111,9 +111,10 @@ using namespace std;
  void svmBitmapMemoryShutdown(HeapBitmap &bitmap){
      if(!svmBitmapInitalized(bitmap))
         return;
-      
-       free(bitmap.objs);
-       free(bitmap.stack);
+      for(int i = 0; i < bitmap.size_t; i++)
+         free(bitmap.objs[i].obj);
+       
+       free(bitmap.stack->generic);
        bitmap.init.byte1 = 0;
        bitmap.base = 0;
        bitmap.MaxLimit = 0;

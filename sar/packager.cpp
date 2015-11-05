@@ -33,7 +33,7 @@ long _stdin=0, _stdout=0;
 string packagefiles()
 {
     stringstream __instream_buf__, __ostream_buf__;
-    Zlib::AUTO_CLEAN=(true);
+    Zlib::AUTO_CLEAN=(false);
     
     printf("sar:  packaging %lu file(s), %lu total bytes of data.\n", h.sourcecount.byte1, h.filesize.byte1);
     
@@ -64,6 +64,7 @@ string packagefiles()
         _stdout+=zres.size_t.byte2;
         
         __instream_buf__.str("");
+        zlib.Cleanup();
     }
     
     cout << "overall: (stdin=" << _stdin << ") (stdout=" << _stdout << ")  comp. ratio (" << (float) (((float) _stdout / (float) _stdin)*10000) << "%)\n";

@@ -44,7 +44,7 @@ int main(int argc, const char**args)
          if(sarheader::makeheader(fsize, files) == 0){
               delete[] files;
               
-              archive << packagefiles() << (char) 0;
+              archive << packagefiles();
               stringstream fout;
               fout << packagefile << ".sar";
               FileStream::out(fout.str().c_str(), archive.str());

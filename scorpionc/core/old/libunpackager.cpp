@@ -13,7 +13,6 @@ using namespace std;
 
 lheader lh;
 string lib;
-stringstream library;
 string s_files;
 long lastchar = 1, len;
 
@@ -93,7 +92,7 @@ int readheader(string file)
                             for(int f = i; f < file.size(); f++)
                                     l << file.at(f);
                             
-                            
+                            cout << "f " << l.str() << endl;;
                             stringstream __ostream_buf__;
                             zlib.Decompress_Buffer2Buffer(l.str(), __ostream_buf__);
                             

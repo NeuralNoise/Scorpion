@@ -41,6 +41,7 @@
 #include "clib/filestream.h"
 #include <iostream>
 #include <string>
+#include <sstream>
 using namespace std;
 
 class Compiler {
@@ -55,14 +56,17 @@ class Compiler {
           libraries = new string[size];
       }
       int loadLibrary(string lib){
+        stringstream file;
+        file << "/usr/share/scorpion/" << lib;
+        
           if(libPos >= size_t){
               cout << "scorpionc:  error: failure to load library " << lib << " max library limit reached.\n";
               return -1;
           }
           
-          if(FileStream::endswith(".sar", lib)){
-              if(FileStream::exists(lib.c_str()))
-                  libraries[libPos++] = lib;
+          if(FileStream::endswith(".sar", file.str())){
+              if(FileStream::exists(file.str().c_str()))
+                  libraries[libPos++] = file.str();
               else {
                   cout << "scorpionc:  error: library " << lib << " is is no such file.\n";
                   return -1;

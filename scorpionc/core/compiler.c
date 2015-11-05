@@ -36,6 +36,7 @@
  */
 #include "scorpionc.h"
 #include "clib/filestream.h"
+#include "Archive.h"
 #include "compiler.h"
 #include <iostream>
 #include <stdio.h>
@@ -43,9 +44,32 @@
 #include <string>
 using namespace std;
 
+Archive archive;
 
 int Compiler::compile(){
-    cout << "compiling.\n";
+    stringstream ss;
+    cout << "compiling " << libraries[0] << endl;
+    
+    int res=archive.extract(libraries[0].c_str());
+    
+    switch( res ){
+        case -3:
+            cout << "Error: lib file: " << libraries[0] << " invalid magic number!" << endl;
+            return -1;
+        break;
+        case -2:
+            cout << "Error: lib file: " << libraries[0] << " unexpected end of file!" << endl;
+            return -1;
+        break;
+        case 0: break;
+        case -4: break;
+        default:
+            cout << "Error: lib file: " << libraries[0] << " sar file format error!" << endl;
+            return -1;
+        break;
+    }
+    
+    
     return 0;
 }
 

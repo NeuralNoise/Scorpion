@@ -51,7 +51,7 @@ bool hasdash(string arg)
 void help()
 {
    cout << "Usage: sar [-options] [source-files...]\n" << endl;
-   cout << "Source file must have a .scorpion extension to be packaged\n" << endl;
+   cout << "Source file must have a .scorpion or .sn extension to be packaged\n" << endl;
    cout << "[-options]\n\n    -version          print the current product version and exit" << endl;
    cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    -a<file>          set the output archive file. Default is lib.sar." << endl;
