@@ -397,7 +397,6 @@ unsigned long DECOMPRESS_WATCHDOG = 0;
  
    k = 0;
    ch = inbuffer[sz1++];
-   cout << "char " << (int) ch << endl;
    if (N<buflen+sz1+1) { zres._warnings_ << "zlib:  warning: Unexpectedly short buffer.\n";  buflen = N - sz1 - 1; }
    while (k<buflen)
     {

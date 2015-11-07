@@ -39,6 +39,7 @@
 #define SCORPION_C_H
 
 #include "clib/filestream.h"
+#include "Tokenizer.h"
 #include <iostream>
 #include <string>
 #include <sstream>

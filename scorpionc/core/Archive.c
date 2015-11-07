@@ -43,6 +43,7 @@
 #include "Archive.h"
 #include <stdlib.h>
 #include <iostream>
+#include <stdio.h>
 #include <string>
 #include <sstream>
 using namespace std;
@@ -66,6 +67,7 @@ char nextToken()
 int Archive::extract(const char* file)
 {
     fcontent = FileStream::getfile(file);
+    Zlib::AUTO_CLEAN=(true);
     
     if(((header.magic.byte1 = nextToken()) == (char) 0xaf) && ((header.magic.byte1 = nextToken()) == (char) 0x6c) &&
         ((header.magic.byte1 = nextToken()) == (char) 0xbe) && ((header.magic.byte1 = nextToken()) == (char) 0xf3)){
@@ -112,7 +114,7 @@ int Archive::extract(const char* file)
                                break;
                         }
                         
-                        string s_files = sfiles.str();
+                        sourceFiles = sfiles.str();
                         fPos += 12 + 1 + 20; // skip null
                         
                         // get packaged file content
@@ -133,7 +135,7 @@ int Archive::extract(const char* file)
                         zlib.Decompress_File2Buffer("/usr/share/scorpion/lib/lib-compiler.zb", __ostream_buf__);
                             
                         if(rez==0)
-                            system("rm /usr/share/scorpion/lib/lib-compiler.zb");
+                            remove( "/usr/share/scorpion/lib/lib-compiler.zb" );
                                
                         if(zres._warnings_.str() != "")
                             cout << zres._warnings_.str();
@@ -144,13 +146,11 @@ int Archive::extract(const char* file)
                             zlib.Cleanup();
                             exit(-1);
                         }
-                            
-                        cout << "decompression successful.\n";    
-                        zlib.Cleanup();
+                        
+                        if(unpack(__ostream_buf__.str()) != 0)
+                            return -1;
                       
-                      //TODO: Decompile binary code
-                      //  if(unpack(__ostream_buf__.str()) != 0)
-                      //      return -1;
+                      __ostream_buf__.str("");
                     }
                     else
                        return -1;
@@ -169,7 +169,114 @@ int Archive::extract(const char* file)
     else
         return -3;
     
+    zlib.Cleanup();
     fcontent="";
+    return 0;
+}
+
+string toinclude(string str)
+{
+    int pushback=0;
+    
+    for(int i = str.size() - 1; i > 0; i--)
+    {
+        if(str.at(i) == '.')
+           break;
+        else
+          pushback++;
+    }
+    
+    stringstream ss;
+    for(int i = 0; i < str.size() - pushback - 1; i++)
+    {
+        if(str.at(i) == '/' || str.at(i) == '\\'){
+            ss << ".";
+        }
+        else
+          ss << str.at(i);
+    }
+    
+    return ss.str();
+}
+
+int Archive::splitfiles()
+{
+    int scount = 0;
+    stringstream str;
+    for(int i = 0; i < sourceFiles.size(); i++){
+        if(sourceFiles.at(i) == ';'){
+            if(str.str() != ""){
+                if(scount >= header.sourcecount.byte1){
+                    cout << "sar:  error: there are more source files than expected ammount.\n";
+                    return -1;
+                }
+                
+                fmap[scount].name = str.str();
+                fmap[scount++].include = toinclude(str.str());
+                str.str("");
+            }
+        }
+        else
+          str << sourceFiles.at(i);
+    }
+    
+    if(scount != header.sourcecount.byte1){
+       cout << "sar:  error: source files do not meet the expected size.\n";
+       return -1;
+    }
+    
+    return 0;
+}
+
+int Archive::unpack(string __outbuf__)
+{
+    fmap = new FileMap[header.sourcecount.byte1];
+    
+    if(splitfiles() != 0)
+       return -1;
+       
+    
+    long filecount = 0;
+    
+    stringstream filecontent;
+    if(!(__outbuf__.size() >0))
+    {
+        cout << "sar:  error: this does not look like a packaged file.\n";
+        return -1;
+    }
+    else if(__outbuf__.at(0) != (char) 0xAA){
+        cout << "sar:  error: this does not look like a packaged file.\n";
+        return -1;
+    }
+    
+    for(long count = 1; count < __outbuf__.size(); count++){
+        
+        if((__outbuf__.at(count) == ((char) 0xAA)) || !((count + 1) < __outbuf__.size())){
+            stringstream __cmp_buf__, _decompile_buf__;
+            Binary::decode_str(filecontent.str(), _decompile_buf__);
+            
+         //   cout << "file " << fmap[filecount].name << "\ncontents " << _decompile_buf__.str() << endl;
+            zlib.Compress_Buffer2Buffer(_decompile_buf__.str(), __cmp_buf__, ZLIB_LAST_SEGMENT);
+            filecontent.str("");
+            
+            if(zres._warnings_.str() != "")
+                cout << zres._warnings_.str();
+                               
+            if(zres.response == ZLIB_FAILURE){
+                fcontent="";
+                cout << "\n" << zres.reason.str() << "Error is not recoverable, exiting with exit status: -1.\n";
+                zlib.Cleanup();
+                exit(-1);
+            }
+            
+            fmap[filecount++].contents = __cmp_buf__.str();
+            __cmp_buf__.str("");
+            _decompile_buf__.str("");
+        }
+        else
+          filecontent << __outbuf__.at(count);
+    }
+    
     return 0;
 }
 

@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2015 The Scorpion Programming Language
  *
@@ -34,47 +35,33 @@
  * limitations under the License.
  *
  */
-#ifndef SCORPION_ARCHIVE_H
-#define SCORPION_ARCHIVE_H
+#ifndef SCORPION_SYNTAX_ANALYZER_H
+#define SCORPION_SYNTAX_ANALYZER_H
 
 #include "clib/filestream.h"
-#include "clib/u2.h"
-#include "clib/u4.h"
-#include "clib/u1.h"
+#include "Tokenizer.h"
 #include <iostream>
+#include <stdlib.h>
 #include <string>
 #include <sstream>
 using namespace std;
 
-struct archiveHeader {
-    u4            magic;
-    u2            minor_version;
-    u2            major_version;
-    u1            sourcecount;         // The number of source files there are
-    string        *sourcefiles;        // The names of each source file
-};
 
-struct FileMap {
-    string name;
-    string include;
-    string contents;
-};
+#define nullptr ((void *)0)
 
-class Archive {
-    
-    public:
-      FileMap* fmap;
-      archiveHeader header;
-      string sourceFiles;
-    
-    public:
-      int extract(const char* file);
+class SyntaxAnalyzer {
+      std::string file, function;
+      int analyzeResponse;
       
-    private:
-      int unpack(string __outbuf__);
-      int splitfiles();
+    public:
+      int analyze(string &file, Tokenizer &tokenizer);
+      void syntaxerror(string std_err, Tokenizer &tokenizer);
+      string getFile(){ return file; }
+      void setFile(string f){
+          file = f;
+      }
 };
 
-#endif // SCORPION_ARCHIVE_H
+#endif // SCORPION_SYNTAX_ANALYZER_H
 
 

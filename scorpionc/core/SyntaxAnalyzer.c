@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2015 The Scorpion Programming Language
  *
@@ -34,47 +35,46 @@
  * limitations under the License.
  *
  */
-#ifndef SCORPION_ARCHIVE_H
-#define SCORPION_ARCHIVE_H
-
 #include "clib/filestream.h"
-#include "clib/u2.h"
-#include "clib/u4.h"
-#include "clib/u1.h"
+#include "SyntaxAnalyzer.h"
+#include "Tokenizer.h"
 #include <iostream>
+#include <stdlib.h>
 #include <string>
 #include <sstream>
 using namespace std;
 
-struct archiveHeader {
-    u4            magic;
-    u2            minor_version;
-    u2            major_version;
-    u1            sourcecount;         // The number of source files there are
-    string        *sourcefiles;        // The names of each source file
-};
-
-struct FileMap {
-    string name;
-    string include;
-    string contents;
-};
-
-class Archive {
+int SyntaxAnalyzer::analyze(string &file, Tokenizer &tokenizer)
+{
+    analyzeResponse=0;
+    // while(tokenizer.eof == false){ tokenizer.nextTok(); }
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    tokenizer.nextTok();
+    syntaxerror("test err", tokenizer);
     
-    public:
-      FileMap* fmap;
-      archiveHeader header;
-      string sourceFiles;
+    return analyzeResponse;
+}
     
-    public:
-      int extract(const char* file);
-      
-    private:
-      int unpack(string __outbuf__);
-      int splitfiles();
-};
-
-#endif // SCORPION_ARCHIVE_H
-
-
+void SyntaxAnalyzer::syntaxerror(string std_err, Tokenizer &tokenizer)
+{
+    analyzeResponse = -1;
+    if(function != "")
+       cout << " In fuction '" << function << "':\n";
+       
+    cout << file << ":" << tokenizer.getLine() << ": error: " << std_err << endl;
+    cout << "   " << tokenizer.lineTxt.str() << endl;
+    
+    for(int i = 0; i < tokenizer.charptr - 1; i++)
+      cout << " ";
+    cout << "^\n";
+}
