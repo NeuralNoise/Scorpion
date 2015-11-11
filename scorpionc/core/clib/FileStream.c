@@ -16,6 +16,26 @@ bool FileStream::exists(const char *file)
        return infile.good();
 }
 
+bool is_whitespace(char c)
+{
+    return ((c ==' ') || (c =='\n') ||
+        (c =='\r') || (c =='\t') ||
+        (c =='\b') || (c =='\v') ||
+        (c =='\f')) ;
+}
+
+bool FileStream::empty(const char *file)
+{
+    string data = getfile(file);
+    for(long i = 0; i < data.size(); i++)
+    {
+        if(!is_whitespace(data.at(i)))
+          return false;
+    }
+    
+    return true;
+}
+
 int FileStream::out(const char *file, string data)
 {
     try {

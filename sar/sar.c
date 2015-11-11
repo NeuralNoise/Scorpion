@@ -22,13 +22,48 @@ extern string packagefiles();
 Timer c_time;
 extern Zlib zlib;
 
-int main(int argc, const char**args)
+int main(int argc, const char**argv)
 {
+    int optionCount, argIdx, res=0;
+    int needExtra = 0;
+    std::string lastFlag;
+    string problemFlag;
+    
     setup();
     c_time.reset();
     
-    if(argc >= 2)
-       parseargs(argc, args);
+    if(argc >= 2){
+    
+       needExtra = 0;
+       for (argIdx = 1; argIdx < argc; argIdx++) {
+          lastFlag = argv[argIdx];
+
+            /* some options require an additional arg */
+            if ((lastFlag == "-a"))
+                /* others? */
+            {
+                if(!((argIdx + 1) < argc)){
+                    problemFlag = lastFlag;
+                    needExtra = 1;
+                    break;
+                }
+                
+                string s = argv[argIdx + 1];
+                if(s.at(0) == '-'){
+                    problemFlag = lastFlag;
+                    needExtra = 1;
+                }
+            }
+        }
+
+    
+        if (needExtra != 0) {
+            printf("error:  Faulty Argument flag. Sar requires a value after option flag: %s\n", problemFlag.c_str());
+            return -1;
+        }
+    
+       parseargs(argc, argv);
+    }
     else if(argc == 1)
        help();
 
@@ -37,7 +72,7 @@ int main(int argc, const char**args)
          string *files = new string[fsize];
          for(int i = file_start + 1; i < argc; i++){
              stringstream ss;
-             ss << args[i];
+             ss << argv[i];
              files[index++] = ss.str(); 
          } 
          

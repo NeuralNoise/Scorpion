@@ -62,7 +62,9 @@ int main(int argc, const char **argv)
 
             /* some options require an additional arg */
             if ((lastFlag == "-o") ||
-                (lastFlag == "--build"))
+                (lastFlag == "--build") ||
+                (lastFlag == "-Xsz") ||
+                (lastFlag == "-O"))
                 /* others? */
             {
                 if(!((argIdx + 1) < argc)){

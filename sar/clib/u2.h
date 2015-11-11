@@ -12,4 +12,11 @@ struct u2 {
    long byte2;
 };
 
+struct u2_d {
+   double byte1;
+   double byte2;
+};
+
+extern bool cmp_u2(u2 a, u2 b);
+
 #endif //SCORPION_ARCH_U4_H

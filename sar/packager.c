@@ -17,16 +17,6 @@ int check = 0;
 
 Zlib zlib;
 
-int getper(long data, long size)
-{
-    double a = 1.0, b = 1.0, c;
-    a = a*data;
-    b = b*size;
-    
-    c = (a/b) * 100;
-    return (int) c;
-}
-
 extern bool verbose;
 long _stdin=0, _stdout=0;
 

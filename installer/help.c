@@ -4,7 +4,7 @@
 #include <string>
 using namespace std;
 
-string build_version = "v1.0.7";
+string build_version = "v1.0.9";
 #define NUM_OPTIONS 7
 string args[ NUM_OPTIONS ];
 

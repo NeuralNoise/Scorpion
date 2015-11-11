@@ -4,19 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
-#include "../sarheader.h"
 using namespace std;
-
-extern long bytestatus;
-int percentage()
-{
-    double a = 1.0, b = 1.0, c;
-    a = a*bytestatus;
-    b = b*h.filesize.byte1;
-    
-    c = (a/b) * 100;
-    return (int) c;
-}
 
 const unsigned char dectab[256] = {
             // // rlyeh's modification
@@ -50,8 +38,6 @@ const unsigned char enctab[91] = {
         };
 
 void Binary::encode_str( const std::string &binary, stringstream &__outbuf__) {
-
-     //   const unsigned char *ib = (unsigned char *) binary.c_str();
 
         unsigned long queue = 0;
         unsigned int nbits = 0;
@@ -87,15 +73,14 @@ void Binary::encode_str( const std::string &binary, stringstream &__outbuf__) {
 }
 
 void Binary::decode_str( const std::string &text, stringstream &__outbuf__) {
-        
-        const unsigned char *ib = (unsigned char *) text.c_str();
 
         unsigned long queue = 0;
         unsigned int nbits = 0;
         int val = -1;
+        unsigned long i = 0;
 
         for( size_t len = text.size(); len--; ) {
-            unsigned int d = dectab[*ib++];
+            unsigned int d = dectab[text.at(i++)];
             if (d == 91)
                 continue;   /* ignore non-alphabet chars */
             if (val == -1)

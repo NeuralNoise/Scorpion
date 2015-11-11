@@ -39,17 +39,21 @@
  #include "Array.h"
  #include "../exception.h"
  #include <string>
+ #include <stdlib.h> 
  #include <sstream>
  
  using namespace std;
   
  ArrayObject* tochararray(string data){
-     ArrayObject* obj = new (nothrow) ArrayObject[0];
-     obj->generic = new (nothrow) double[data.size()];
+     ArrayObject* obj = new (nothrow) ArrayObject[1];
      
-     obj->length = data.size();
+     if(obj == nullptr)
+        return obj;
+    
+     obj->generic = (double*)malloc(data.size());
+     obj->length = data.size();    
      
-     if(obj == nullptr || obj->generic == nullptr)
+     if(obj->generic == NULL)
         return obj;
      
      if(obj->length > STR_LIMIT)

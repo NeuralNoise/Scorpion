@@ -66,9 +66,9 @@
 
  void sczfree( struct scz_item *tmppt )
  {
- tmppt->nxt = sczfreelist1;
- sczfreelist1 = tmppt;
-}
+  tmppt->nxt = sczfreelist1;
+  sczfreelist1 = tmppt;
+ }
 
 
  struct scz_item2 *new_scz_item2()

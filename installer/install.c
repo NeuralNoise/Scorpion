@@ -115,7 +115,7 @@ int err(string folder){
 extern string distributionPackage, reinstallDir;
 
 int install(){
-    stringstream folder, sstream, dir;
+    stringstream folder, sstream, dir, ss;
     string package;
     int exit_val;
     char answer;
@@ -136,8 +136,19 @@ int install(){
             
             cout << "> Extracting files...\n";
             
-            for(int i = 0; i < package.size() - 7; i++)
-                folder << package.at(i);
+            for(int i = package.size() - 8; i >= 0; i--) {
+                if(package.at(i) == '\\' || package.at(i) == '/')
+                    break;
+                else
+                    ss << package.at(i);
+            }
+            
+            for( int i = ss.str().size() - 1; i >= 0; i-- )
+            {
+                folder << ss.str().at(i);
+            }
+            
+            cout << "folder " << folder.str() << endl;
                 
             sstream << "mkdir -p \"/usr/share/scorpion/sdk/" << folder.str() << "\"";
             exit_val = system(sstream.str().c_str());
@@ -157,7 +168,7 @@ int install(){
             }
             
             cout << "> Setting up SDK directories...\n";
-            system("mkdir -p /usr/share/scorpion/libs /usr/share/scorpion/vm/log");
+            system("mkdir -p /usr/share/scorpion/libs /usr/share/scorpion/lib /usr/share/scorpion/vm/log");
             
             dir << "/usr/share/scorpion/sdk/" << folder.str();
 
@@ -284,8 +295,11 @@ int install(){
                 ss << "cp " << cfg.products[i] << " /sbin/";
                 system(ss.str().c_str());
             }
+            
             chdir("../");
             system("cp -a libs/. /usr/share/scorpion/libs/");
+            if(cfg.version >  0.108) // version specific instillation directory
+                system("cp -a lib/. /usr/share/scorpion/lib/");
             system("cp info.cfg /usr/share/scorpion");
             
             cout << "> Scorpion was successfully installed!\n";
@@ -452,6 +466,15 @@ int _reinstall()
                             return 1;
                         }
                         
+                        if(icfg.version >  0.108){ // version specific instillation directory
+                            exit_val = system("cp -a lib/. /usr/share/scorpion/lib/");
+                            
+                            if(exit_val != 0){
+                                cout << "install:  error: failed to apply internal libraries.\n";
+                                return 1;
+                            }
+                        }
+                        
                     cout << "> Scorpion was successfully reinstalled!\n";
                    }
                 }
@@ -482,11 +505,47 @@ std::string getpath()
 }
 
 /* UNIX install script */
-int main(int argc, const char**args)
+int main(int argc, const char**argv)
 {
+    int optionCount, argIdx, res=0;
+    int needExtra = 0;
+    std::string lastFlag;
+    string problemFlag;
+    
     setup();
-    if(argc >= 2)
-       parseargs(argc, args);
+    if(argc >= 2){
+    
+       needExtra = 0;
+       for (argIdx = 1; argIdx < argc; argIdx++) {
+          lastFlag = argv[argIdx];
+
+            /* some options require an additional arg */
+            if ((lastFlag == "-i") || 
+                (lastFlag == "-r"))
+                /* others? */
+            {
+                if(!((argIdx + 1) < argc)){
+                    problemFlag = lastFlag;
+                    needExtra = 1;
+                    break;
+                }
+                
+                string s = argv[argIdx + 1];
+                if(s.at(0) == '-'){
+                    problemFlag = lastFlag;
+                    needExtra = 1;
+                }
+            }
+        }
+
+    
+        if (needExtra != 0) {
+            printf("error:  Faulty Argument flag. Scorpion installer requires a value after option flag: %s\n", problemFlag.c_str());
+            return -1;
+        }
+    
+       parseargs(argc, argv);
+    }
     else if(argc == 1)
        help();
        

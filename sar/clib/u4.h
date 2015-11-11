@@ -14,4 +14,13 @@ struct u4 {
    long byte4;
 };
 
+struct u4_d {
+   double byte1;
+   double byte2;
+   double byte3;
+   double byte4;
+};
+
+extern bool cmp_u4(u4 a, u4 b);
+
 #endif //SCORPION_ARCH_U4_H

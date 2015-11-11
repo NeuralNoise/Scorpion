@@ -59,42 +59,48 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
   obj.instanceData.byte2 = gc_status;
   
   if(_typedef_ == TYPEDEF_GENERIC){
-   obj.obj = new (nothrow) DataObject[0];
+   obj.obj = new (nothrow) DataObject[1];
    
    if(obj.obj == nullptr)
       Exception("Object could not be created.", "OutOfMemoryError");
   }
   if(_typedef_ == TYPEDEF_STRING){
-   obj.obj = new (nothrow) DataObject[0];
-   obj.obj->strobj = new (nothrow) StringObject[0];
-   obj.obj->strobj->array = new (nothrow) ArrayObject[0];
+   obj.obj = new (nothrow) DataObject[1];
+   obj.obj->strobj = new (nothrow) StringObject[1];
+   obj.obj->strobj->array = new (nothrow) ArrayObject[1];
    
    if(obj.obj == nullptr || obj.obj->strobj == nullptr 
       || obj.obj->strobj->array == nullptr)
        Exception("String object could not be created.", "OutOfMemoryError");
   }
   if(_typedef_ == TYPEDEF_GENERIC_ARRAY) {
-   obj.obj = new (nothrow) DataObject[0];
-   obj.obj->arrayobj = new (nothrow) ArrayObject[0];
-   obj.obj->arrayobj->length = objsz_t.byte1;
-   obj.obj->arrayobj->generic = new (nothrow) double[objsz_t.byte1];
+   obj.obj = new (nothrow) DataObject[1];
+   obj.obj->arrayobj = new (nothrow) ArrayObject[1];
    
-   if(obj.obj == nullptr || obj.obj->arrayobj == nullptr 
-      || obj.obj->strobj->array == nullptr)
+   if(obj.obj == nullptr || obj.obj->arrayobj == nullptr)
+       Exception("Array object could not be created.", "OutOfMemoryError");
+   
+   obj.obj->arrayobj->length = objsz_t.byte1;
+   obj.obj->arrayobj->generic = (double*)malloc(objsz_t.byte1);
+   
+   if(obj.obj->arrayobj->generic == NULL)
        Exception("Array object could not be created.", "OutOfMemoryError");
   }
   if(_typedef_ == TYPEDEF_STRING_ARRAY) {
-   obj.obj = new (nothrow) DataObject[0];
-   obj.obj->arrayobj = new (nothrow) ArrayObject[0];
-   obj.obj->arrayobj->length = objsz_t.byte1;
-   obj.obj->arrayobj->strobj = new (nothrow) StringObject[objsz_t.byte1];
+   obj.obj = new (nothrow) DataObject[1];
+   obj.obj->arrayobj = new (nothrow) ArrayObject[1];
    
-   if(obj.obj == nullptr || obj.obj->arrayobj == nullptr 
-      || obj.obj->arrayobj->strobj == nullptr)
+   if(obj.obj == nullptr || obj.obj->arrayobj == nullptr)
+       Exception("String array object could not be created.", "OutOfMemoryError");
+    
+   obj.obj->arrayobj->length = objsz_t.byte1;
+   obj.obj->arrayobj->strobj = (StringObject*)malloc(objsz_t.byte1);
+   
+   if(obj.obj->arrayobj->strobj == NULL)
        Exception("String array object could not be created.", "OutOfMemoryError");
    
    for(long i = 0; i < objsz_t.byte1; i++){ // initalize all strings
-      obj.obj->arrayobj->strobj[i].array = new (nothrow) ArrayObject[0];
+      obj.obj->arrayobj->strobj[i].array = new (nothrow) ArrayObject[1];
       
       if(obj.obj->arrayobj->strobj[i].array == nullptr)
         Exception("String array object could not be created.", "OutOfMemoryError");
