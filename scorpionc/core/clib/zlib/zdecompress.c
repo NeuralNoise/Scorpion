@@ -27,7 +27,11 @@
  #include "zdecompress.h"
  #include "zlib.h"
  #include <sstream>
+ #include <iostream>
  using namespace std;
+
+
+unsigned long DECOMPRESS_WATCHDOG = 0;
 
 /****************************************************************/
 /* Decompress - Decompress a buffer.  Returns 1 on success, 0 	*/
@@ -128,6 +132,7 @@
  unsigned char ch, chksum, chksum0;
  struct scz_item *buffer0_hd, *buffer0_tl, *bufpt, *bufprv;
  FILE *infile=0, *outfile;
+ DECOMPRESS_WATCHDOG=0;
 
  infile = fopen(infilename,"rb");
  if (infile==0) {return 1;} //
@@ -177,6 +182,12 @@
      scz_add_item( &buffer0_hd, &buffer0_tl, ch );
      sz1++;  k++;
      ch = getc(infile);
+     
+     DECOMPRESS_WATCHDOG+=sz1;
+     if(DECOMPRESS_WATCHDOG >= DECOMPRESSION_OVERLOAD)
+     {
+       zres.reason << "zlib:  error: Decompression overload!\n"; return ZLIB_FAILURE; 
+     }
     }
 
    chksum0 = ch;
@@ -227,10 +238,11 @@
 /**************************************************************************/
  int Scz_Decompress_File2Buffer( char *infilename, stringstream &__outbuf__ )
  {
- int k, success, sz1=0, sz2=0, buflen, continuation, totalin=0, totalout=0;
+ long k, success, sz1=0, sz2=0, buflen, continuation, totalin=0, totalout=0;
  unsigned char ch, chksum, chksum0;
  struct scz_item *buffer0_hd, *buffer0_tl, *bufpt, *bufprv, *sumlst_hd=0, *sumlst_tl=0;
  FILE *infile=0;
+ DECOMPRESS_WATCHDOG=0;
 
  infile = fopen(infilename,"rb");
  if (infile==0) { zres.reason << "zlib:  error: Cannot open input file '" << infilename << "'.\n";  return ZLIB_FAILURE; }
@@ -274,6 +286,12 @@
      scz_add_item( &buffer0_hd, &buffer0_tl, ch );
      sz1++;  k++;
      ch = getc(infile);
+     
+     DECOMPRESS_WATCHDOG+=sz1;
+     if(DECOMPRESS_WATCHDOG >= DECOMPRESSION_OVERLOAD)
+     {
+       zres.reason << "zlib:  error: Decompression overload!\n"; return ZLIB_FAILURE; 
+     }
     }
 
    chksum0 = ch;
@@ -282,6 +300,8 @@
  
    if (k<buflen) { zres._warnings_ << "zlib:  warning: Unexpectedly short file.\n"; }
    totalin = totalin + sz1 + 4;		/* (+4, because chksum+3buflen chars not counted above.) */
+   DECOMPRESS_WATCHDOG+=totalin;
+   
    /* Decode the 'end-marker'. */
    if (ch==']') continuation = 0;
    else
@@ -330,9 +350,6 @@
 }
 
 
-
-
-
 /*******************************************************************************/
 /* Scz_Decompress_Buffer2Buffer - Decompresses input buffer to output buffer.  */
 /*  This routine is handy for applications wishing to decompress data on the   */
@@ -346,9 +363,10 @@
 /*******************************************************************************/
  int Scz_Decompress_Buffer2Buffer( char *inbuffer, int N, stringstream &__outbuf__ )
  {
- int k, success, sz1=0, sz2=0, buflen, continuation, totalin=0, totalout=0;
+ long k, success, sz1=0, sz2=0, buflen, continuation, totalin=0, totalout=0;
  unsigned char ch, chksum, chksum0;
  struct scz_item *buffer0_hd, *buffer0_tl, *bufpt, *bufprv, *sumlst_hd=0, *sumlst_tl=0;
+ DECOMPRESS_WATCHDOG=0;
 
  do 
   { /*Segment*/
@@ -360,7 +378,7 @@
    totalin = totalin + N;
 
    ch = inbuffer[sz1++];		/* Byte 1, expect magic numeral 101. */
-   if ((sz1>8) || (ch!=101)) { zres.reason << "zlib:  error: This does not look like a compressed buffer.\n"; return ZLIB_FAILURE;}
+   if ((sz1>8) || (ch!=101)) { zres.reason << "zlib:  error: This does not look like a compressed buffer1.\n"; return ZLIB_FAILURE;}
    scz_add_item( &buffer0_hd, &buffer0_tl, ch );
 
    ch = inbuffer[sz1++];		/* Byte 2, expect magic numeral 98. */
@@ -384,6 +402,12 @@
     {
      scz_add_item( &buffer0_hd, &buffer0_tl, ch );
      ch = inbuffer[sz1++];     k++;
+     
+     DECOMPRESS_WATCHDOG+=sz1;
+     if(DECOMPRESS_WATCHDOG >= DECOMPRESSION_OVERLOAD)
+     {
+       zres.reason << "zlib:  error: Decompression overload!\n"; return ZLIB_FAILURE; 
+     }
     }
 
    chksum0 = ch;

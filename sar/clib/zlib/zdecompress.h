@@ -27,6 +27,8 @@
  #define _ZLIB_DECOMPRESS
  
  
+ #define DECOMPRESSION_OVERLOAD (64 * 1020 * 64) * 8
+ 
 /****************************************************************/
 /* Decompress - Decompress a buffer.  Returns 1 on success, 0 	*/
 /*  if failure.							*/

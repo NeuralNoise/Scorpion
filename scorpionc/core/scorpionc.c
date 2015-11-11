@@ -62,7 +62,9 @@ int main(int argc, const char **argv)
 
             /* some options require an additional arg */
             if ((lastFlag == "-o") ||
-                (lastFlag == "--build"))
+                (lastFlag == "--build") ||
+                (lastFlag == "-Xsz") ||
+                (lastFlag == "-O"))
                 /* others? */
             {
                 if(!((argIdx + 1) < argc)){
@@ -121,10 +123,9 @@ int main(int argc, const char **argv)
                          return -1;
                      }
                      /* Load compiler libraries */
-                     cout << "compile compiler" << endl;
                      compiler.libSize(1);
                      
-                     res+=compiler.loadLibrary("/usr/share/scorpion/lib/lib-compiler-scorpionc-0.1.0.0.sar");
+                     res+=compiler.loadLibrary("lib/lib-compiler-scorpionc-0.1.0.0.sar");
                      
                      if(res == 0){
                        if(compiler.compile() != 0)

@@ -35,14 +35,15 @@
  *
  */
 #include "scorpionc.h"
+#include "clib/compilr/core.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
 #include <string>
 using namespace std;
 
-string build_version = "v0.1.0.6";
-#define NUM_OPTIONS 6
+string build_version = "v0.1.0.8";
+#define NUM_OPTIONS 11
 string args[ NUM_OPTIONS ];
 
 string OPTION = "";
@@ -54,6 +55,9 @@ void setup()
    options.build_file = "";
    options.output_file = "application";
    options.ags_t = 0;
+   options.compileOnly=false;
+   options.warnings=false;
+   options.extendedWarnings=false;
    
    args[0] = "--help";
    args[1] = "-version";
@@ -61,6 +65,11 @@ void setup()
    args[3] = "-o";
    args[4] = "-showversion";
    args[5] = "-?";
+   args[6] = "-Xsz";
+   args[7] = "-O";
+   args[8] = "-c";
+   args[9] = "-w";
+   args[10] = "-wextra";
 }
 
 bool isarg(string arg)
@@ -93,8 +102,18 @@ void help()
    cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    --build<file>     set the dev build scipt file. This option is required." << endl;
    cout <<               "    -o<file>          set the output object file. Default is application.xso." << endl;
+   cout <<               "    -Xsz<value>       set the standard heap size for compilation allocation (standard size is usually ok)." << endl;
+   cout <<               "    -O<value>         set the standard heap size for object file allocation (standard size is usually ok)." << endl;
+   cout <<               "    -c                compile only and do not generate object file." << endl;
+   cout <<               "    -w                allow warnings to be displayed." << endl;
+   cout <<               "    -wextra           allow extended warnings to be displayed." << endl;
    cout <<               "    --help -?         display this help message." << endl;
    exit(1);
+}
+
+string trim(string str)
+{
+  return str.substr(0, str.size()-1);
 }
 
 void parseargs(int argc, const char **args)
@@ -155,6 +174,90 @@ void parseargs(int argc, const char **args)
          
             options.output_file = args[i];
          }
+         else if(OPTION == "-Xsz"){
+            i++;
+            file_start++;
+            
+            if(!(i < argc)){
+               cout << "Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." << endl;
+               exit(1);   
+            }
+         
+            unsigned long _heap_std=cplr_item_buflen;
+            data = args[i];
+            double segment;
+            if(data.at(data.length() - 1) == 'b'){ // bytes
+               segment = 1;
+               data = trim(data);
+            }
+            else if(data.at(data.length() - 1) == 'k'){ // kb
+               segment = 1000;
+               data = trim(data);
+            }
+            else if(data.at(data.length() - 1) == 'm'){ // mb
+               segment = 1000000;
+               data = trim(data);
+            }
+            else if(data.at(data.length() - 1) == 'g'){ // gb
+               segment = 1000000000;
+               data = trim(data);
+            }
+            else
+               segment = 1000;
+            
+            double mb = atoi(data.c_str());
+            mb *= segment; // convert to actual bytes
+            cplr_item_buflen = mb;
+            if(cplr_bitmap_len <= 0){
+              cplr_item_buflen = _heap_std;
+              cout << "scorpionc:  warning: requested object heap may be too large or equal to 0.\n";
+            }
+         }
+         else if(OPTION == "-O"){
+            i++;
+            file_start++;
+            
+            if(!(i < argc)){
+               cout << "Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." << endl;
+               exit(1);   
+            }
+            
+            unsigned long _heap_std=cplr_bitmap_len;
+            data = args[i];
+            double segment;
+            if(data.at(data.length() - 1) == 'b'){ // bytes
+               segment = 1;
+               data = trim(data);
+            }
+            else if(data.at(data.length() - 1) == 'k'){ // kb
+               segment = 1000;
+               data = trim(data);
+            }
+            else if(data.at(data.length() - 1) == 'm'){ // mb
+               segment = 1000000;
+               data = trim(data);
+            }
+            else if(data.at(data.length() - 1) == 'g'){ // gb
+               segment = 1000000000;
+               data = trim(data);
+            }
+            else
+               segment = 1000;
+            
+            double mb = atoi(data.c_str());
+            mb *= segment; // convert to actual bytes
+            cplr_bitmap_len = mb;
+            if(cplr_bitmap_len <= 0){
+              cplr_bitmap_len = _heap_std;
+              cout << "scorpionc:  warning: requested heap may be too large or equal to 0.\n";
+            }
+         }
+         else if(OPTION == "-c")
+            options.compileOnly=true;
+         else if(OPTION == "-w")
+            options.warnings=true;
+         else if(OPTION == "-wextra")
+            options.extendedWarnings=true;
          
          file_start++;
    }

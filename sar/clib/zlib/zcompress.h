@@ -30,6 +30,7 @@
  
  extern int *scz_freq2; 
 
+ #define DECOMPRESSION_OVERLOAD (64 * 1020 * 64) * 8
 
 /*------------------------------------------------------------*/
 /* Add an item to a value-sorted list of maximum-length N.    */

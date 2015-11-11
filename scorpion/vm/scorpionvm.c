@@ -59,7 +59,7 @@ string *ags;
 bool TRUE = true, FALSE = false;
 
 
-string build_version = "v1.0_5";
+string build_version = "v1.0_9";
 int revision_num = 7;
 
 string OPTION = "";
@@ -556,4 +556,5 @@ void Init_ShutdownScorpionVM()
     alog.ALOGV("--- VM is down, process exiting\n");
     exit(gSvm.exitval);
 }
+
 

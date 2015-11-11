@@ -46,9 +46,10 @@
  bool isnull(Object &obj){
     
     if(svmObjectHasInstance(obj, TYPEDEF_STRING))
-       return (obj.obj->strobj[0].array == nullptr);
+       return (obj.obj->strobj[0].array == nullptr || obj.obj->strobj[0].array == NULL);
     else
-       return (obj.obj->arrayobj->strobj[str_location].array == nullptr);
+       return (obj.obj->arrayobj->strobj[str_location].array == nullptr || 
+              obj.obj->arrayobj->strobj[str_location].array == NULL);
  }
  
  unsigned int at(Object &obj, long pos){

@@ -30,9 +30,9 @@
  
  using namespace std;
  
- int *scz_freq2=0; 
-
-
+ int *scz_freq2=0, w=0; 
+ extern unsigned long DECOMPRESS_WATCHDOG;
+ 
 /*------------------------------------------------------------*/
 /* Add an item to a value-sorted list of maximum-length N.    */
 /* Sort from largest to smaller values.  (A descending list.) */
@@ -404,8 +404,6 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
 }
 
 
-
-
 /************************************************************************/
 /* Scz_Compress_File - Compresses input file to output file.		*/
 /*  First argument is input file name.  Second argument is output file	*/
@@ -418,6 +416,7 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  int sz1=0, sz2=0, szi, success=1, flen, buflen;
  unsigned char ch, chksum;
  FILE *infile=0, *outfile=0;
+ DECOMPRESS_WATCHDOG=0;
 
  infile = fopen(infilename,"rb");
  if (infile==0) {
@@ -434,6 +433,15 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  flen = Scz_get_file_length( infile );
  buflen = flen / sczbuflen + 1;
  buflen = flen / buflen + 1;
+ 
+ DECOMPRESS_WATCHDOG+=buflen;
+ if(w==0 && ((DECOMPRESS_WATCHDOG >= DECOMPRESSION_OVERLOAD) || (DECOMPRESS_WATCHDOG >= 
+                           (DECOMPRESSION_OVERLOAD - (DECOMPRESSION_OVERLOAD/2))))) // are we close to a compression overload
+ {
+   w = 1;
+   zres._warnings_ << "zlib:  warning: Possible Decompression overload!\n";
+ }
+ 
  if (buflen>=SCZ_MAX_BUF) {
    zres.reason << "zlib:  error: Buffer length too large.\n";
   return ZLIB_FAILURE;
@@ -503,12 +511,22 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  int sz1=0, sz2=0, szi, success=1, buflen;
  unsigned char chksum;
  FILE *outfile=0;
+ DECOMPRESS_WATCHDOG=0;
 
  outfile = fopen(outfilename,"wb");
  if (outfile==0) { zres.reason << "zlib:  error: Cannot open output file '" << outfilename << "' for writing.\n"; return ZLIB_FAILURE; }
 
  buflen = N / sczbuflen + 1;
  buflen = N / buflen + 1;
+ 
+ DECOMPRESS_WATCHDOG+=buflen;
+ if(w==0 && ((DECOMPRESS_WATCHDOG >= DECOMPRESSION_OVERLOAD) || (DECOMPRESS_WATCHDOG >= 
+                           (DECOMPRESSION_OVERLOAD - (DECOMPRESSION_OVERLOAD/2))))) // are we close to a compression overload
+ {
+   w =1;
+   zres._warnings_ << "zlib:  warning: Possible Decompression overload!\n";
+ }
+ 
  if (buflen>=SCZ_MAX_BUF) { zres.reason << "zlib:  error: Buffer length too large.\n"; return ZLIB_FAILURE; }
 
  while (sz1 < N)
@@ -575,8 +593,19 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
  struct scz_item *buffer0_hd=0, *buffer0_tl=0, *bufpt;
  int sz1=0, sz2=0, szi, success=1, buflen;
  unsigned char chksum;
+ if(lastbuf_flag)
+    DECOMPRESS_WATCHDOG=0;
 
  buflen = N;
+ 
+ DECOMPRESS_WATCHDOG+=buflen;
+ if(w==0 && ((DECOMPRESS_WATCHDOG >= DECOMPRESSION_OVERLOAD) || (DECOMPRESS_WATCHDOG >= 
+                           (DECOMPRESSION_OVERLOAD - (DECOMPRESSION_OVERLOAD/2))))) // are we close to a compression overload
+ {
+   w =1;
+   zres._warnings_ << "zlib:  warning: Possible Decompression overload!\n";
+ }
+ 
  if (buflen>=SCZ_MAX_BUF) { zres.reason << "zlib:  error: Buffer length too large.\n"; return ZLIB_FAILURE;}
 
  chksum = 0;  szi = 0;
@@ -610,9 +639,8 @@ for (j=0; j!=nreplaced+1; j++) markerlist[ char_freq[j].phrase[0] ] = j;
 
  // printf("Initial size = %d,  Final size = %d\n", sz1, sz2);
  // printf("Compression ratio = %g : 1\n", (float)sz1 / (float)sz2 );
- zres.size_t.byte1 += sz1; // inital size
- zres.size_t.byte2 += sz2; // final size
- 
+ zres.size_t.byte1 = sz1; // inital size
+ zres.size_t.byte2 = sz2; // final size
  zres.compressionRatio = (float)sz1 / (float)sz2;
  free(scz_freq2);
  scz_freq2 = 0;

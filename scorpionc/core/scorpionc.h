@@ -46,6 +46,8 @@ struct option {
     string output_file;
     string *ags;
     int ags_t;
+    
+    bool compileOnly, warnings, extendedWarnings;
 };
   
 extern option options;

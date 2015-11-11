@@ -1,0 +1,11 @@
+module test;
+
+def __init(string** args)
+{
+  asm {
+    cout "Hello, World!"
+  }
+  
+  return 0;
+}
+

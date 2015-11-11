@@ -136,8 +136,11 @@ string getheadertxt()
          else
            ss << c;
      }
-    if(decode)    
-      return Binary::decode_str(ss.str());
+    if(decode){    
+      stringstream stream_buf;
+      Binary::decode_str(ss.str(), stream_buf);
+      return stream_buf.str();
+    }
     else 
       return ss.str();
 }
@@ -165,7 +168,6 @@ string rmnln(string data){
  {
      Exception::trace.addproto("vm.internal.system.process", "XSO", 1);
      XSO_F = data;
-     Binary::show = false;   
      soIdx = 0;
      
      u4 magic;
@@ -502,7 +504,6 @@ static int LastChar = ' ';
      alog.ALOGI("preprocessing XSO image.");
      
      XSO_F = data;
-     Binary::show = false;   
      decode = false;    
      soIdx = 0;
      gSvm.bytestream = new double[gSvm.appheader.filesize.byte1]; // set the byte stream to match expected image size
