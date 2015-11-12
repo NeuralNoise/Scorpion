@@ -213,13 +213,13 @@ namespace lexr
 
          while (end != itr1)
          {
-            if ('\\' == (*itr1))
+            if ('$' == (*itr1))
             {
                ++removal_count;
 
                if (end == ++itr1)
                   break;
-               else if ('\\' != (*itr1))
+               else if ('$' != (*itr1))
                {
                   switch (*itr1)
                   {
@@ -384,7 +384,7 @@ namespace lexr
             case e_mod         : return "%";
             case e_pow         : return "^";
             case e_colon       : return ":";
-            case e_semicolon       : return ";";
+            case e_semicolon   : return ";";
             default            : return "UNKNOWN";
          }
       }

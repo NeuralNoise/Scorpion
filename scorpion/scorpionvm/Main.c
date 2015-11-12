@@ -65,15 +65,16 @@ void printusage()
   printf("           (to execute scorpion object file)\n");
   printf("or    scorpion [-options] -sar sarfile [args...]\n");
   printf("           (to execute a sar file)\n\n");
-  printf("   -version        print the current product version and exit.\n");
-  printf("   -showversion    print the current product version and continue.\n");
-  printf("   -help -?        display this help message.\n");
-  printf("   -da -disableassertions\n");
-  printf("                   disable assertions.\n");
-  printf("   -Xms <size>     set the minimum heap size.\n");
-  printf("   -Xmx <size>     set the max heap size.\n");
-  printf("   -sdb            enable the scorpion debug bridge.\n");
-  printf("   -?std           print non-standard options.\n");
+  printf("[-options]\n\n");
+  printf("    -version        print the current product version and exit.\n");
+  printf("    -showversion    print the current product version and continue.\n");
+  printf("    -help -?        display this help message.\n");
+  printf("    -da -disableassertions\n");
+  printf("                    disable assertions.\n");
+  printf("    -Xms <size>     set the minimum heap size.\n");
+  printf("    -Xmx <size>     set the max heap size.\n");
+  printf("    -sdb            enable the scorpion debug bridge.\n");
+  printf("    -?std           print non-standard options.\n");
   printf("See %s for more details.\n", product_website.c_str());
 }
 
@@ -118,15 +119,6 @@ int main(int argc, const char **argv){
      */
     optionCount = argc - 1;
     Exception::trace.addproto("vm.internal.system.main", "[ScorpionVirtualMachine]", 1);
-
-    // Setup VM and compiler directories
-    status = system("sudo mkdir -p /usr/share/scorpion/lib");
-    status = system("sudo mkdir -p /usr/share/scorpion/vm/log");
-
-    /* Setup Logging Service */
-    alog.setup(7);
-    alog.setClass("ALog");
-    alog.ALOGI("Log setup: using /usr/scorpion/vm/log");
 
     /*
      * First level Arg check.  Check if argumets arent faulty
@@ -207,7 +199,7 @@ int main(int argc, const char **argv){
     * boot err.
     */
     bail:
-        /*printf("Shutting down Dalvik VM\n");*/
+        /*printf("Shutting down Scorpion VM\n");*/
      if (gSvm.vm.status != 0) 
         Init_ShutdownScorpionVM();
     

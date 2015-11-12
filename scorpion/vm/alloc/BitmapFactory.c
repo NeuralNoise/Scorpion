@@ -63,7 +63,7 @@ using namespace std;
      bitmap.objs = (Object*)malloc(_base);
      bitmap.stack = new (nothrow) ArrayObject[1];
          
-     if(bitmap.stack == NULL || bitmap.objs == nullptr)
+     if(bitmap.stack == nullptr || bitmap.objs == NULL)
          goto bail;
      
      bitmap.stack->generic = (double*)malloc(stack);

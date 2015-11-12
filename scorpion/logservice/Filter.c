@@ -24,7 +24,7 @@ string print(int priority, string tag, string message, bool log, string file, st
      if(!log)
          return stackmsg;
      else if(log){
-         if(priority <= p)
+         if(priority >= p)
              return println(priority,tag,message, file, stackmsg);
          else
              return stackmsg;

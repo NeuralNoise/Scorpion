@@ -63,6 +63,7 @@
     string *ags;
     int ags_t;
     bool out;
+    int llevel;
   };
   
   class ScorpionEnv;

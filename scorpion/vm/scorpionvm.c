@@ -40,6 +40,7 @@
 #include "exception.h"
 #include "../clib/filestream.h"
 #include "../libxso/xso.h"
+#include "../logservice/Log.h"
 #include "scorpion_env.h"
 #include "Globals.h"
 #include <stdlib.h>
@@ -59,7 +60,7 @@ string *ags;
 bool TRUE = true, FALSE = false;
 
 
-string build_version = "v1.0_9";
+string build_version = "v1.0_11";
 int revision_num = 7;
 
 string OPTION = "";
@@ -67,7 +68,7 @@ int arg_start = 0;
 int XSO_PATH = 0;
 int SAR_PATH = 0;
 
-#define NUM_OPTIONS 12
+#define NUM_OPTIONS 19
 #define SINGLE_ENVIRONMENT 1
 string args[ NUM_OPTIONS ];
 
@@ -78,6 +79,7 @@ void setuparguments()
 {
    options.minHeap = HEAP_STANDARD;
    options.maxHeap = HEAP_STANDARD *2;
+   options.llevel = VERBOSE;
    args[0] = "-version";
    args[1] = "-showversion";
    args[2] = "-help";
@@ -90,6 +92,13 @@ void setuparguments()
    args[9] = "-sar";
    args[10] = "-?std";
    args[11] = "-out";
+   args[12] = "-log=verbose";
+   args[13] = "-log=debug";
+   args[14] = "-log=info";
+   args[15] = "-log=warning";
+   args[16] = "-log=error";
+   args[17] = "-log=assert";
+   args[18] = "-log=off";
 }
 
 bool arg(string arg)
@@ -126,7 +135,10 @@ void print_non_std_usage()
   printf("           (to execute scorpion object file)\n");
   printf("or    scorpion [-options] -sar sarfile [args...]\n");
   printf("           (to execute a sar file)\n\n");
-  printf("   -out            output application info upon execution.\n");
+  printf("[-options]\n\n");
+  printf("    -out            output application info upon execution.\n");
+  printf("    -log=<level>    set the system log level (standard level: verbose).\n");
+  printf("                    \"-log=off\" to shut off system logging.\n");
   printf("See %s for more details.\n", product_website.c_str());
 }
 
@@ -266,6 +278,20 @@ void process_ags(int argc, const char** args)
             SAR_PATH=(1);
             return;
          }
+         else if(OPTION == "-log=verbose")
+            options.llevel = VERBOSE;
+         else if(OPTION == "-log=debug")
+            options.llevel = DEBUG;
+         else if(OPTION == "-log=info")
+            options.llevel = INFO;
+         else if(OPTION == "-log=warning")
+            options.llevel = WARN;
+         else if(OPTION == "-log=error")
+            options.llevel = ERROR;
+         else if(OPTION == "-log=assert")
+            options.llevel = ASSERT;
+         else if(OPTION == "-log=off")
+            options.llevel = ASSERT+1;  // weird trick to filter out logging
    }
    Exception("Failed to properly parse VM args.","RuntimeException");
 }
@@ -345,9 +371,14 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
     
     // process arguments
     setuparguments();
-    alog.ALOGA("Processing VM arguments.");
     process_ags(ags_t,args);
-      
+    
+    
+    /* Setup Logging Service */
+    alog.setup(options.llevel);
+    alog.setClass("ALog");
+    alog.ALOGI("Log setup: using /usr/scorpion/vm/log");
+    
     gSvm.Debug =  options.Debug;  
     if(XSO_PATH){
        
