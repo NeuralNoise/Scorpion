@@ -84,7 +84,7 @@
 
 namespace lexr
 {
-
+   unsigned long line_t;
    namespace details
    {
 
@@ -109,7 +109,7 @@ namespace lexr
                 ('%' == c) || (':' == c) ||
                 ('?' == c) || ('&' == c) ||
                 ('|' == c) || (';' == c) ||
-                ('!' == c);
+                ('!' == c) || ('.' == c);
       }
 
       inline bool is_letter(const char c)
@@ -255,13 +255,14 @@ namespace lexr
          e_eof         =   6, e_number      =   7, e_symbol      =   8,
          e_string      =   9, e_assign      =  10, e_shr         =  11,
          e_shl         =  12, e_lte         =  13, e_ne          =  14,
-         e_gte         =  15, e_lt          = '<', e_gt          = '>',
+         e_gte         =  15, e_parry       =  16,
+         e_lt          = '<', e_gt          = '>',
          e_eq          = '=', e_rbracket    = ')', e_lbracket    = '(',
          e_rsqrbracket = ']', e_lsqrbracket = '[', e_rcrlbracket = '}',
          e_lcrlbracket = '{', e_comma       = ',', e_add         = '+',
          e_sub         = '-', e_div         = '/', e_mul         = '*',
          e_mod         = '%', e_pow         = '^', e_colon       = ':',
-         e_semicolon   = ';'
+         e_semicolon   = ';', e_line        = 'n', e_dot        = '.'
       };
 
       token()
@@ -322,6 +323,14 @@ namespace lexr
          type     = e_string;
          value    = s;
          position = p;
+         return *this;
+      }
+      
+      inline token& set_line()
+      {
+         type     = e_line;
+         value    ="\\n";
+         position = 0;
          return *this;
       }
 
@@ -385,6 +394,9 @@ namespace lexr
             case e_pow         : return "^";
             case e_colon       : return ":";
             case e_semicolon   : return ";";
+            case e_parry       : return "**";
+            case e_line        : return "\\n";
+            case e_dot         : return ".";
             default            : return "UNKNOWN";
          }
       }
@@ -435,22 +447,26 @@ namespace lexr
          base_itr_ = str.data();
          s_itr_    = str.data();
          s_end_    = str.data() + str.size();
+         line_t=0;
 
          eof_token_.set_operator(token_t::e_eof,s_end_,s_end_,base_itr_);
          token_list_.clear();
+         bool ok=true;
          
+         int i = 1;
          while (!is_end(s_itr_))
          {
+          // cout << "char" << i++ << "\n";
             scan_token();
 
             if (token_list_.empty())
                return true;
             else if (token_list_.back().is_error())
             {
-               return false;
+               ok = false;
             }
          }
-         return true;
+         return ok;
       }
 
       inline bool empty() const
@@ -484,6 +500,16 @@ namespace lexr
          if (token_list_.end() != token_itr_)
          {
             return *token_itr_++;
+         }
+         else
+            return eof_token_;
+      }
+      
+      inline token_t& curr_token()
+      {
+         if (token_list_.end() != token_itr_)
+         {
+            return *token_itr_;
          }
          else
             return eof_token_;
@@ -541,6 +567,9 @@ namespace lexr
       {
          while (!is_end(s_itr_) && details::is_whitespace(*s_itr_))
          {
+            if(*s_itr_ == '\n')
+               line_t++;
+            
             ++s_itr_;
          }
       }
@@ -582,6 +611,9 @@ namespace lexr
 
          while (!is_end(s_itr_) && !test::comment_end(*s_itr_,*(s_itr_ + 1),mode))
          {
+            if(*s_itr_ == '\n')
+               line_t++;
+            
             ++s_itr_;
          }
 
@@ -597,38 +629,46 @@ namespace lexr
       {
          skip_whitespace();
          skip_comments();
-
+ 
+         //cout << "char " << (*s_itr_) << endl;
          if (is_end(s_itr_))
          {
+            //cout << "eof\n";
             return;
          }
          else if (details::is_operator_char(*s_itr_))
          {
+            //cout << "operator\n";
             scan_operator();
             return;
          }
-         else if (details::is_letter(*s_itr_))
+         else if (details::is_letter(*s_itr_) || ('_' == (*s_itr_)))
          {
+            //cout << "letter\n";
             scan_symbol();
             return;
          }
-         else if (details::is_digit((*s_itr_)) || ('.' == (*s_itr_)))
+         else if (details::is_digit((*s_itr_)))
          {
+            //cout << "digit\n";
             scan_number();
             return;
          }
          else if ('"' == (*s_itr_))
          {
+            //cout << "string\n";
             scan_string();
             return;
          }
          else if ('\'' == (*s_itr_))
          {
+            //cout << "char\n";
             scan_char();
             return;
          }
          else
          {
+            //cout << "error_char\n";
             token_t t;
             t.set_error(token::e_error,s_itr_,s_itr_ + 2,base_itr_);
             token_list_.push_back(t);
@@ -655,6 +695,7 @@ namespace lexr
             else if ((c0 == ':') && (c1 == '=')) ttype = token_t::e_assign;
             else if ((c0 == '<') && (c1 == '<')) ttype = token_t::e_shl;
             else if ((c0 == '>') && (c1 == '>')) ttype = token_t::e_shr;
+            else if ((c0 == '*') && (c1 == '*')) ttype = token_t::e_parry;
 
             if (token_t::e_none != ttype)
             {
@@ -693,6 +734,7 @@ namespace lexr
          {
             ++s_itr_;
          }
+         
          token_t t;
          t.set_symbol(begin,s_itr_,base_itr_);
          token_list_.push_back(t);
@@ -1748,8 +1790,6 @@ namespace lexr
          }
 
          lexer_.begin();
-
-         next_token();
 
          return true;
       }

@@ -25,6 +25,7 @@
  */
  #include "cinclude.h"
  #include "compilr.h"
+ #include "../../Archive.h"
  #include "core.h"
  #include <string>
  #include <sstream>
@@ -35,42 +36,12 @@
  
  extern char* c_ptr(string data);
  
- void Compilr::Compile(string file, string output)
+ void Compilr::Compile_Buffer2Buffer(Archive &zip_archive, stringstream &__obuff__)
  {
-    cres.response = Cmplr_Compile_File( file, c_ptr(output) );
- }
- 
- void Compilr::Compile_Buffer2File(string buffer, string outfile)
- {
-     
- }
- 
- void Compilr::Compile_Buffer2Buffer(string buffer, stringstream &__obuff__, bool lastbuf)
- {
-     
- }
- 
- void Compilr::Compile_File2Buffer(string f, stringstream &__buf)
- {
-     
- }
- 
- void Compilr::Link(string file, string output)
- {
-     
- }
- 
- void Compilr::Link_Buffer2File(string buffer, string outfile)
- {
-     
+    cres.response = Cmplr_Compile_Zip( zip_archive, __obuff__ );
  }
  
  void Compilr::Link_Buffer2Buffer(string buffer, stringstream &__obuff__, bool lastbuf)
- {
-     
- }
- 
- void Compilr::Link_File2Buffer(string f, stringstream &__buf)
  {
      
  }

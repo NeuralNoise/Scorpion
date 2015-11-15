@@ -33,30 +33,12 @@
 #ifndef C_INCLUDE
 #define C_INCLUDE 
 
+#include "../../Archive.h"
 #include <string>
 #include <sstream>
 using namespace std;
 #define CMPLR_VERSION 1.0
 float compilr_version=CMPLR_VERSION;
-
-/************************************************************************/
-/* Cmplr_Compile_File - Compile input file to output file.		*/
-/*  First argument is input file name(MUST HAVE .scorpion or .sn extn.).  Second argument is output file	*/
-/*  name.  The two file names must be different.			*/
-/*  The generated output file will produce a .o file (this file must be linked before runing) */
-/************************************************************************/
-int Cmplr_Compile_File( string infilename, char *outfilename );
-
-
-/************************************************************************/
-/* Cmplr_Compile_Buffer2File - Compile string input buffer	*/
-/*  to an output file.  This routine is handy for applications wishing	*/
-/*  to compile their output directly while saving to disk.		*/
-/*  First argument is input string buffer,	*/
-/*  third is the output file name to store to.				*/
-/*  The generated output file will produce a .o file (this file must be linked before runing) */
-/************************************************************************/
-int Cmplr_Compile_Buffer2File( string buffer, char *outfilename );
 
 
 /************************************************************************/
@@ -68,18 +50,7 @@ int Cmplr_Compile_Buffer2File( string buffer, char *outfilename );
 /*  and the final parameter is a continuation flag.  Set true	*/
 /*  if last file to compile, otherwise set false if more files to come.	*/
 /************************************************************************/
-int Cmplr_Compile_Buffer2Buffer( string inbuffer, stringstream &outbuffer, int lastbuf_flag );
-
-
-/***************************************************************************/
-/* Cmplr_Compile_File2Buffer - Compile input file to output buffer.  */
-/*  This routine is handy for applications wishing to read compressed data */
-/*  directly from disk and to compile the input directly while reading  */
-/*  from the disk.             						   */
-/*  First argument is input file name.  Second argument is output buffer   */
-/*  Input file name(MUST HAVE .scorpion or .sn extn.) to be compiled.	*/
-/**************************************************************************/
-int Cmplr_Compile_File2Buffer( string infilename, stringstream &__outbuff__);
+int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &outbuffer );
 
 /************************************************************************/
 /* Standard Linker routines for linking together multiple object files */
@@ -93,13 +64,7 @@ int Cmplr_Compile_File2Buffer( string infilename, stringstream &__outbuff__);
 /*  name.  The two file names must be different.                        */
 /*  Input file name(MUST HAVE .o extn.) to be linked.	*/
 /************************************************************************/
-int Cmplr_Link_File( char *infilename, char *outfilename );
-
-int Cmplr_Link_Buffer2File(char *buffer, string outfile);
- 
 int Cmplr_Link_Buffer2Buffer(char *buffer, stringstream &__obuff__, bool lastbuf);
- 
-int Cmplr_Link_File2Buffer(char *f, stringstream &__buf);
  
 
 void cmpir_cleanup();	/* Call after last Compilr call to free temporarily allocated memory. */

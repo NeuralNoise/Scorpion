@@ -69,6 +69,7 @@ class Archive {
     
     public:
       int extract(const char* file);
+      void clean();
       
     private:
       int unpack(string __outbuf__);

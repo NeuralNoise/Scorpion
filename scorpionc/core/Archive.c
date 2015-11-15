@@ -64,6 +64,15 @@ char nextToken()
     }
 }
 
+
+void Archive::clean()
+{
+    delete[] fmap;
+    sourceFiles="";
+    archiveHeader h;
+    header =h;
+}
+      
 int Archive::extract(const char* file)
 {
     fcontent = FileStream::getfile(file);
@@ -128,14 +137,14 @@ int Archive::extract(const char* file)
                         }
                         while(!eof);
                         
-                        int rez=FileStream::out("/usr/share/scorpion/lib/lib-compiler.zb", __buf__.str());
+                        int rez=FileStream::out("/usr/share/scorpion/lib/lib-tmp.zip", __buf__.str());
                         __buf__.str("");
                             
                         stringstream __ostream_buf__;
-                        zlib.Decompress_File2Buffer("/usr/share/scorpion/lib/lib-compiler.zb", __ostream_buf__);
+                        zlib.Decompress_File2Buffer("/usr/share/scorpion/lib/lib-tmp.zip", __ostream_buf__);
                             
                         if(rez==0)
-                            remove( "/usr/share/scorpion/lib/lib-compiler.zb" );
+                            remove( "/usr/share/scorpion/lib/lib-tmp.zip" );
                                
                         if(zres._warnings_.str() != "")
                             cout << zres._warnings_.str();

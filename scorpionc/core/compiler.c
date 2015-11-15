@@ -38,6 +38,7 @@
 #include "clib/filestream.h"
 #include "clib/zlib/zlib.h"
 #include "Archive.h"
+#include "clib/compilr/compilr.h"
 #include "compiler.h"
 #include <iostream>
 #include <stdio.h>
@@ -46,35 +47,43 @@
 using namespace std;
 
 Archive archive;
+Compilr kernal;
 
 extern Zlib zlib;
 
 int Compiler::compile(){
     stringstream ss;
     
-    int res=archive.extract(libraries[0].c_str());
+    for(int i = 0; i < size_t; i++)
+    {
+        int res=archive.extract(libraries[i].c_str());
     
-    switch( res ){
-        case -3:
-            cout << "Error: lib file: " << libraries[0] << " invalid magic number!" << endl;
-            return res;
-        break;
-        case -2:
-            cout << "Error: lib file: " << libraries[0] << " unexpected end of file!" << endl;
-            return res;
-        break;
-        case 0: break;
-        case -4: break;
-        default:
-            cout << "Error: lib file: " << libraries[0] << " sar file format error!" << endl;
-            return res;
-        break;
+        switch( res ){
+            case -3:
+                cout << "Error: lib file: " << libraries[0] << " invalid magic number!" << endl;
+                return res;
+            break;
+            case -2:
+                cout << "Error: lib file: " << libraries[0] << " unexpected end of file!" << endl;
+                return res;
+            break;
+            case 0: break;
+            case -4: break;
+            default:
+                cout << "Error: lib file: " << libraries[0] << " sar file format error!" << endl;
+                return res;
+            break;
+        }
+        
+        
+        stringstream _ostream_buf__;
+        kernal.Compile_Buffer2Buffer(archive, _ostream_buf__);
+        
+        if(res != 0)
+           return res;
+        
+        archive.clean();
     }
-    
-    // TODO: Compile each file
-    
-    if(res != 0)
-       return res;
     
     return 0;
 }

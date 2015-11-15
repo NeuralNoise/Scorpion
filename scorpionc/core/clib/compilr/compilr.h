@@ -28,6 +28,7 @@
  
  #include "../u1.h"
  #include "../u4.h"
+ #include "../../Archive.h"
  #include <string>
  #include <sstream>
  
@@ -89,14 +90,8 @@
  class Compilr {
      
      public:
-        void Compile(string file, string output);
-        void Compile_Buffer2File(string buffer, string outfile);
-        void Compile_Buffer2Buffer(string buffer, stringstream &__obuff__, bool lastbuf);
-        void Compile_File2Buffer(string f, stringstream &__buf);
-        void Link(string file, string output);
-        void Link_Buffer2File(string buffer, string outfile);
+        void Compile_Buffer2Buffer(Archive &zip_archive, stringstream &__obuff__);
         void Link_Buffer2Buffer(string buffer, stringstream &__obuff__, bool lastbuf);
-        void Link_File2Buffer(string f, stringstream &__buf);
         void Cleanup(bool full_flush);
  };
  
