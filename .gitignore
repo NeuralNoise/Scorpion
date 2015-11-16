@@ -1,9 +1,0 @@
-scorpion/clib/
-sar/clib/
-installer/clib/
-scorpionc/core/clib/
-scorpionc/core/Archive.c
-scorpionc/core/Archive.h
-sar/sarheader.c
-.c9/
-.gitignore
