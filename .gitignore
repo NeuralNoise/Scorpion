@@ -6,3 +6,4 @@ scorpionc/core/Archive.c
 scorpionc/core/Archive.h
 sar/sarheader.c
 .c9/
+.gitignore
