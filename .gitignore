@@ -2,3 +2,4 @@ scorpion/clib/
 sar/clib/
 installer/clib/
 scorpionc/core/clib/
+.gitignore
