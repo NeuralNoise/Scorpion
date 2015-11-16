@@ -2,7 +2,6 @@ scorpion/clib/
 sar/clib/
 installer/clib/
 scorpionc/core/clib/
-.gitignore
 scorpionc/core/Archive.c
 scorpionc/core/Archive.h
 sar/sarheader.c
