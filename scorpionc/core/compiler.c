@@ -79,9 +79,14 @@ int Compiler::compile(){
         stringstream _ostream_buf__;
         kernal.Compile_Buffer2Buffer(archive, _ostream_buf__);
         
-        if(res != 0)
-           return res;
+        if(cres.response == COMPILR_FAILURE){
+              cout << "\n" << cres.reason.str() << "Shutting down.\n";
+              return COMPILR_FAILURE;
+        }
+        else if(zres._warnings_.str() != "")
+              cout << cres._warnings_.str();
         
+        kernal.Cleanup( true );
         archive.clean();
     }
     

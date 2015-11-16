@@ -70,7 +70,7 @@
     }
  };
  
- struct module_def
+ struct module_definition
  {
     std::string name;
     
@@ -106,7 +106,7 @@
  
  struct parse_module_impl
  {
-    int parse(lexr::parser_helper &lex, module_def &mDef, std::string file)
+    int parse(lexr::parser_helper &lex, module_definition &mDef, std::string file)
     {
        stringstream ss;
        std::string tmp="";
@@ -126,35 +126,32 @@
              ss << tmp;
              dot=false;
           }
+          else if(lex.token_is(t.e_semicolon)){
+            if(dot)
+            {
+               cout << file << ":" << lexr::line_t << ":  error: expected symbol before ';'." << endl;
+               cout << "\tmodulename not set, compilation terminated.\n";
+               return -1;
+            }
+            break;
+          }
+          else if(lex.token_is(t.e_dot)){
+             ss << '.';
+             dot=true;
+          }
           else{
-               
-             if(lex.token_is(t.e_semicolon)){
-               if(dot)
-               {
-                  cout << file << ":" << lexr::line_t << ":  error: expected symbol before ';'." << endl;
-                  cout << "\tmodulename not set, compilation terminated.\n";
-                  return -1;
-               }
-               break;
-             }
-             else if(lex.token_is(t.e_dot)){
-                ss << '.';
-                dot=true;
-             }
-             else{
-                lexr::token t = lex.current_token();
-                cout << file << ":" << lexr::line_t << ":  error: expected symbol or dot before '" << t.value << "'." << endl; 
-                cout << "\tmodulename not set, compilation terminated.\n";
-                return -1;
-             }
-          } 
-       }
+             lexr::token t = lex.current_token();
+             cout << file << ":" << lexr::line_t << ":  error: expected symbol or dot before '" << t.value << "'." << endl; 
+             cout << "\tmodulename not set, compilation terminated.\n";
+             return -1;
+          }
+        } 
        mDef.name = ss.str();
        return 0;
     }
  };
  
- bool parse_module_definition(lexr::parser_helper &lexer, module_def &mod_def, std::string file_name)
+ bool parse_module_definition(lexr::parser_helper &lexer, module_definition &mod_def, std::string file_name)
  {
     parse_module_impl module_impl;
     return (module_impl.parse(lexer, mod_def, file_name) == 0);
@@ -181,7 +178,7 @@
         
         lex.init(source.str());
         
-        module_def mDef;
+        module_definition mDef;
         if(!parse_module_definition(lex, mDef, zip_archive.fmap[i].name))
            continue;
         
@@ -246,6 +243,8 @@
            __out_buf__.str("");
            __out_buf__ << __new_buf__.str();
            __new_buf__.str("");
+           
+           return 0;
         }
         
         __out_buf__.str("");

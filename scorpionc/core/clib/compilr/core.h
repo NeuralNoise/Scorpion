@@ -198,7 +198,7 @@
    */
    DataObject* obj;
    
-   string symbol; // the name of our object
+   string symbol, m; // the name of our object and the module it belongs to
    
    /* The size of our object */
    u1 size_t;
@@ -244,21 +244,6 @@
  */
  struct Method {
     string clazz, module, name;
-  
-    /* 
-    * This holds 2 key data dets
-    *
-    * 1. The return location
-    * 2. The jump location
-    *
-    * When calling a method, we jump to the 
-    * preprocessed location to which the method
-    * has been assigned. 
-    *
-    * The return location well also be set for 
-    * returning back to the position it was called.
-    */
-    u2 ref;
     
     /*
     * Wether or not this method is
@@ -268,27 +253,21 @@
   
  };
 
-  long jmpLocation(Method &m);
-  long returnLocation(Method &m);
-
  bool svmObjectIsDead(Object &obj);
 
  bool svmObjectHasInstance(Object &obj, int instance);
 
  void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status);
  
- Object findObjectByDescriptor(string desc);
+ Object& findObjectByDescriptor(string desc);
+ Object& findSpecificObjectByDescriptor(string module, string desc);
  
 /*
  * Properly initialize an Object.
  * void SVM_OBJECT_INIT(Object** obj, long location, int _typedef, u1 sz)
  */
- #define SVM_OBJECT_INIT(obj, _tdef, sz) \
-     svmInitHeapObject(obj, _tdef, sz, GC_CLEAN)
-
-/* debugging */
- void svmDumpObject(Object &obj); // wait for GC cleanup
- // We still free this object after calling the routine since the compiler has no GC
+ #define SVM_OBJECT_INIT(obj, _tdef, sz, name, m) \
+     svmInitHeapObject(obj, _tdef, sz, name, m, GC_CLEAN)
 
  bool isObjArray(Object &obj);
 

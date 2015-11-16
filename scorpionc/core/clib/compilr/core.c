@@ -37,9 +37,12 @@
  cmplr_item_2 *cplrfreelist2=0;
  #define sub_item_base_sz1 4
  
+ Object* memoryObjs;
+ Method* staticMethods;
+ 
  bool init = false;
- unsigned long cplr_item_buflen=2 * 1048576;
- unsigned long cplr_bitmap_len=4 * 1748576;
+ unsigned long cplr_item_buflen=4 * 1048576;
+ unsigned long cplr_bitmap_len=2 * 1748576;
  unsigned long cplr_item_sz1=0;
  
  
@@ -94,6 +97,8 @@
      if(fullFlush)
      {
          //Flush everything
+         free(memoryObjs);
+         free(staticMethods);
          init=false;
      }
     cplrfreelist1=NULL;
@@ -108,9 +113,13 @@
  {
      cplrfreelist2 = new cmplr_item_2[1];
      cplrfreelist2->c_items = (cmplr_item*) malloc (cplr_item_buflen+1);
-     if(cplrfreelist2->c_items == NULL){ cres.reason << "compilr:  error: could not initalize internal memory structures.\n"; return -1;}
+     if(cplrfreelist2->c_items == NULL){ cres.reason << "compilr:  error: could not initalize internal memory structures.\n"; return -1; }
      
      cplrfreelist2->j=cplr_item_buflen+1;
+     memoryObjs=(Object*)malloc( cplr_bitmap_len+1 );
+     staticMethods=(Method*)malloc( cplr_bitmap_len+1 );
+     if(memoryObjs == NULL || staticMethods == NULL){ cres.reason << "compilr:  error: could not initalize internal memory structures.\n"; return -1; }
+     
      init=true;
      return 0;
  }
@@ -126,46 +135,43 @@
      return 0;
  }
  
- long jmpLocation(Method &m)
- {
-     
- }
- 
- long returnLocation(Method &m)
- {
-     
- }
-
  bool svmObjectIsDead(Object &obj)
  {
-     
+    return (obj.init.byte1 != OBJECT_ALIVE);
  }
 
- bool svmObjectHasInstance(Object &obj, int instance)
+ bool svminstanceOf(Object &obj, int instance)
  {
-     
+     return (obj.instanceData.byte1 == instance);
  }
 
- void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status)
+ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, string name, string m, int gc_status)
  {
+     obj.obj=(DataObject*)malloc(1);
+     obj.obj->instanceData.byte1=_typedef_;
+     obj.obj->instanceData.byte2=gc_status;
+     obj.obj->size_t=objsz_t;
+     obj.obj->name=name;
+     obj.obj->m=m;
      
- }
-
-/* debugging */
- void svmDumpObject(Object &obj){
-     
+     //TODO: check typedef conditions and initalize
  }
 
  bool isObjArray(Object &obj)
  {
-     
+     return (obj.instanceData.byte1 == TYPEDEF_GENERIC_ARRAY || 
+          obj.instanceData.byte1 == TYPEDEF_STRING_ARRAY);
  }
 
  void freeObj(Object &obj)
  {
-     
+     obj.init = OBJECT_DEAD;
+     obj.instanceData.byte1=0;
+     obj.instanceData.byte2=0;
+     obj.size_t.byte1=0;
+     obj.symbol="";
+     obj.m="";
+     free(obj.obj);
  }
- 
- 
  
  
