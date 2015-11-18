@@ -60,23 +60,23 @@ int Compiler::compile(){
     
         switch( res ){
             case -3:
-                cout << "Error: lib file: " << libraries[0] << " invalid magic number!" << endl;
+                cout << "Error: lib file: " << libraries[i] << " invalid magic number!" << endl;
                 return res;
             break;
             case -2:
-                cout << "Error: lib file: " << libraries[0] << " unexpected end of file!" << endl;
+                cout << "Error: lib file: " << libraries[i] << " unexpected end of file!" << endl;
                 return res;
             break;
             case 0: break;
             case -4: break;
             default:
-                cout << "Error: lib file: " << libraries[0] << " sar file format error!" << endl;
+                cout << "Error: lib file: " << libraries[i] << " sar file format error!" << endl;
                 return res;
             break;
         }
         
         
-        stringstream _ostream_buf__;
+      /*  stringstream _ostream_buf__;
         kernal.Compile_Buffer2Buffer(archive, _ostream_buf__);
         
         if(cres.response == COMPILR_FAILURE){
@@ -86,7 +86,7 @@ int Compiler::compile(){
         else if(zres._warnings_.str() != "")
               cout << cres._warnings_.str();
         
-        kernal.Cleanup( true );
+        kernal.Cleanup( true );*/
         archive.clean();
     }
     

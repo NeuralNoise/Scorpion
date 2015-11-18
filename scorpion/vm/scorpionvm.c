@@ -129,11 +129,11 @@ string trim(string str)
 
 void print_non_std_usage()
 {
-  string product_website = "https://github.com/AndroDevcd/Scorpion/wiki";
+  string product_website = "https://github.com/AndroDevcd/Scorpion-Dist/wiki";
   
   printf("Usage scorpion [-options] xso [args...]\n");    
   printf("           (to execute scorpion object file)\n");
-  printf("or    scorpion [-options] -sar sarfile [args...]\n");
+  printf("or    scorpion [-options] -sar sarfile [args...]\n"); 
   printf("           (to execute a sar file)\n\n");
   printf("[-options]\n\n");
   printf("    -out            output application info upon execution.\n");

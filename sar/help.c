@@ -7,7 +7,7 @@
 #include <string>
 using namespace std;
 
-string build_version = "v0.1.0.20";
+string build_version = "v0.1.0.21";
 #define NUM_OPTIONS 6
 string args[ NUM_OPTIONS ];
 
@@ -23,7 +23,7 @@ void setup()
    args[1] = "-version";
    args[2] = "-a";
    args[3] = "-showversion";
-   args[4] = "-v";
+   args[4] = "-v"; 
    args[5] = "-?";
 }
 
@@ -52,7 +52,7 @@ void help()
 {
    cout << "Usage: sar [-options] [source-files...]\n" << endl;
    cout << "Source file must have a .scorpion or .sn extension to be packaged\n" << endl;
-   cout << "[-options]\n\n    -version          print the current product version and exit" << endl;
+   cout << "[-options]\n\n    -version          print the current product version and exit." << endl;
    cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    -a<file>          set the output archive file. Default is lib.sar." << endl;
    cout <<               "    -v                \"verbose mode\"; print out file packaging info." << endl;

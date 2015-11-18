@@ -4,7 +4,7 @@
 #include <string>
 using namespace std;
 
-string build_version = "v1.0.9";
+string build_version = "v1.0.10";
 #define NUM_OPTIONS 7
 string args[ NUM_OPTIONS ];
 
@@ -18,7 +18,7 @@ void setup()
    args[1] = "-version";
    args[2] = "-showversion";
    args[3] = "-i";
-   args[4] = "-r";
+   args[4] = "-r"; 
    args[5] = "-u";
    args[6] = "-?";
 }
@@ -49,7 +49,7 @@ void help()
    cout << "Usage: install [-options]" << endl;
    cout << "or     install [-options] [distribution package]\n" << endl;
    cout << "Your distribution package must be a .tar.gz file.\n" << endl;
-   cout << "[-options]\n\n    -version          print the current product version and exit" << endl;
+   cout << "[-options]\n\n    -version          print the current product version and exit." << endl;
    cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    -i<file>          set the distribution package file to be installed." << endl;
    cout <<               "    -r<dir>           set the directory to witch to reinstall Scorpion." << endl;
