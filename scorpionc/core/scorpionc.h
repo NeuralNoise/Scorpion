@@ -47,7 +47,7 @@ struct option {
     string *ags;
     int ags_t;
     
-    bool compileOnly, warnings, extendedWarnings;
+    bool compileOnly, warnings, extendedWarnings, sharedLibrary;
 };
   
 extern option options;

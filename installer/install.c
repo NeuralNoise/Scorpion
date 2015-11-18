@@ -147,8 +147,6 @@ int install(){
             {
                 folder << ss.str().at(i);
             }
-            
-            cout << "folder " << folder.str() << endl;
                 
             sstream << "mkdir -p \"/usr/share/scorpion/sdk/" << folder.str() << "\"";
             exit_val = system(sstream.str().c_str());
@@ -399,7 +397,6 @@ int _reinstall()
     int exit_val, i_ok = 0;
     char answer;
     info_cfg icfg;
-    
     exit_val = chdir(reinstallDir.c_str());
     if(exit_val != 0){
         cout << "install:  error: failed to cd into " << reinstallDir << ".\n";
@@ -496,12 +493,14 @@ void parseargs(int argc, const char **args);
 void help();
 void setup();
 
-std::string getpath()
+string getpath()
 {
-  char *path=NULL;
-  size_t size;
-  path=getcwd(path,size);
-  return std::string(path);
+  char cwd[1024];
+  getcwd(cwd, sizeof(cwd));
+
+  string s;
+  s.assign( cwd );
+  return s;
 }
 
 /* UNIX install script */

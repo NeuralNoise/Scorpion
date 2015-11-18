@@ -1,0 +1,13 @@
+/*
+* This file will act as a text subject
+* for the language.
+*
+*/
+module org.scorpion.lang;
+
+def __init__(string** args)
+{
+  asm("cout 'Hello, World'");
+  return 0;
+}
+

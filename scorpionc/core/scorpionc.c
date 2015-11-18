@@ -125,7 +125,7 @@ int main(int argc, const char **argv)
                      /* Load compiler libraries */
                      compiler.libSize(1);
                      
-                     res+=compiler.loadLibrary("lib/lib-compiler-scorpionc-0.1.0.0.sar");
+                     res+=compiler.loadLibrary("lib/lib-compiler-scorpionc.sar");
                      
                      if(res == 0){
                        if(compiler.compile() != 0)

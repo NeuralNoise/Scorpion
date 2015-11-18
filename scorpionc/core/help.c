@@ -42,8 +42,8 @@
 #include <string>
 using namespace std;
 
-string build_version = "v0.1.0.8";
-#define NUM_OPTIONS 11
+string build_version = "v0.1.0.9";
+#define NUM_OPTIONS 12
 string args[ NUM_OPTIONS ];
 
 string OPTION = "";
@@ -58,6 +58,7 @@ void setup()
    options.compileOnly=false;
    options.warnings=false;
    options.extendedWarnings=false;
+   options.sharedLibrary=false;
    
    args[0] = "--help";
    args[1] = "-version";
@@ -70,6 +71,7 @@ void setup()
    args[8] = "-c";
    args[9] = "-w";
    args[10] = "-wextra";
+   args[11] = "-sl";
 }
 
 bool isarg(string arg)
@@ -107,6 +109,7 @@ void help()
    cout <<               "    -c                compile only and do not generate object file." << endl;
    cout <<               "    -w                allow warnings to be displayed." << endl;
    cout <<               "    -wextra           allow extended warnings to be displayed." << endl;
+   cout <<               "    -sl               create a native Scorpion shared library." << endl;
    cout <<               "    --help -?         display this help message." << endl;
    exit(1);
 }
@@ -258,6 +261,8 @@ void parseargs(int argc, const char **args)
             options.warnings=true;
          else if(OPTION == "-wextra")
             options.extendedWarnings=true;
+         else if(OPTION == "-sl")
+            options.sharedLibrary=true;
          
          file_start++;
    }

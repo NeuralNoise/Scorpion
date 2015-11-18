@@ -60,7 +60,7 @@ using namespace std;
             SCORPION_LOG_OUTPUT = "/usr/share/scorpion/vm/log/out.log";
          #endif
          #ifdef SCORPION_RUNTIME
-            SCORPION_LOG_OUTPUT "/usr/share/scorpion/sre/vm/log/out.log";
+            SCORPION_LOG_OUTPUT = "/usr/share/scorpion/sre/vm/log/out.log";
          #endif
          
          file = SCORPION_LOG_OUTPUT;
@@ -76,6 +76,8 @@ using namespace std;
             on = false; // we do this to skip logging
             return;
          }
+         else if(p == ASSERT+1)
+            on=false;
             
          precedence = p;
          stackmsg = "";
