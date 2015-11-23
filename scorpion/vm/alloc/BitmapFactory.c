@@ -144,12 +144,12 @@ using namespace std;
      if(!svmIsValidAddr(bitmap, dataset_obj, pos))
        Exception("Cannot access Object at address " + pos, "IllegalAccessExcpetion");
       
-     if(!svmObjectIsDead(bitmap.objs[pos]))
+     if(!svmObjectIsAlive(bitmap.objs[pos]))
        Exception("Object is null.", "NullPointerException");
  }
  
  void svmObjectAssign(Object &obj, Object &obj2){
-     if(!svmObjectIsDead(obj))
+     if(!svmObjectIsAlive(obj))
        Exception("Object is null.", "NullPointerException");
      obj = obj2; // we assume compiler did object checking
  }

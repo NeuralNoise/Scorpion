@@ -428,7 +428,7 @@ static int LastChar = ' ';
  
  void HandleStringInstruction(){
      getNextToken();
-     if(CurTok == OP_STRCONST || CurTok == OP_COUT || CurTok == OP_STR_APND){
+     if(CurTok == OP_COUT){
          string msg = getheadertxt();
          long arg1 = msg.size();
          
@@ -438,7 +438,20 @@ static int LastChar = ' ';
              setbyte((int) msg.at(i));
              
          getNextToken();
-     } 
+     }
+     else if(CurTok == OP_STRCONST){
+         long arg1 = atoi(getheadertxt().c_str());
+         string msg = getheadertxt();
+         long arg2 = msg.size();
+         
+         setbyte(CurTok);
+         setbyte(arg1);
+         setbyte(arg2);
+         for(int i = 0; i < arg2; i++)
+             setbyte((int) msg.at(i));
+             
+         getNextToken();
+     }
      else
         preexecute_err();
  }
@@ -473,7 +486,7 @@ static int LastChar = ' ';
      else if(CurTok == OP_SCONST || CurTok == OP_BCONST || CurTok == OP_CCONST || CurTok == OP_RSHFT 
        || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF 
        || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST 
-       || CurTok == OP_THROW){
+       || CurTok == OP_THROW || CurTok == OP_STR_APND || CurTok == OP_ASSN){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
         setbyte(CurTok);

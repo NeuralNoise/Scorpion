@@ -38,6 +38,7 @@
  #include "Array.h"
  #include "../exception.h"
  #include <sstream>
+ #include <iostream>
  using namespace std;
  
  
@@ -53,7 +54,7 @@
  }
  
  unsigned int at(Object &obj, long pos){
-     if(!svmObjectIsDead(obj))
+     if(!svmObjectIsAlive(obj))
         Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
@@ -63,7 +64,7 @@
  }
  
   void assign(Object &obj, string data){
-     if(!svmObjectIsDead(obj))
+     if(!svmObjectIsAlive(obj))
         Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING)){
@@ -80,7 +81,7 @@
  }
  
  string getstr(Object &obj){
-    if(!svmObjectIsDead(obj))
+    if(!svmObjectIsAlive(obj))
         Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
@@ -96,7 +97,7 @@
  }
  
  unsigned int size(Object &obj){
-     if(!svmObjectIsDead(obj))
+     if(!svmObjectIsAlive(obj))
         Exception("String Object has not been created!", "DeadObjectException");
         
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
@@ -107,7 +108,7 @@
  
  void concat(Object &obj, string data){
       
-     if(!svmObjectIsDead(obj))
+     if(isnull(obj))
         Exception("String Object is null!", "NullPointerException");
         
      ArrayObject* aobj = tochararray(data);  

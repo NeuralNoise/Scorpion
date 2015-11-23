@@ -73,7 +73,7 @@
      
      gc_objc = 0;
      for(long i = 0; i < bitmap.size_t; i++){
-         if(!svmObjectIsDead(bitmap.objs[i]) && !objIsDirty(bitmap.objs[i]))
+         if(!svmObjectIsAlive(bitmap.objs[i]) && !objIsDirty(bitmap.objs[i]))
              continue;
              
          free(bitmap.objs[i].obj);

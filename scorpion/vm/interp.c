@@ -22,6 +22,7 @@ int svm_main = 0;
 
 stringstream mthdname, classname, modulename;
 int mthdptr = 0;
+void _cout_(string output);
 
 void getMethodName(long ptr){
     
@@ -137,7 +138,7 @@ void printf_obj_content(long addr, char form)
   else if(form == 's')
     cout << (int) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
   else if(form == 'S')
-    cout << fromchararray(gSvm.env->getBitmap().objs[addr].obj->strobj->array[default_loc]);
+    _cout_(fromchararray(gSvm.env->getBitmap().objs[addr].obj->strobj->array[default_loc]));
   else //form == v
     cout << svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
 }
@@ -195,6 +196,80 @@ double math(long instruction){
         return (char) a % (char) b;
      else
         return 0;
+}
+
+void _cout_(string output)
+{
+  for(long i = 0; i < output.size(); i++){
+    if(output.at(i) != '$'){
+      cout << output.at(i);
+      continue;
+    }
+    else {
+       if(!((i + 1) < output.size())){
+          cout << (char) 244;
+          return;
+        }
+        
+       
+       char bad_char=(131);  
+       i++;
+       switch ( output.at(i) ){
+           case '$':
+              cout << '$'; continue;
+           case 'n':
+              cout << endl; continue;
+           case 'b':
+              cout << '\b'; continue;
+           case 't':
+              cout << '\t'; continue;
+           case 'f':
+              cout << '\f'; continue;
+           case 'r':
+              cout << '\r'; continue;
+           case '"':
+              cout << "\""; continue;
+           case '\'':
+              cout << "'"; continue;
+           case '[': // print variable data example:  $[v483|
+              {
+                i++;
+                if(!((i) < output.size())){
+                  cout << bad_char;
+                  return;
+                }
+                int form = output.at(i);
+                stringstream  ss;
+                ss << "";
+                i++;
+                
+                for(long i2 = i; i < output.size(); i++){
+                    if(isdigit(output.at(i)))
+                      ss << output.at(i);
+                    else{
+                      if(ss.str() == ""){
+                         cout << bad_char;
+                         return;
+                      }
+                      
+                      long addr = atoi(ss.str().c_str());
+                      printf_obj_content(addr, form);
+                      continue;
+                    }
+                }
+                break;
+              }
+           case '#':
+              cout << std::flush; continue;
+           case '!': // TODO: change color
+              {
+                return;
+              }
+           default:
+              cout << bad_char; continue;
+       }
+    }
+  }
 }
 
 // TODO: Finish implementing the rest of the instructions
@@ -333,7 +408,7 @@ void Scorpion_VMExecute(){
           goto exe;
           case OP_KILL:
                {
-                   if(!svmObjectIsDead(gSvm.env->getBitmap().objs[(long) arguments.byte1]))
+                   if(!svmObjectIsAlive(gSvm.env->getBitmap().objs[(long) arguments.byte1]))
                      goto exe;
                      
                    svmDumpObject(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
@@ -367,7 +442,7 @@ void Scorpion_VMExecute(){
           case OP_LBL: goto exe;  // this instruction does nothing, it was executed during vm init
           default:
              if(i == OP_DELETE || i == OP_DELETE_ARRY){
-                 if(!svmObjectIsDead(gSvm.env->getBitmap().objs[(long) arguments.byte1]))
+                 if(!svmObjectIsAlive(gSvm.env->getBitmap().objs[(long) arguments.byte1]))
                          goto exe;
                          
                    freeObj(gSvm.env->getBitmap().objs[(long) arguments.byte1]); // arrays and generic objects can be freed the same way
@@ -468,6 +543,13 @@ void Scorpion_VMExecute(){
                   svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], i);
                }
           goto exe;
+          case OP_STR_APND:
+                 concat(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
+                        fromchararray(gSvm.env->getBitmap().objs[(long) arguments.byte2].obj->strobj->array[default_loc]));
+          goto exe;
+          case OP_ASSN:
+                 gSvm.env->getBitmap().objs[(long) arguments.byte1] = gSvm.env->getBitmap().objs[(long) arguments.byte2];
+          goto exe;
        } // run each instr
        goto exe;
     group3:
@@ -531,82 +613,8 @@ void Scorpion_VMExecute(){
                  assign(gSvm.env->getBitmap().objs[(long) arguments.byte1], output);
                }
           goto exe;
-          case OP_STR_APND:
-               {
-                 string output = gSvm.appholder.getStr();
-                 concat(gSvm.env->getBitmap().objs[(long) arguments.byte1], output);
-               }
-          goto exe;
-          case OP_COUT: // output data to the console
-            {
-              string output =  gSvm.appholder.getStr();
-              for(long i = 0; i < output.size(); i++){
-                if(output.at(i) != '$'){
-                  cout << output.at(i);
-                  continue;
-                }
-                else {
-                   if(!((i + 1) < output.size())){
-                      cout << (char) 244;
-                      goto exe;
-                    }
-                    
-                   
-                   char bad_char=(131);  
-                   i++;
-                   switch ( output.at(i) ){
-                       case '$':
-                          cout << '$'; goto exe;
-                       case 'n':
-                          cout << endl; goto exe;
-                       case 'b':
-                          cout << '\b'; goto exe;
-                       case 't':
-                          cout << '\t'; goto exe;
-                       case 'f':
-                          cout << '\f'; goto exe;
-                       case 'r':
-                          cout << '\r'; goto exe;
-                       case '[': // print variable data example:  $[v483|
-                          {
-                            i++;
-                            if(!((i) < output.size())){
-                              cout << bad_char;
-                              goto exe;
-                            }
-                            int form = output.at(i);
-                            stringstream  ss;
-                            ss << "";
-                            i++;
-                            
-                            for(long i2 = i; i < output.size(); i++){
-                                if(isdigit(output.at(i)))
-                                  ss << output.at(i);
-                                else{
-                                  if(ss.str() == ""){
-                                     cout << bad_char;
-                                     goto exe;
-                                  }
-                                  
-                                  long addr = atoi(ss.str().c_str());
-                                  printf_obj_content(addr, form);
-                                  goto exe;
-                                }
-                            }
-                            break;
-                          }
-                       case '#':
-                          cout << std::flush; goto exe;
-                       case '!': // TODO: change color
-                          {
-                            goto exe;
-                          }
-                       default:
-                          cout << bad_char; goto exe;
-                   }
-                }
-              }
-            }
+          case OP_COUT: // output data to the console;
+              _cout_(gSvm.appholder.getStr());
           goto exe;
        } // run each instr
        goto exe;

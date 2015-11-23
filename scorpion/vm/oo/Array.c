@@ -41,6 +41,7 @@
  #include <string>
  #include <stdlib.h> 
  #include <sstream>
+ #include <iostream>
  
  using namespace std;
   
@@ -50,10 +51,10 @@
      if(obj == nullptr)
         return obj;
     
-     obj->generic = (double*)malloc(data.size());
+     obj->generic = new (nothrow) double[data.size()];
      obj->length = data.size();    
      
-     if(obj->generic == NULL)
+     if(obj->generic == nullptr)
         return obj;
      
      if(obj->length > STR_LIMIT)
@@ -78,7 +79,6 @@
      
      stringstream ss;
      ss << fromchararray(arrayobj) << fromchararray(arrayobj2);
-       
      return tochararray(ss.str());
  }
  
@@ -86,7 +86,7 @@
  
  /* Generic array parsing stuff */
  double get(Object &obj, long pos){
-     if(!svmObjectIsDead(obj))
+     if(!svmObjectIsAlive(obj))
           segfault();
   
      if(pos >= obj.obj->arrayobj->length){
@@ -99,7 +99,7 @@
  }
  
  void set(Object &obj, long pos, double default_value){
-     if(!svmObjectIsDead(obj))
+     if(!svmObjectIsAlive(obj))
           segfault();
           
      if(pos >= obj.obj->arrayobj->length){

@@ -225,7 +225,7 @@
   long jmpLocation(Method &m);
   long returnLocation(Method &m);
 
-bool svmObjectIsDead(Object &obj);
+bool svmObjectIsAlive(Object &obj);
 
 bool svmObjectHasInstance(Object &obj, int instance);
 

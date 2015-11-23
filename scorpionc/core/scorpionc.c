@@ -40,6 +40,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <sstream>
+#include <stdlib.h>
 #include <string>
 using namespace std;
 
@@ -132,7 +133,7 @@ int main(int argc, const char **argv)
                           return -1;
                        
                        // run compiled file
-                       // system("scorpion compiler.xso [args..]");
+                        system("scorpion /usr/share/scorpion/lib/compiler.xso ");
                      }
                      else
                        return res;

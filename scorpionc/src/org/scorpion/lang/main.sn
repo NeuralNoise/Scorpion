@@ -14,6 +14,16 @@ def __init__(string** args)
        cout (int) i
        d_const @pi #3.13152
        cout 'pi is ' cout pi cout '!$n'
+       c_const @f #10
+       cout 'f ->' cout (int) f cout '$n'
+       str_const @g 'Hello, World 3!$n'
+       cout g
+       str_const @h 'str2'
+       str_apnd g h
+       cout 'g=$'' cout g cout '$'$n'
+       assn i pi
+       cout i cout '$n'
+       
       ");
   // TODO: parse cout strings
   // TODO: change cout objects to output data based on typedefs (print array obj address when applicable)

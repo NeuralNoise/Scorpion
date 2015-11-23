@@ -53,7 +53,6 @@ extern Zlib zlib;
 
 int Compiler::compile(){
     stringstream ss;
-    
     for(int i = 0; i < size_t; i++)
     {
         int res=archive.extract(libraries[i].c_str());
@@ -84,8 +83,10 @@ int Compiler::compile(){
         else if(zres._warnings_.str() != "")
               cout << cres._warnings_.str();
         
-        if(_ostream_buf__.str() != "")
-           FileStream::out("compiler.xso",_ostream_buf__.str());
+        if(_ostream_buf__.str() != ""){
+            if(FileStream::out("/usr/share/scorpion/lib/compiler.xso",_ostream_buf__.str()) != 0)
+              return COMPILR_FAILURE;
+        }
         
         kernal.Cleanup( true );
         archive.clean();

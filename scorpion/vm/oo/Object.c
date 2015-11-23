@@ -42,8 +42,8 @@
  
  using namespace std;
 
-bool svmObjectIsDead(Object &obj){
-   return (obj.init.byte1 != OBJECT_ALIVE);
+bool svmObjectIsAlive(Object &obj){
+   return (obj.init.byte1 == OBJECT_ALIVE);
 }
 
 bool svmObjectHasInstance(Object &obj, int instance){
@@ -51,8 +51,6 @@ bool svmObjectHasInstance(Object &obj, int instance){
 }
 
 void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
-  if(!svmObjectIsDead(obj))
-        return;
   
   obj.init.byte1 = OBJECT_ALIVE;
   obj.instanceData.byte1 = _typedef_;
@@ -121,14 +119,14 @@ long returnLocation(Method &m){
 }
   
 void svmSetGenericValue(Object &obj, double value){
-    if(svmObjectIsDead(obj))
+    if(!svmObjectIsAlive(obj))
       Exception("Object was not initalized.", "DeadObjectException");
    
     obj.obj->generic = value;
 }
 
 double svmGetGenericValue(Object &obj){
-    if(svmObjectIsDead(obj))
+    if(!svmObjectIsAlive(obj))
       Exception("Object was not initalized.", "DeadObjectException");
    
     return obj.obj->generic;
@@ -148,7 +146,7 @@ bool isObjArray(Object &obj){
 }
 
 void freeObj(Object &obj){
-    if(!svmObjectIsDead(obj))
+    if(!svmObjectIsAlive(obj))
        return;
        
     free(obj.obj);
