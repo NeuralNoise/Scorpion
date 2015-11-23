@@ -67,21 +67,24 @@ using namespace std;
          bufferthreshold = 126 * (1000);  // 126 kb
          Class = "System";
          BaseClass = Class;
-         on = true;
-
-         int status = FileStream::out(file.c_str(), "");
-
-         if(status != 0){
-            cout << "warning: I/O err, unable to open system log file!\n";
-            on = false; // we do this to skip logging
-            return;
-         }
-         else if(p == ASSERT+1)
+         if(p == ASSERT+1)
             on=false;
-            
-         precedence = p;
-         stackmsg = "";
-         stackmsg += "=======System Dev Log begin=======\n";
+         else 
+            on=true;
+
+         if(on) {
+            int status = FileStream::out(file.c_str(), "");
+   
+            if(status != 0){
+               cout << "warning: I/O err, unable to open system log file!\n";
+               on = false; // we do this to skip logging
+               return;
+            }
+               
+            precedence = p;
+            stackmsg = "";
+            stackmsg += "=======System Dev Log begin=======\n";
+         }
      }
      void setClass(string name){
          Class = name;

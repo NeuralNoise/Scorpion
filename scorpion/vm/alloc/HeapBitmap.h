@@ -82,9 +82,6 @@
      ArrayObject* stack;
  };
  
- // TODO: attach new memory structure to vm
- // TODO: redesign the vm to better handle and use new memory structure
- 
  /*
  * Initalizes a HeapBitmap, This must be called before any other
  * svm methods that interact with the bitmap.

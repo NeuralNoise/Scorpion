@@ -12,10 +12,10 @@ extern long streamcount;
  double getb(){
     long pos = gSvm.vm.vStaticRegs[VREG_PC]++;
     
-    if(!(pos < streamcount))
+    if(pos > streamcount)
         return tok_eof;
 
-    return gSvm.bytestream[pos];
+    return gSvm.bytestream.valueAt(pos);
  }
 
  u4_d op_ags;
@@ -37,7 +37,7 @@ extern long streamcount;
      if(LastChar == tok_eof)
        return LastChar;
      
-     if( !(LastChar > 0) && !(LastChar <= sMaxOpcodeLimit))
+     if(LastChar < 0 || LastChar > sMaxOpcodeLimit)
         return tok_floating; // very bad
         
      agsclear();
@@ -50,6 +50,7 @@ extern long streamcount;
        || LastChar == OP_USLP || LastChar == OP_KILL || LastChar == OP_DELETE || LastChar == OP_DELETE_ARRY){ // push 7 or push *x
          instrgroup = 1;
          op_ags.byte1 = getb();
+         
          return LastChar;
      }
      if(LastChar == OP_ICONST || LastChar == OP_DCONST || LastChar == OP_FCONST || 

@@ -76,17 +76,18 @@ int Compiler::compile(){
         }
         
         
-      /*  stringstream _ostream_buf__;
+        stringstream _ostream_buf__;
         kernal.Compile_Buffer2Buffer(archive, _ostream_buf__);
         
-        if(cres.response == COMPILR_FAILURE){
-              cout << "\n" << cres.reason.str() << "Shutting down.\n";
+        if(cres.response == COMPILR_FAILURE)
               return COMPILR_FAILURE;
-        }
         else if(zres._warnings_.str() != "")
               cout << cres._warnings_.str();
         
-        kernal.Cleanup( true );*/
+        if(_ostream_buf__.str() != "")
+           FileStream::out("compiler.xso",_ostream_buf__.str());
+        
+        kernal.Cleanup( true );
         archive.clean();
     }
     

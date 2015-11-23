@@ -38,6 +38,7 @@
  #include "../vm/exception.h"
  #include "../clib/u4.h"
  #include "../clib/u2.h"
+ #include "../clib/zlib/zlib.h"
  #include "../clib/u1.h"
  #include "../clib/binary.h"
  #include "../logservice/alog.h"
@@ -149,8 +150,9 @@ string getimage()
 {
     Exception::trace.addproto("vm.internal.system.getimage", "XSO", 1);
     stringstream ss;
-    for(int i = soIdx; i < XSO_F.size(); i++)
+    for(int i = soIdx; i < XSO_F.size(); i++){
             ss << XSO_F.at(i) << "";
+    }
    return ss.str();
 }
 
@@ -186,7 +188,7 @@ string rmnln(string data){
 
      if(!equals(getch(), 0x7a))
         Exception("Invalid flag found in header.", "XSOFileFormatException");
-    
+        
      decode = false;    
      headerInf.name = getheadertxt();
      decode = true;
@@ -195,7 +197,7 @@ string rmnln(string data){
      
      if(!equals(getch(), 0xd9))
         Exception("Invalid flag found in header.", "XSOFileFormatException");
-     
+        
      headerInf.method_size.byte1 = atoi(getheadertxt().c_str());
      
      if(!equals(getch(), 0xAF))
@@ -240,6 +242,7 @@ string rmnln(string data){
         Exception("Invalid flag found in header.", "XSOFileFormatException");
      
      headerInf.version_number = getheadertxt();
+     decode=false;
     
      
      if(!equals(getch(), 0xEC))
@@ -257,7 +260,6 @@ string rmnln(string data){
      if(!equals(getch(), 0xFA))
         Exception("Invalid flag found in header.", "XSOFileFormatException");
      
-     decode = false;
      headerInf.log_precedence.byte1 = atoi(getheadertxt().c_str());
      decode = true;
      
@@ -283,14 +285,24 @@ string rmnln(string data){
      
      for(int i = 0; i < (12 + 1 + 20); i++)
         getch();  // eat all null values
-    
-     if(!equals(getch(), 0x1f))
-        Exception("Invalid flag found in header.", "XSOFileFormatException");
         
      alog.setClass("XSOImg");
      alog.ALOGI("XSO processing successful. Getting XSO Image.");
-     gSvm.image = rmnln(getimage());
-      // TODO: decode imagewith binary lib
+     Zlib zlib;
+     stringstream __img_buf__;
+     
+     zlib.Decompress_Buffer2Buffer(getimage(), __img_buf__);
+     if(zres.response == ZLIB_FAILURE){
+         cout << "\n" << zres.reason.str() << "Shutting down.\n";
+         zlib.Cleanup();
+         exit(0);
+     }
+     else if(zres._warnings_.str() != "")
+         cout << zres._warnings_.str();
+     
+     gSvm.image = __img_buf__.str();
+     __img_buf__.str("");
+     zlib.Cleanup();
  }
  
  
@@ -324,8 +336,9 @@ static int LastChar = ' ';
         alog.ALOGV("Image size bigger than specified. Try recompiling your application.");
         preexecute_err();
      }
-        
-     gSvm.bytestream[streamcount++] = byte;
+    
+     streamcount++;
+     gSvm.bytestream.add(byte);
  }
  
  void svmInitMethod(long pos, string name, long jmp_adr){
@@ -506,11 +519,12 @@ static int LastChar = ' ';
      XSO_F = data;
      decode = false;    
      soIdx = 0;
-     gSvm.bytestream = new double[gSvm.appheader.filesize.byte1]; // set the byte stream to match expected image size
-     if(gSvm.bytestream == nullptr){
+     if(gSvm.appheader.filesize.byte1 > XSO_MAX_BUF_LEN){
          alog.setClass("XSO");
          alog.ALOGV("error: could not create byte stream for image file processing.");
-         Exception("Could not allocate resources for running application.", "OutOfMemoryError");
+         stringstream ss;
+         ss << "Image size too large, size: " << gSvm.appheader.filesize.byte1 << " > (" << XSO_MAX_BUF_LEN << ")";
+         Exception(ss.str(), "MemoryOverloadErr");
      }
      
     getNextToken();
@@ -535,12 +549,11 @@ static int LastChar = ' ';
                 if(eof){
                   eof = false;
                   gSvm.image = "";
-                    // Add this in later
-                   /*  if(streamcount < gSvm.appheader.filesize.byte1){
-                        alog.setClass("XSO");
-                        alog.ALOGV("Image size smaller than specified. Try recompiling your application.");
-                        preexecute_err();
-                     }*/
+                  if(streamcount != gSvm.appheader.filesize.byte1){
+                      alog.setClass("XSO");
+                      alog.ALOGV("Image size does not match specified length. Try recompiling your application.");
+                      preexecute_err();
+                  }
                   return;
                 }
                 preexecute_err();

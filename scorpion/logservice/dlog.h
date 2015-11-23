@@ -60,19 +60,21 @@ using namespace std;
          on = x.headerInf.logging.byte1;
          bufferthreshold = 126 *(1000); // 126kb
          
-         int status = FileStream::out(file.c_str(), "");
-
-         if(status != 0){
-            stringstream ss;
-            ss << "warning: I/O err, unable to open application log file: '" << file << "'!\n";
-            cout << ss.str();
-            on = false; // we do this to skip logging
-            return;
+         if(on) {
+            int status = FileStream::out(file.c_str(), "");
+   
+            if(status != 0){
+               stringstream ss;
+               ss << "warning: I/O err, unable to open application log file: '" << file << "'!\n";
+               cout << ss.str();
+               on = false; // we do this to skip logging
+               return;
+            }
+            
+            precedence = p;    
+            stackmsg = "";
+            stackmsg += "=======System Dev Log begin=======\n";
          }
-        
-         precedence = p;    
-         stackmsg = "";
-         stackmsg += "=======System Dev Log begin=======\n";
      }
      string getFile(){
         return file;

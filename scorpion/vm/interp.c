@@ -78,7 +78,6 @@ void return_method(long addr){
        Exception(ss.str(), "MethodNotFoundException");
     }
     
-    gSvm.vm.flags[VFLAG_MTHDC]--;
     gSvm.vm.vStaticRegs[VREG_PC] = returnLocation(gSvm.mtds[addr]);
 }
 
@@ -114,6 +113,33 @@ long compare(long instruction){
         return a && b;
      else
         return 0;
+}
+
+void printf_obj_content(long addr, char form)
+{
+   if(gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_GENERIC_ARRAY ||
+      gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_STRING_ARRAY)
+   {
+     printf("0x%08x", (unsigned int) addr);
+     return;
+   }
+   
+  if(form == 'c')
+    cout << (char) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+  else if(form == 'b')
+    cout << (bool) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+  else if(form == 'f')
+    cout << (float) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+  else if(form == 'd')
+    cout << (double) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+  else if(form == 'i')
+    cout << (long) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+  else if(form == 's')
+    cout << (int) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+  else if(form == 'S')
+    cout << fromchararray(gSvm.env->getBitmap().objs[addr].obj->strobj->array[default_loc]);
+  else //form == v
+    cout << svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
 }
 
 double math(long instruction){
@@ -178,9 +204,10 @@ void Scorpion_VMExecute(){
   
   long i, g; // our dedicated instruction and igroup
   exe:
+   // cout << "exe" << endl;
     i = gSvm.appholder.getNextInstr();
     g = gSvm.appholder.getGroup();
-    
+   // cout << "i=" << i << endl;
     if(i == tok_eof){
       alog.ALOGV("fatal error: application attempting to close unexpectingly.");
       segfault();
@@ -239,7 +266,7 @@ void Scorpion_VMExecute(){
     group1:
        switch( i ) {
           case OP_RETURN:
-               if(arguments.byte1 == 0 && gSvm.vm.flags[VFLAG_MTHDC] == 0)
+               if(((long) arguments.byte1 == 0) && (--gSvm.vm.flags[VFLAG_MTHDC] <= 0))
                   return_main();
                else
                  return_method(arguments.byte1);
@@ -293,9 +320,8 @@ void Scorpion_VMExecute(){
       
                if(++gSvm.vm.vStaticRegs[VREG_SP] >= stacksz) 
                  Exception("The stack has overflowed with too much data.", "StackOverfowlException");
-               
-               gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]] = 
-                      svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
+            //   cout << "push @" << gSvm.vm.vStaticRegs[VREG_SP] << " ->" << (long) arguments.byte1 << endl;
+               gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]] = (long) arguments.byte1;
             }
           goto exe;
           case OP_POP:
@@ -303,7 +329,7 @@ void Scorpion_VMExecute(){
                    Exception("Failure to pull data from empty stack.", "StackUnderflowException");
                 
                svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
-                      gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]]);
+                      gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]--]);
           goto exe;
           case OP_KILL:
                {
@@ -353,6 +379,7 @@ void Scorpion_VMExecute(){
        switch( i ) {
           case OP_ICONST:
                {
+                  //  cout << "iconst @" << (long) arguments.byte1 << " ->" << (long) arguments.byte2 << endl;
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) arguments.byte1], TYPEDEF_GENERIC, sz);
@@ -562,22 +589,7 @@ void Scorpion_VMExecute(){
                                   }
                                   
                                   long addr = atoi(ss.str().c_str());
-                                  if(form == 'c')
-                                    cout << (char) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
-                                  else if(form == 'b')
-                                    cout << (bool) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
-                                  else if(form == 'f')
-                                    cout << (float) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
-                                  else if(form == 'd')
-                                    cout << (double) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
-                                  else if(form == 'i')
-                                    cout << (long) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
-                                  else if(form == 's')
-                                    cout << (int) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
-                                  else if(form == 'S')
-                                    cout << fromchararray(gSvm.env->getBitmap().objs[addr].obj->strobj->array[default_loc]);
-                                  else //form == v
-                                    cout << svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+                                  printf_obj_content(addr, form);
                                   goto exe;
                                 }
                             }

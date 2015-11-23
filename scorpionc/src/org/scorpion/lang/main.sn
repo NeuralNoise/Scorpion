@@ -7,7 +7,16 @@ module org.scorpion.lang;
 
 def __init__(string** args)
 {
-  asm("cout 'Hello, World'");
-  return 0;
+  asm("cout 'Hello, World!$n$t'
+       nop
+       cout 'hello, world 2!$n'
+       i_const @i #55
+       cout (int) i
+       d_const @pi #3.13152
+       cout 'pi is ' cout pi cout '!$n'
+      ");
+  // TODO: parse cout strings
+  // TODO: change cout objects to output data based on typedefs (print array obj address when applicable)
+  return 15;
 }
 

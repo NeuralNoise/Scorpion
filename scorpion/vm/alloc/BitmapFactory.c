@@ -69,7 +69,7 @@ using namespace std;
      bitmap.stack->generic = (double*)malloc(stack);
      bitmap.stack->length = stack;
      
-     if(bitmap.stack->generic == nullptr)
+     if(bitmap.stack->generic == NULL)
          goto bail;
      
      bitmap.init.byte1 = BITMAP_ALLOC; // bitmap created successfully
@@ -111,7 +111,7 @@ using namespace std;
  void svmBitmapMemoryShutdown(HeapBitmap &bitmap){
      if(!svmBitmapInitalized(bitmap))
         return;
-        
+       
        free(bitmap.objs);
        free(bitmap.stack->generic);
        bitmap.init.byte1 = 0;

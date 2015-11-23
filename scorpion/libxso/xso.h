@@ -46,6 +46,7 @@
 using namespace std;
 
 #define  PROTOTYPE_LIMIT (64 + 16 *(132 * 31)) + 2 // Method Limit: 67647
+#define  XSO_MAX_BUF_LEN ((64 * 1020 * 156) * 8)
 
 struct header {
     u4            magic;

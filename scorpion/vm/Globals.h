@@ -45,6 +45,7 @@
  #include "exception.h"
  #include "variable.h"
  #include "scorpionvm.h"
+ #include "../clib/arraylist.h"
  #include "scorpion_env.h"
  #include "../libxso/xso.h"
  #include "../logservice/dlog.h"
@@ -72,7 +73,7 @@ class SecurityManager;
   
   
    string image; // our full executable image
-   double* bytestream; // holds the image bytes to be processed
+   ListAdapter<double> bytestream; // holds the image bytes to be processed
    
    Method* mtds;  // our shared method array
    long methodc;

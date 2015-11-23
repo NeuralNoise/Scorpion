@@ -60,7 +60,7 @@ string *ags;
 bool TRUE = true, FALSE = false;
 
 
-string build_version = "v1.0_11";
+string build_version = "1.0_12";
 int revision_num = 7;
 
 string OPTION = "";
@@ -178,12 +178,17 @@ void process_ags(int argc, const char** args)
             exit(0);
          }
          else if(OPTION == "-version"){
-            cout << "Scorpion(TM) Virtual Machine build version: \"" << build_version << "\"   --Revision: " << revision_num << endl;
+            cout << "scorpion version \"" << build_version << "\"" << endl;
+            cout << "Scorpion(TM) SDK (build " << build_version << "-b" << revision_num << ")"<< endl;
+            cout << "Scorpion(TM) 64-Bit Server VM (v" << revision_num << ")" << endl;
             alog.ALOGV("--- VM is down, process exiting.");
             exit(0);
          }
-         else if(OPTION == "-showversion")
-            cout << "Scorpion(TM) Virtual Machine build version: \"" << build_version << "\"   --Revision: " << revision_num << endl;
+         else if(OPTION == "-showversion"){
+            cout << "scorpion version \"" << build_version << "\"" << endl;
+            cout << "Scorpion(TM) SDK (build " << build_version << "-b" << revision_num << ")"<< endl;
+            cout << "Scorpion(TM) 64-Bit Server VM (v" << revision_num << ")" << endl;
+         }
          else if(OPTION == "-da" || OPTION == "-disableassertions")
             options.Assert = TRUE; 
          else if(OPTION == "-Xms"){
@@ -362,7 +367,6 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
     * is no longer needed.
     */
     gSvm.ForceShutdown = true;
-         
         
     Exception::trace.addproto("vm.internal.system.Init_CreateScorpionVM", "ScorpionVM", 1);
     env = new ScorpionEnv[SINGLE_ENVIRONMENT];
@@ -559,8 +563,11 @@ void Init_ShutdownScorpionVM()
     //        fprintf(stderr, "Warning: Dalvik VM did not shut down cleanly\n");
     
       if(gSvm.env != nullptr){ // shut down all block table structures 
-         if(gSvm.vm.vStaticRegs != nullptr && (gSvm.vm.vStaticRegs[VREG_SP] >= 0))
-             gSvm.exitval = gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]--]; // simple stack pop
+         if(gSvm.vm.vStaticRegs != nullptr && (gSvm.vm.vStaticRegs[VREG_SP] >= 0)){
+        //     cout << "address " << gSvm.vm.vStaticRegs[VREG_SP] << " val " << gSvm.env->getBitmap().objs[0].obj->generic << endl;
+             unsigned long address = gSvm.env->getBitmap().stack->generic[gSvm.vm.vStaticRegs[VREG_SP]--]; // simple stack pop
+             gSvm.exitval = (long) gSvm.env->getBitmap().objs[address].obj->generic;
+         }
            
         alog.ALOGD("Shutting down environments.");     
         svmBitmapMemoryShutdown(gSvm.env->bitmap); 
@@ -569,8 +576,8 @@ void Init_ShutdownScorpionVM()
       /*
       * Here we shut down major Global variables
       */
-      if(gSvm.bytestream != nullptr){
-        free(gSvm.bytestream);
+      if(gSvm.bytestream.size() != 0){
+        gSvm.bytestream.clear();
         gSvm.vm.status = 0;
       }
       
