@@ -23,7 +23,11 @@ def __init__(string** args)
        cout 'g=$'' cout g cout '$'$n'
        assn i pi
        cout i cout '$n'
-       
+       delete i
+       delete i
+       str_const @exc 'Exception'
+       str_const @msg 'This is a test'
+       ret __init__
       ");
   // TODO: parse cout strings
   // TODO: change cout objects to output data based on typedefs (print array obj address when applicable)

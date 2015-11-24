@@ -46,8 +46,8 @@ extern long streamcount;
          return LastChar;
      }
      if(LastChar == OP_RETURN || LastChar == OP_PUSH || LastChar == OP_POP || LastChar == OP_JMP || LastChar == OP_CALL
-       || LastChar == OP_MTHD || LastChar == OP_LBL || LastChar == OP_IF || LastChar == OP_INC || LastChar == OP_DEC || LastChar == OP_SLP
-       || LastChar == OP_USLP || LastChar == OP_KILL || LastChar == OP_DELETE || LastChar == OP_DELETE_ARRY){ // push 7 or push *x
+       || LastChar == OP_MTHD || LastChar == OP_LBL || LastChar == OP_IF || LastChar == OP_INC || LastChar == OP_DEC
+       || LastChar == OP_KILL || LastChar == OP_DELETE || LastChar == OP_DELETE_ARRY){ // push 7 or push *x
          instrgroup = 1;
          op_ags.byte1 = getb();
          
@@ -55,7 +55,8 @@ extern long streamcount;
      }
      if(LastChar == OP_ICONST || LastChar == OP_DCONST || LastChar == OP_FCONST || 
         LastChar == OP_SCONST || LastChar == OP_BCONST || LastChar == OP_CCONST || LastChar == OP_RSHFT 
-        || LastChar == OP_LSHFT || LastChar == OP_CIN || LastChar == OP_STR_APND || LastChar == OP_ASSN){ // mthd @9
+        || LastChar == OP_LSHFT || LastChar == OP_CIN || LastChar == OP_STR_APND || LastChar == OP_ASSN
+        || LastChar == OP_THROW){ // mthd @9
          instrgroup = 2;
          op_ags.byte1 = getb();
          op_ags.byte2 = getb();

@@ -295,7 +295,7 @@ string rmnln(string data){
      if(zres.response == ZLIB_FAILURE){
          cout << "\n" << zres.reason.str() << "Shutting down.\n";
          zlib.Cleanup();
-         exit(0);
+         Init_ShutdownScorpionVM();
      }
      else if(zres._warnings_.str() != "")
          cout << zres._warnings_.str();
@@ -467,8 +467,8 @@ static int LastChar = ' ';
          return;
      }
      else if(CurTok == OP_RETURN  || CurTok == OP_PUSH || CurTok == OP_POP || CurTok == OP_JMP || CurTok == OP_CALL
-        || CurTok == OP_MTHD || CurTok == OP_LBL || CurTok == OP_IF || CurTok == OP_INC || CurTok == OP_DEC || CurTok == OP_SLP 
-        || CurTok == OP_USLP || CurTok == OP_KILL || CurTok == OP_DELETE || CurTok == OP_DELETE_ARRY){
+        || CurTok == OP_MTHD || CurTok == OP_LBL || CurTok == OP_IF || CurTok == OP_INC || CurTok == OP_DEC 
+        || CurTok == OP_KILL || CurTok == OP_DELETE || CurTok == OP_DELETE_ARRY){
         double arg1 = atof(getheadertxt().c_str());
         setbyte(CurTok);
         setbyte(arg1);

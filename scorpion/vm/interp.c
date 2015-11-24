@@ -426,18 +426,6 @@ void Scorpion_VMExecute(){
                    Exception("Failure to invoke unknown method.", "MethodInvocationFailure");
                }
           goto exe;
-          case OP_SLP:
-                {
-                    long time = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
-                    sleep(time);
-                }
-          goto exe;
-          case OP_USLP:
-               {
-                   long time = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
-                   usleep(time);
-               }
-          goto exe;
           case OP_MTHD: goto exe; // this instruction does nothing, it was executed during vm init
           case OP_LBL: goto exe;  // this instruction does nothing, it was executed during vm init
           default:

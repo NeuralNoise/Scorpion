@@ -104,8 +104,7 @@
       OP_INC = 0x43,
       OP_DEC = 0x44,
       OP_AND = 0x45,
-      OP_SLP = 0x46,
-      OP_USLP = 0x47,
+      // 0x46 - 47 unused
       OP_THROW = 0x48,
       OP_AT = 0x49,
       OP_STR_APND = 0x4a,
