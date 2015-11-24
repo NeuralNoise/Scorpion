@@ -5,6 +5,13 @@
 */
 module org.scorpion.lang;
 
+// inline assembly decliration
+asm("
+    .mthd @foo:
+       cout 'in foo$n'
+       ret foo
+    ");
+
 def __init__(string** args)
 {
   asm("cout 'Hello, World!$n$t'
@@ -27,10 +34,9 @@ def __init__(string** args)
        delete i
        str_const @exc 'Exception'
        str_const @msg 'This is a test'
-       ret __init__
+       call foo
       ");
-  // TODO: parse cout strings
-  // TODO: change cout objects to output data based on typedefs (print array obj address when applicable)
+      
   return 15;
 }
 

@@ -21,7 +21,6 @@ bool includep = true, isnative = false;
 int svm_main = 0;
 
 stringstream mthdname, classname, modulename;
-int mthdptr = 0;
 void _cout_(string output);
 
 void getMethodName(long ptr){
@@ -34,7 +33,6 @@ void getMethodName(long ptr){
     classname << gSvm.mtds[ptr].clazz;
     modulename << gSvm.mtds[ptr].module;
     isnative = gSvm.mtds[ptr].native;
-    mthdptr = jmpLocation(gSvm.mtds[ptr]);
 }
 
 int Scorpion_InvokeMain(){
@@ -60,9 +58,8 @@ int Scorpion_InvokeMethod(long ptrValue){
     else
       includep = true;
     
-    long pc = gSvm.vm.vStaticRegs[VREG_PC];
-    gSvm.vm.vStaticRegs[VREG_PC] = mthdptr;
-    gSvm.mtds[ptrValue].ref.byte1 = pc;
+    gSvm.mtds[ptrValue].ref.byte1 = gSvm.vm.vStaticRegs[VREG_PC];
+    gSvm.vm.vStaticRegs[VREG_PC] = jmpLocation(gSvm.mtds[ptrValue]);
     
      return 0;
 }
@@ -72,14 +69,14 @@ void return_main() // this is simple lol
    Init_ShutdownScorpionVM();
 }
  
-void return_method(long addr){
-    if(addr >= gSvm.methodc){
+void return_method(long ptrValue){
+    if(ptrValue >= gSvm.methodc){
        stringstream ss;
-       ss << "pointer to method: " << addr << " is out of allocated method range.";
+       ss << "pointer to method: " << ptrValue << " is out of allocated method range.";
        Exception(ss.str(), "MethodNotFoundException");
     }
     
-    gSvm.vm.vStaticRegs[VREG_PC] = returnLocation(gSvm.mtds[addr]);
+    gSvm.vm.vStaticRegs[VREG_PC] = returnLocation(gSvm.mtds[ptrValue]);
 }
 
 u4_d arguments; // our dedicated instruction arguments
@@ -344,7 +341,7 @@ void Scorpion_VMExecute(){
                if(((long) arguments.byte1 == 0) && (--gSvm.vm.flags[VFLAG_MTHDC] <= 0))
                   return_main();
                else
-                 return_method(arguments.byte1);
+                 return_method((long) arguments.byte1);
           goto exe;
           case OP_INC:
                svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 

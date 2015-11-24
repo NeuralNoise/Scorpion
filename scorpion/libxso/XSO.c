@@ -344,7 +344,7 @@ static int LastChar = ' ';
  void svmInitMethod(long pos, string name, long jmp_adr){
      if(pos >= gSvm.methodc){
          alog.setClass("XSO");
-         alog.ALOGV("There are more methods than the expercted ammount. Have you compiled your application correctly?");
+         alog.ALOGV("There are more methods than the expected ammount. Have you compiled your application correctly?");
          preexecute_err();
      }
      
@@ -417,11 +417,11 @@ static int LastChar = ' ';
      string methodname = getheadertxt(); // get text from image
      long l = atoi(getheadertxt().c_str());
      
-    // cout << "setting method " << methodname << " at location " << l << endl;
-     InitMthd(l, methodname,streamcount);
-     
      setbyte(OP_MTHD);
      setbyte(l);
+     
+    // cout << "setting method " << methodname << " at location " << l << endl;
+     InitMthd(l, methodname,streamcount);
      
      getNextToken();
  }
@@ -456,6 +456,7 @@ static int LastChar = ' ';
         preexecute_err();
  }
  
+ // TODO: pre assign const values (i_const ect.)
  void HandleInstruction(){ // ^180200290
      getNextToken();
      if(!(CurTok > 0) && !(CurTok <= sMaxOpcodeLimit))
