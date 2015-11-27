@@ -59,10 +59,24 @@
      if(!svmObjectIsAlive(obj))
         Exception("String Object has not been created!", "DeadObjectException");
      
-     if(svmObjectHasInstance(obj, TYPEDEF_STRING))
+     if(svmObjectHasInstance(obj, TYPEDEF_STRING)){
+       if(pos >= obj.obj->strobj[0].array->length){
+        stringstream ss;
+        ss << "string::at(" << pos << ") >= string::length[" << obj.obj->strobj[0].array->length << "]";
+        Exception(ss.str(), "StringIndexOutOfBoundsException");
+       }
+        
        return obj.obj->strobj[0].array->generic[pos];
-     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY))
+     }
+     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)){
+       if(pos >= obj.obj->arrayobj->strobj[str_location].array->length){
+        stringstream ss;
+        ss << "string::at(" << pos << ") >= string::length[" << obj.obj->arrayobj->strobj[str_location].array->length << "]";
+        Exception(ss.str(), "StringIndexOutOfBoundsException");
+       }
+        
        return obj.obj->arrayobj->strobj[str_location].array->generic[pos];
+     }
      else
         Exception("The requested object is not a string type.", "InvalidObjectException");
  }

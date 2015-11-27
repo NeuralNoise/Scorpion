@@ -117,7 +117,6 @@
       OP_ACONST = 0x51,
       OP_STR_ACONST = 0x52,
   };
-  // TODO: add sizeOf & instanceOf instructions
 
 #endif 
 

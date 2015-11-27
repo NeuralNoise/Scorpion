@@ -487,7 +487,8 @@ static int LastChar = ' ';
      else if(CurTok == OP_SCONST || CurTok == OP_BCONST || CurTok == OP_CCONST || CurTok == OP_RSHFT 
        || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF 
        || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST 
-       || CurTok == OP_THROW || CurTok == OP_STR_APND || CurTok == OP_ASSN){
+       || CurTok == OP_THROW || CurTok == OP_STR_APND || CurTok == OP_ASSN || CurTok == OP_ACONST 
+       || CurTok == OP_STR_ACONST){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
         setbyte(CurTok);

@@ -106,9 +106,9 @@ long compare(long instruction){
      if(instruction == OP_ISNLT)
         return !(a < b);
      if(instruction == OP_OR)
-        return a || b;
+        return ((bool) a || (bool) b);
      if(instruction == OP_AND)
-        return a && b;
+        return ((bool) a && (bool) b);
      else
         return 0;
 }
@@ -118,14 +118,14 @@ void printf_obj_content(long addr, char form)
    if(gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_GENERIC_ARRAY ||
       gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_STRING_ARRAY)
    {
-     printf("0x%012x", (unsigned int) addr);
+     printf("%#x", (unsigned int) addr);
      return;
    }
    
   if(form == 'c')
     cout << (char) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
   else if(form == 'b')
-    cout << (bool) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+    cout << (((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]) == 1) ? "true" : "false");
   else if(form == 'f')
     cout << (float) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
   else if(form == 'd')
@@ -136,6 +136,8 @@ void printf_obj_content(long addr, char form)
     cout << (int) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
   else if(form == 'S')
     _cout_(getstr(gSvm.env->getBitmap().objs[addr]));
+  else if(form == 'p')
+    printf("%#x", (unsigned int) addr);
   else //form == v
     cout << svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
 }
@@ -487,6 +489,20 @@ void Scorpion_VMExecute(){
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], (char) arguments.byte2);
                }
           goto exe;
+          case OP_ACONST:
+               {
+                u1 sz;
+                sz.byte1 = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
+                SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arguments.byte1], TYPEDEF_GENERIC_ARRAY, sz);
+               }
+          goto exe;
+          case OP_STR_ACONST:
+               {
+                u1 sz;
+                sz.byte1 = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
+                SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arguments.byte1], TYPEDEF_STRING_ARRAY, sz);
+               }
+          goto exe;
           case OP_JIT:
                if((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == 1)
                   gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
@@ -543,7 +559,8 @@ void Scorpion_VMExecute(){
           case OP_AT:
                {
                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
-                          at(gSvm.env->getBitmap().objs[(long) arguments.byte2], (long) arguments.byte3));
+                          at(gSvm.env->getBitmap().objs[(long) arguments.byte2], 
+                             svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte3])));
                }
           goto exe;
           case OP_ALOAD:
@@ -569,6 +586,7 @@ void Scorpion_VMExecute(){
                    }
                    else {
                        str_location = pos;
+                       
                        string data = getstr(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
                        assign(gSvm.env->getBitmap().objs[(long) arguments.byte1], data);
                    }
@@ -584,8 +602,7 @@ void Scorpion_VMExecute(){
                   || i == OP_FSUB || i == OP_FMULT || i == OP_FDIV || i == OP_CADD
                   || i == OP_CSUB || i == OP_CMULT || i == OP_CDIV || i == OP_IMOD 
                   || i == OP_SMOD || i == OP_CMOD){
-                  cout << "adding " << (long) arguments.byte1 << "= " << (long) arguments.byte2 << "+" << (long) arguments.byte3 << endl;
-              svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], math(i));
+                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], math(i));
                   }
           goto exe;
        } // run each instr

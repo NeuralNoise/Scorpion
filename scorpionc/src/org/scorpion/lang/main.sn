@@ -44,6 +44,8 @@ asm("
        cout 'Type a character: '
        cin _char #0
        cout '$nchar is now: ' cout _char cout '$n'
+       
+       kill _char
        ret _cin
     ");
 
@@ -94,9 +96,21 @@ def __init__(string** args)
 	    i_const @a #1
 	    i_const @b #2
 	    i_const @c #3
+	    b_const @d #0
 	    
-	    iadd c b c
+	    iadd c b a 
+	    ilt d a b
 	    cout 'c is ' cout (int) c cout '$n'
+	    cout d
+	    at d exc c
+	    cout '$n d=' cout (char) d
+	    
+	    b_const @f1 #1
+	    b_const @f2 #0
+	    b_const @or #2
+	    
+	    or or f2 f1
+	    cout '$n$n or=' cout (bool) or
 	   ;hlt
       ");
       
