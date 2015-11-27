@@ -118,7 +118,7 @@ void printf_obj_content(long addr, char form)
    if(gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_GENERIC_ARRAY ||
       gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_STRING_ARRAY)
    {
-     printf("0x%08x", (unsigned int) addr);
+     printf("0x%012x", (unsigned int) addr);
      return;
    }
    
@@ -135,7 +135,7 @@ void printf_obj_content(long addr, char form)
   else if(form == 's')
     cout << (int) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
   else if(form == 'S')
-    _cout_(fromchararray(gSvm.env->getBitmap().objs[addr].obj->strobj->array[default_loc]));
+    _cout_(getstr(gSvm.env->getBitmap().objs[addr]));
   else //form == v
     cout << svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
 }
@@ -192,7 +192,7 @@ double math(long instruction){
      if(instruction == OP_CMOD)
         return (char) a % (char) b;
      else
-        return 0;
+        return 21303029493;
 }
 
 void _cout_(string output)
@@ -254,13 +254,13 @@ void _cout_(string output)
                       continue;
                     }
                 }
-                break;
+                continue;
               }
            case '#':
               cout << std::flush; continue;
            case '!': // TODO: change color
               {
-                return;
+                continue;
               }
            default:
               cout << bad_char; continue;
@@ -291,8 +291,8 @@ void Scorpion_VMExecute(){
 
     if(gSvm.vm.flags[VFLAG_NO] == 1 && i != OP_ENDNO) // do not run
         goto exe;
-        
-    if(gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && (i != OP_END || i != OP_IF)) // do not run
+    
+     if(gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && !(i == OP_END || i == OP_IF)) // do not run
         goto exe; 
         
     arguments = gSvm.appholder.getAgs();
@@ -321,16 +321,17 @@ void Scorpion_VMExecute(){
           case OP_END: 
               if(gSvm.vm.flags[VFLAG_IFC] > 0)
                   gSvm.vm.flags[VFLAG_IFC]--;
-                  
-              if(gSvm.vm.flags[VFLAG_IF_IGNORE] && (gSvm.vm.flags[VFLAG_IFC] == gSvm.vm.flags[VFLAG_IF_DEPTH])){
-                 gSvm.vm.flags[VFLAG_IGNORE] = false;
-                 gSvm.vm.flags[VFLAG_IF_IGNORE] = false;
+              
+              if(gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && (gSvm.vm.flags[VFLAG_IFC] == gSvm.vm.flags[VFLAG_IF_DEPTH])){
+                 gSvm.vm.flags[VFLAG_IF_IGNORE] = 0;
+                 gSvm.vm.flags[VFLAG_IF_DEPTH] = 0;
               }
+                 
           goto exe;
           case OP_NO:
-               gSvm.vm.flags[VFLAG_NO] == 1; goto exe;
+               gSvm.vm.flags[VFLAG_NO] = 1; goto exe;
           case OP_ENDNO:
-               gSvm.vm.flags[VFLAG_NO] == 0; goto exe;
+               gSvm.vm.flags[VFLAG_NO] = 0; goto exe;
           case OP_HLT:
                Init_ShutdownScorpionVM();
        } // run each instr
@@ -338,7 +339,8 @@ void Scorpion_VMExecute(){
     group1:
        switch( i ) {
           case OP_RETURN:
-               if(((long) arguments.byte1 == 0) && (--gSvm.vm.flags[VFLAG_MTHDC] <= 0))
+               --gSvm.vm.flags[VFLAG_MTHDC];
+               if(((long) arguments.byte1 == 0) && (gSvm.vm.flags[VFLAG_MTHDC] <= 0))
                   return_main();
                else
                  return_method((long) arguments.byte1);
@@ -352,11 +354,12 @@ void Scorpion_VMExecute(){
                       svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]) - 1);
           goto exe;
           case OP_IF:
+               
                /*
                * VFLAG_IF_DEPTH
                *
                * This is a special flag that tells the Scorpion virtual machine 
-               * that here if where the if was rejected.
+               * where the if statment was rejected.
                *
                * The control flow system:
                *
@@ -376,15 +379,15 @@ void Scorpion_VMExecute(){
                *
                * we only set the VFLAG_IF_DEPTH flag if VFLAG_IF_IGNORE evaluates to false.
                */
-               if(!gSvm.vm.flags[VFLAG_IF_IGNORE])
+                if((gSvm.vm.flags[VFLAG_IF_IGNORE] == 0) && 
+                 ((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]) == 0))
+                       gSvm.vm.flags[VFLAG_IF_IGNORE] = 1;
+                       
+               if(gSvm.vm.flags[VFLAG_IF_IGNORE] == 1)
                   gSvm.vm.flags[VFLAG_IF_DEPTH] = gSvm.vm.flags[VFLAG_IFC];
                   
                gSvm.vm.flags[VFLAG_IFC]++;
                
-               if(!gSvm.vm.flags[VFLAG_IF_IGNORE] && !svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1])){
-                   gSvm.vm.flags[VFLAG_IF_IGNORE] = 1;
-                   gSvm.vm.flags[VFLAG_IGNORE] = 1;
-               }
           goto exe;
           case OP_PUSH:
             {
@@ -418,9 +421,7 @@ void Scorpion_VMExecute(){
           case OP_CALL:
                {
                  gSvm.vm.flags[VFLAG_MTHDC]++;
-                 long m = Scorpion_InvokeMethod((long) arguments.byte1);
-                 if(m != 0)
-                   Exception("Failure to invoke unknown method.", "MethodInvocationFailure");
+                 Scorpion_InvokeMethod((long) arguments.byte1);
                }
           goto exe;
           case OP_MTHD: goto exe; // this instruction does nothing, it was executed during vm init
@@ -487,30 +488,30 @@ void Scorpion_VMExecute(){
                }
           goto exe;
           case OP_JIT:
-               if(svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == 1)
+               if((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == 1)
                   gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
           goto exe;
           case OP_JIF:
-               if(svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == 0)
+               if((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]) == 0)
                   gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
           goto exe;
           case OP_RSHFT:
                {
                  long num = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
-                 num >> (long) arguments.byte2;
-                 svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2], num);
+                 num >>= (long) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
+                 svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], num);
                }
           goto exe;
           case OP_LSHFT:
                {
                  long num = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1]);
-                 num << (long) arguments.byte2;
-                 svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2], num);
+                 num <<= (long) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte2]);
+                 svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], num);
                }
           goto exe;
           case OP_THROW: 
-                   Exception(fromchararray(gSvm.env->getBitmap().objs[(long) arguments.byte1].obj->strobj->array[default_loc]), 
-                             fromchararray(gSvm.env->getBitmap().objs[(long) arguments.byte2].obj->strobj->array[default_loc]));
+                   Exception(getstr(gSvm.env->getBitmap().objs[(long) arguments.byte1]), 
+                             getstr(gSvm.env->getBitmap().objs[(long) arguments.byte2]));
           goto exe;
           case OP_CIN:
                {
@@ -519,7 +520,7 @@ void Scorpion_VMExecute(){
                   
                   if(arguments.byte2 == 0){ // do not print char to screen
                     i = getchar();
-                    cout << "\b \b" << std::flush;
+                    cout << "\b  \b" << std::flush;
                   }
                   else
                     i = getchar();
@@ -530,7 +531,7 @@ void Scorpion_VMExecute(){
           goto exe;
           case OP_STR_APND:
                  concat(gSvm.env->getBitmap().objs[(long) arguments.byte1], 
-                        fromchararray(gSvm.env->getBitmap().objs[(long) arguments.byte2].obj->strobj->array[default_loc]));
+                        getstr(gSvm.env->getBitmap().objs[(long) arguments.byte2]));
           goto exe;
           case OP_ASSN:
                  gSvm.env->getBitmap().objs[(long) arguments.byte1] = gSvm.env->getBitmap().objs[(long) arguments.byte2];
@@ -582,8 +583,10 @@ void Scorpion_VMExecute(){
                   || i == OP_DSUB || i == OP_DMULT || i == OP_DDIV || i == OP_FADD
                   || i == OP_FSUB || i == OP_FMULT || i == OP_FDIV || i == OP_CADD
                   || i == OP_CSUB || i == OP_CMULT || i == OP_CDIV || i == OP_IMOD 
-                  || i == OP_SMOD || i == OP_CMOD)
+                  || i == OP_SMOD || i == OP_CMOD){
+                  cout << "adding " << (long) arguments.byte1 << "= " << (long) arguments.byte2 << "+" << (long) arguments.byte3 << endl;
               svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arguments.byte1], math(i));
+                  }
           goto exe;
        } // run each instr
        goto exe;

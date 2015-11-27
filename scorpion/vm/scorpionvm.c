@@ -484,7 +484,6 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
     gSvm.vm.flags[VFLAG_MTHDC] = 0;
     gSvm.vm.flags[VFLAG_IFC] = 0;
     gSvm.vm.flags[VFLAG_IF_IGNORE] = 0;
-    gSvm.vm.flags[VFLAG_IGNORE] = 0;
     gSvm.vm.flags[VFLAG_NO] = 0;
     
     performSecuritySetup();
@@ -512,8 +511,7 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
     Exception("Could not find path to start the Scorpion VM.", "InitPathNotFoundException");
 }
 
-// if something goes wrong while starting the VM return 
-// with an error status code
+extern bool includep;
 int Init_StartScorpionVM()
 {
    Exception::trace.addproto("vm.internal.system.Init_StartScorpionVM", "ScorpionVM", 1);
@@ -528,6 +526,14 @@ int Init_StartScorpionVM()
     gSvm.vm.vStaticRegs[VREG_EXC] = 1;   // TODO: Update Dev script to 'showExitVal(false)' option for disabling exit value
    
     // TODO: push arguments on the stack to be processed by main method
+      if(0 >= gSvm.methodc)
+           Exception("coold not locate main method.", "MethodNotFoundException");
+      
+      stringstream main;
+      main << gSvm.mtds[0].module << "." << gSvm.mtds[0].name << "<init>";
+      Exception::trace.addproto(main.str(), gSvm.mtds[0].clazz, false);
+      
+      includep=false;
       status = Scorpion_InvokeMain();
     
     if(status != 0){

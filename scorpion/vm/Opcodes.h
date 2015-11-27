@@ -115,6 +115,7 @@
       OP_ASTORE = 0x4f,
       OP_ASSN = 0x50,
   };
+  // TODO: add sizeOf & instanceOf instructions
 
 #endif 
 

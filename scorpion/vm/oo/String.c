@@ -48,9 +48,11 @@
     
     if(svmObjectHasInstance(obj, TYPEDEF_STRING))
        return (obj.obj->strobj[0].array == nullptr || obj.obj->strobj[0].array == NULL);
-    else
+    else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY))
        return (obj.obj->arrayobj->strobj[str_location].array == nullptr || 
               obj.obj->arrayobj->strobj[str_location].array == NULL);
+    else
+       Exception("The requested object is not a string type.", "InvalidObjectException");
  }
  
  unsigned int at(Object &obj, long pos){
@@ -59,8 +61,10 @@
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
        return obj.obj->strobj[0].array->generic[pos];
-     else
+     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY))
        return obj.obj->arrayobj->strobj[str_location].array->generic[pos];
+     else
+        Exception("The requested object is not a string type.", "InvalidObjectException");
  }
  
   void assign(Object &obj, string data){
@@ -71,10 +75,11 @@
        obj.obj->strobj[0].array = tochararray(data);
        obj.obj->strobj[0].length = obj.obj->strobj[0].array->length;
      }
-     else {
+     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)) {
        obj.obj->arrayobj->strobj[str_location].array = tochararray(data);
        obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
      }
+     else 
      
      if(isnull(obj))
       Exception("String Object failed to be reassigned.", "NullpointerException");
@@ -86,7 +91,7 @@
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
        return fromchararray(obj.obj->strobj[0].array[0]);
-     else {
+     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)) {
        if(str_location >= obj.obj->arrayobj->length){
            stringstream ss;
            ss << "Index " << str_location << " is not within bounds. Array size[" << length(obj) << "].";
@@ -94,6 +99,8 @@
        }
        return fromchararray(obj.obj->strobj[str_location].array[0]);
      }
+     else
+        Exception("The requested object is not a string type.", "InvalidObjectException");
  }
  
  unsigned int size(Object &obj){
@@ -102,8 +109,10 @@
         
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
        return obj.obj->strobj[0].length;
-     else
+     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY))
        return obj.obj->arrayobj->strobj[str_location].length;
+     else
+        Exception("The requested object is not a string type.", "InvalidObjectException");
  }
  
  void concat(Object &obj, string data){
@@ -118,11 +127,13 @@
        obj.obj->strobj[default_loc].array = ostr_arraymesh(obj.obj->strobj[default_loc].array[default_loc], aobj[default_loc]);
        obj.obj->strobj[default_loc].length = obj.obj->strobj[default_loc].array->length;
      }
-     else {
+     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)) {
        obj.obj->arrayobj->strobj[str_location].array = 
           ostr_arraymesh(obj.obj->arrayobj->strobj[str_location].array[default_loc], aobj[default_loc]);
        obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
      }
+     else
+        Exception("The requested object is not a string type.", "InvalidObjectException");
      
      if(isnull(obj))
       Exception("String Object failed to be reassigned.", "NullpointerException");

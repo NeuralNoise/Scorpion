@@ -133,7 +133,7 @@ int main(int argc, const char **argv)
                           return -1;
                        
                        // run compiled file
-                        system("scorpion /usr/share/scorpion/lib/compiler.xso ");
+                      //  system("scorpion /usr/share/scorpion/lib/compiler.xso ");
                      }
                      else
                        return res;

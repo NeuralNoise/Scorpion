@@ -10,6 +10,41 @@ asm("
     .mthd @foo:
        cout 'in foo$n'
        ret foo
+       
+    .mthd @foo2:
+       cout 'in foo2$n'
+       ret foo2
+    
+    .mthd @rshift:
+       i_const @mShiftOffset #3
+       i_const @mValue #5
+       
+       rsft mValue mShiftOffset
+       cout 'mValue shifted ' cout mShiftOffset cout ' units right is: '
+       cout mValue cout '$n'
+       
+       kill mValue
+       kill mShiftOffset
+       ret rshift
+    
+    .mthd @lshift:
+       i_const @mShiftOffset #3
+       i_const @mValue #5
+       
+       lsft mValue mShiftOffset
+       cout 'mValue shifted ' cout mShiftOffset cout ' units left is: '
+       cout mValue cout '$n'
+       
+       kill mValue
+       kill mShiftOffset
+       ret lshift
+       
+    .mthd @_cin:
+       c_const @_char ' '
+       cout 'Type a character: '
+       cin _char #0
+       cout '$nchar is now: ' cout _char cout '$n'
+       ret _cin
     ");
 
 def __init__(string** args)
@@ -31,12 +66,39 @@ def __init__(string** args)
        assn i pi
        cout i cout '$n'
        delete i
-       delete i
        str_const @exc 'Exception'
-       str_const @msg 'This is a test'
-       call foo
+       str_const @msg 'This is a test'   ; this is a test
+       .lbl @exe
+		  call foo2
+		  call foo
+		  b_const @run #1
+		  b_const @run2 #0
+		  if run
+             cout 'run$n'	
+             if run2
+                cout 'run2$n'	
+	            throw msg exc  
+             end
+		  end
+		i_const @num #55
+		inc num
+		cout num cout '$n'
+		dec num
+		cout num cout '$n'
+		kill num
+		call lshift
+		call rshift
+		call _cin
+	    jif exe run
+	    
+	    i_const @a #1
+	    i_const @b #2
+	    i_const @c #3
+	    
+	    iadd c b c
+	    cout 'c is ' cout (int) c cout '$n'
+	   ;hlt
       ");
       
   return 15;
 }
-

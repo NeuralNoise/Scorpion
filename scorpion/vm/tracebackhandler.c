@@ -67,7 +67,7 @@ void TraceBack::addproto(string proto, string klass, int native)
      
     if(update){
         for(int i = 0; i < 18; i++){
-            if( trace_protos[i + 1] == ""){
+            if( i + 1 >= 18){
                 trace_protos[i] = proto;
                 trace_classes[i] = klass;
                 protos = 18;
