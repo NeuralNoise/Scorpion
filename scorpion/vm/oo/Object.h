@@ -47,6 +47,7 @@
  #include "../alloc/HeapBitmap.h"
  #include "../alloc/gc.h"
  #include <string>
+ #include <stdint.h>
  
  using namespace std;
  
@@ -70,7 +71,7 @@
  #define _typedef (0x0)
  #define gc_self (0x1)
  
- /*
+ /**
  * Init values
  * 
  * OBJECT_DEAD 0x0      when an object has not been instantiated
@@ -79,16 +80,93 @@
  #define OBJECT_DEAD (0x0)
  #define OBJECT_ALIVE (0x129)
  
- /*
+ /**
  * Typedef values
  * 
  * These are used for object instantiation
  */
  #define TYPEDEF_STRING (0x12)
- #define TYPEDEF_GENERIC_ARRAY (0x13)
  #define TYPEDEF_STRING_ARRAY (0x14)
- #define TYPEDEF_GENERIC (0x15)
  
+ /**
+ * 8-Bit signed integer
+ *   This data type has a minimum value of -128 and a maximum value of 127
+ *   Using this data type is great for saving space upon creation of huge array 
+ *   and data structures that occupy large pieces of memory
+ */
+ #define TYPEDEF_GENERIC_BYTE (0x32)
+ 
+ /**
+ * 16-Bit signed integer
+ *  This data type is a "little" integer, containing a minimum value of -32,768
+ *  and a max value of 32,767. This is also a nother good data type to use in large 
+ *  arrays to save memory consumption.
+ */
+ #define TYPEDEF_GENERIC_SHORT (0x34)
+ 
+ /**
+ * 32-Bit signed integer
+ *  This data type is a "medium" integer, containing a minimum value of -2^31 and
+ *  a maximum value of 2^31. This data type is probably the most used type of data 
+ *  because its range is in the "middle" and can be used for most data processing
+ */
+ #define TYPEDEF_GENERIC_INT (0x36)
+ 
+ /**
+  * 64-Bit signed integer
+  *  This data type is a "big" integer, containing a mimimum value of -2^63 and
+  *  a maximum value of 2^63. This data type is the largest integer type that 
+  *  hold data in Scorpion. Use this data type when you need a range of values 
+  *  much wider than those provided by int
+  */
+ #define TYPEDEF_GENERIC_LONG (0x38)
+ 
+ /**
+  * 32-bit signed decimal
+  *  This data type is used for small and mid sized decimal calculations.
+  *  Use this when you wand to parform fractional data calculations. This 
+  *  data type has a decimal precision(digits behind the decimal number)
+  *  of up to 7 digits.
+  */
+ #define TYPEDEF_GENERIC_FLOAT (0x40)
+ 
+ /**
+  * 64-Bit signed decimal
+  *  This data type is float's counterpar in performing fractional calculations.
+  *  Use this data type when you need more percise decimal calculations. This 
+  *  data type has a decimal precision(digits behind the decimal number)
+  *  of up to 16 digits.
+  */
+ #define TYPEDEF_GENERIC_DOUBLE (0x42)
+ 
+ /**
+  * 16-Bit signed integer
+  *  This data type is very similar to the type short, except this 
+  *  data type is used for text creation and manipulation. This data
+  *  type contains a minimum value of -32,768 and a max value of 32,767.
+  */
+ #define TYPEDEF_GENERIC_CHAR (0x46)
+ 
+ /**
+  * Single-Bit value
+  *  This data type is a very trivial data type seen in almost all programming languages.
+  *  It operates as a single bit that can only hold the values true or false (i.e 1 or 0)
+  */
+ #define TYPEDEF_GENERIC_BOOL (0x48)
+ 
+ /*
+  * Scorpion primitive type array type
+  * definitions
+  */
+ #define TYPEDEF_GENERIC_BYTE_ARRAY (0x50)
+ #define TYPEDEF_GENERIC_SHORT_ARRAY (0x52)
+ #define TYPEDEF_GENERIC_INT_ARRAY (0x54)
+ #define TYPEDEF_GENERIC_LONG_ARRAY (0x56)
+ #define TYPEDEF_GENERIC_FLOAT_ARRAY (0x58)
+ #define TYPEDEF_GENERIC_DOUBLE_ARRAY (0x60)
+ #define TYPEDEF_GENERIC_BOOL_ARRAY (0x62)
+ #define TYPEDEF_GENERIC_CHAR_ARRAY (0x64)
+
  struct DataObject {
  
      /* These are our special object types */    
@@ -96,9 +174,16 @@
      ArrayObject* arrayobj;
      
      /*
-     * Generic data (int, float, etc..)
+     * native Scorpion primitive types
      */
-     double generic;
+     int8_t  *pbyte;  
+     int16_t *pshort;
+     int16_t *pchar;
+     int32_t *pint;
+     int64_t *plong;
+     float   *pfloat;
+     double  *pdouble;
+     bool    *pboolean;
  };
  
  /*
@@ -184,9 +269,16 @@
    StringObject* strobj;
      
    /*
-   * Generic data (**int, **float, etc..)
-   */
-   double *generic;
+    * native Scorpion primitive types
+    */
+     int8_t  *pbyte;  
+     int16_t *pshort;
+     int16_t *pchar;
+     int32_t *pint;
+     int64_t *plong;
+     float   *pfloat;
+     double  *pdouble;
+     bool    *pboolean;
  };
 
  /*
@@ -245,11 +337,18 @@ void svmSetGenericValue(Object &obj, double value);
 
 double svmGetGenericValue(Object &obj);
 
+void svmIncGenericValue(Object &obj);
+
+double svmDecGenericValue(Object &obj);
+
 long __typedef(Object &obj);
 
 long __gcstatus(Object &obj);
 
 bool isObjArray(Object &obj);
+
+bool isgeneric(int _typedef_);
+bool isgenericarray(int _typedef_);
 
 void freeObj(Object &obj);
  

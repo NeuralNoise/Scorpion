@@ -66,10 +66,10 @@ using namespace std;
      if(bitmap.stack == nullptr || bitmap.objs == NULL)
          goto bail;
      
-     bitmap.stack->generic = (double*)malloc(stack);
+     bitmap.stack->plong = (int64_t*)malloc(stack);
      bitmap.stack->length = stack;
      
-     if(bitmap.stack->generic == NULL)
+     if(bitmap.stack->plong == NULL)
          goto bail;
      
      bitmap.init.byte1 = BITMAP_ALLOC; // bitmap created successfully
@@ -77,7 +77,7 @@ using namespace std;
      
      bail:
        free(bitmap.objs);
-       free(bitmap.stack->generic);
+       free(bitmap.stack->plong);
        bitmap.base = 0;
        bitmap.size_t = 0;
        bitmap.stsz_t = 0;
@@ -113,7 +113,7 @@ using namespace std;
         return;
        
        free(bitmap.objs);
-       free(bitmap.stack->generic);
+       free(bitmap.stack->plong);
        bitmap.init.byte1 = 0;
        bitmap.base = 0;
        bitmap.MaxLimit = 0;
@@ -126,7 +126,7 @@ using namespace std;
         Exception("Failed to clear non-initalized bitmap.", "IllegalStateExcpetion");
   
      free(bitmap.objs);
-     free(bitmap.stack->generic);
+     free(bitmap.stack->plong);
      bitmap.init.byte1 = 0;
      
      if(!svmHeapBitmapInit(bitmap, bitmap.base, bitmap.MaxLimit, bitmap.stsz_t, bitmap.size_t))

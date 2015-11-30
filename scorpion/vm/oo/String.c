@@ -39,6 +39,7 @@
  #include "../exception.h"
  #include <sstream>
  #include <iostream>
+ #include <stdint.h>
  using namespace std;
  
  
@@ -66,7 +67,7 @@
         Exception(ss.str(), "StringIndexOutOfBoundsException");
        }
         
-       return obj.obj->strobj[0].array->generic[pos];
+       return obj.obj->strobj[0].array->pchar[pos];
      }
      else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)){
        if(pos >= obj.obj->arrayobj->strobj[str_location].array->length){
@@ -75,7 +76,7 @@
         Exception(ss.str(), "StringIndexOutOfBoundsException");
        }
         
-       return obj.obj->arrayobj->strobj[str_location].array->generic[pos];
+       return obj.obj->arrayobj->strobj[str_location].array->pchar[pos];
      }
      else
         Exception("The requested object is not a string type.", "InvalidObjectException");

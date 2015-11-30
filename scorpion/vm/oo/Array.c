@@ -42,6 +42,7 @@
  #include <stdlib.h> 
  #include <sstream>
  #include <iostream>
+ #include <stdint.h>
  
  using namespace std;
   
@@ -51,17 +52,17 @@
      if(obj == nullptr)
         return obj;
     
-     obj->generic = new (nothrow) double[data.size()];
+     obj->pchar = new (nothrow) int16_t[data.size()];
      obj->length = data.size();    
      
-     if(obj->generic == nullptr)
+     if(obj->pchar == nullptr)
         return obj;
      
      if(obj->length > STR_LIMIT)
         Exception("String greater than max limit.", "StringOverloadException");
        
      for(int i = 0; i < data.size(); i++)
-       obj->generic[i] = (int) data.at(i);
+       obj->pchar[i] = (int) data.at(i);
        
      return obj;
  }
@@ -70,7 +71,7 @@
      stringstream ss;
      
      for(int i = 0; i < arrayobj.length; i++)
-       ss << (char) arrayobj.generic[i];
+       ss << (char) arrayobj.pchar[i];
        
      return ss.str();
  }
@@ -91,11 +92,11 @@
   
      if(pos >= obj.obj->arrayobj->length){
        stringstream ss;
-       ss << "Index " << pos << " is not within bounds. Array size[" << length(obj) << "].";
+       ss << "Index at(" << pos << ") is not within bounds. Array size[" << length(obj) << "].";
        Exception(ss.str(), "ArrayIndexOutOfBoundsException");
      }
      
-     return obj.obj->arrayobj->generic[pos];
+     return obj.obj->arrayobj->pchar[pos];
  }
  
  void set(Object &obj, long pos, double default_value){
@@ -104,11 +105,11 @@
           
      if(pos >= obj.obj->arrayobj->length){
        stringstream ss;
-       ss << "Index " << pos << " is not within bounds. Array size[" << length(obj) << "].";
+       ss << "Index at(" << pos << ") is not within bounds. Array size[" << length(obj) << "].";
        Exception(ss.str(), "ArrayIndexOutOfBoundsException");
      }
       
-      obj.obj->arrayobj->generic[pos] = default_value;
+      obj.obj->arrayobj->pchar[pos] = default_value;
  }
  
  

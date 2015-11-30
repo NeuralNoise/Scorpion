@@ -39,6 +39,7 @@
  #include <iostream>
  #include <new>
  #include <stdlib.h> 
+ #include <stdint.h>
  
  using namespace std;
 
@@ -50,17 +51,70 @@ bool svmObjectHasInstance(Object &obj, int instance){
    return (obj.instanceData.byte1 == instance);
 }
 
+// TODO: add err() function to free object before throwing exception
 void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
+  
+  if(svmObjectIsAlive(obj))
+    return;
   
   obj.init.byte1 = OBJECT_ALIVE;
   obj.instanceData.byte1 = _typedef_;
   obj.instanceData.byte2 = gc_status;
   
-  if(_typedef_ == TYPEDEF_GENERIC){
+  if(isgeneric(_typedef_)){
    obj.obj = new (nothrow) DataObject[1];
    
    if(obj.obj == nullptr)
       Exception("Object could not be created.", "OutOfMemoryError");
+
+   if(_typedef_ == TYPEDEF_GENERIC_BYTE){
+      obj.obj->pbyte = new (nothrow)  int8_t[1];
+      
+      if(obj.obj->arrayobj->pbyte == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_SHORT){
+      obj.obj->pshort = new (nothrow)  int16_t[1];
+      
+      if(obj.obj->arrayobj->pshort == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_INT){
+      obj.obj->pint = new (nothrow)  int32_t[1];
+      
+      if(obj.obj->arrayobj->pint == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_LONG){
+      obj.obj->plong = new (nothrow)  int64_t[1];
+      
+      if(obj.obj->arrayobj->plong == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_CHAR){
+      obj.obj->pchar = new (nothrow)  int16_t[1];
+      
+      if(obj.obj->arrayobj->pchar == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_BOOL){
+      obj.obj->pboolean = new (nothrow)  bool[1];
+      
+      if(obj.obj->arrayobj->pboolean == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_FLOAT){
+      obj.obj->pfloat = new (nothrow)  float[1];
+      
+      if(obj.obj->arrayobj->pfloat == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_DOUBLE){
+      obj.obj->pdouble = new (nothrow)  double[1];
+      
+      if(obj.obj->arrayobj->pdouble == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
   }
   if(_typedef_ == TYPEDEF_STRING){
    obj.obj = new (nothrow) DataObject[1];
@@ -71,7 +125,7 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
       || obj.obj->strobj->array == nullptr)
        Exception("String object could not be created.", "OutOfMemoryError");
   }
-  if(_typedef_ == TYPEDEF_GENERIC_ARRAY) {
+  if(isgenericarray(_typedef_)) {
    obj.obj = new (nothrow) DataObject[1];
    obj.obj->arrayobj = new (nothrow) ArrayObject[1];
    
@@ -79,10 +133,55 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
        Exception("Array object could not be created.", "OutOfMemoryError");
    
    obj.obj->arrayobj->length = objsz_t.byte1;
-   obj.obj->arrayobj->generic = (double*)malloc(objsz_t.byte1);
    
-   if(obj.obj->arrayobj->generic == NULL)
-       Exception("Array object could not be created.", "OutOfMemoryError");
+   if(_typedef_ == TYPEDEF_GENERIC_BYTE_ARRAY){
+      obj.obj->arrayobj->pbyte =  (int8_t*)malloc(objsz_t.byte1);
+      
+      if(obj.obj->arrayobj->pbyte == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_SHORT_ARRAY){
+      obj.obj->arrayobj->pshort = (int16_t*)malloc(objsz_t.byte1);
+      
+      if(obj.obj->arrayobj->pshort == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_INT_ARRAY){
+      obj.obj->arrayobj->pint = (int32_t*)malloc(objsz_t.byte1);
+      
+      if(obj.obj->arrayobj->pint == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_LONG_ARRAY){
+      obj.obj->arrayobj->plong = (int64_t*)malloc(objsz_t.byte1);
+      
+      if(obj.obj->arrayobj->plong == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_CHAR_ARRAY){
+      obj.obj->arrayobj->pchar = (int16_t*)malloc(objsz_t.byte1);
+      
+      if(obj.obj->arrayobj->pchar == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_BOOL_ARRAY){
+      obj.obj->arrayobj->pboolean = (bool*)malloc(objsz_t.byte1);
+      
+      if(obj.obj->arrayobj->pboolean == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_FLOAT_ARRAY){
+      obj.obj->arrayobj->pfloat = (float*)malloc(objsz_t.byte1);
+      
+      if(obj.obj->arrayobj->pfloat == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
+   else if(_typedef_ == TYPEDEF_GENERIC_DOUBLE_ARRAY){
+      obj.obj->arrayobj->pdouble = (double*)malloc(objsz_t.byte1);
+      
+      if(obj.obj->arrayobj->pdouble == NULL)
+          Exception("Array object could not be created.", "OutOfMemoryError");
+   }
   }
   if(_typedef_ == TYPEDEF_STRING_ARRAY) {
    obj.obj = new (nothrow) DataObject[1];
@@ -122,16 +221,89 @@ void svmSetGenericValue(Object &obj, double value){
     if(!svmObjectIsAlive(obj))
       Exception("Object was not initalized.", "DeadObjectException");
    
-    obj.obj->generic = value;
+    if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BYTE)
+       obj.obj->pbyte[default_loc] = value;
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
+       obj.obj->pshort[default_loc] = value;
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
+       obj.obj->pint[default_loc] = value;
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
+       obj.obj->plong[default_loc] = value;
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
+       obj.obj->pfloat[default_loc] = value;
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
+       obj.obj->pchar[default_loc] = value;
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
+       obj.obj->pboolean[default_loc] = value;
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
+       obj.obj->pdouble[default_loc] = value;
 }
 
 double svmGetGenericValue(Object &obj){
     if(!svmObjectIsAlive(obj))
       Exception("Object was not initalized.", "DeadObjectException");
    
-    return obj.obj->generic;
+    
+    if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BYTE)
+       return (double) obj.obj->pbyte[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
+       return (double) obj.obj->pshort[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
+       return (double) obj.obj->pint[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
+       return (double) obj.obj->plong[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
+       return (double) obj.obj->pfloat[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
+       return (double) obj.obj->pchar[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
+       return (double) obj.obj->pboolean[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
+       return (double) obj.obj->pdouble[default_loc];
 }
 
+void svmIncGenericValue(Object &obj){
+    if(!svmObjectIsAlive(obj))
+      Exception("Object was not initalized.", "DeadObjectException");
+   
+    
+    if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BYTE)
+       ++obj.obj->pbyte[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
+       ++obj.obj->pshort[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
+       ++obj.obj->pint[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
+       ++obj.obj->plong[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
+       ++obj.obj->pfloat[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
+       ++obj.obj->pchar[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
+       ++obj.obj->pboolean[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
+       ++obj.obj->pdouble[default_loc];
+}
+
+double svmDecGenericValue(Object &obj){
+    if(!svmObjectIsAlive(obj))
+      Exception("Object was not initalized.", "DeadObjectException");
+   
+    if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BYTE)
+       --obj.obj->pbyte[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
+       --obj.obj->pshort[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
+       --obj.obj->pint[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
+       --obj.obj->plong[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
+       --obj.obj->pfloat[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
+       --obj.obj->pchar[default_loc];
+    else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
+       --obj.obj->pdouble[default_loc];
+}
 
 long __typedef(Object &obj){
     return obj.instanceData.byte1;
@@ -142,7 +314,7 @@ long __gcstatus(Object &obj){
 }
 
 bool isObjArray(Object &obj){
-    return (__typedef(obj) == TYPEDEF_GENERIC_ARRAY || __typedef(obj) == TYPEDEF_STRING_ARRAY);
+    return (isgenericarray(__typedef(obj)) || __typedef(obj) == TYPEDEF_STRING_ARRAY);
 }
 
 void freeObj(Object &obj){
@@ -156,7 +328,23 @@ void freeObj(Object &obj){
     obj.init.byte1 = OBJECT_DEAD;
 }
 
-// We perform a shallow delete
+bool isgeneric(int _typedef_)
+{
+    return (_typedef_ == TYPEDEF_GENERIC_BYTE || _typedef_ == TYPEDEF_GENERIC_SHORT 
+     || _typedef_ == TYPEDEF_GENERIC_INT || _typedef_ == TYPEDEF_GENERIC_LONG
+     || _typedef_ == TYPEDEF_GENERIC_CHAR || _typedef_ == TYPEDEF_GENERIC_BOOL
+     || _typedef_ == TYPEDEF_GENERIC_FLOAT || _typedef_ == TYPEDEF_GENERIC_DOUBLE);
+}
+
+bool isgenericarray(int _typedef_)
+{
+    return (_typedef_ == TYPEDEF_GENERIC_BYTE_ARRAY || _typedef_ == TYPEDEF_GENERIC_SHORT_ARRAY 
+     || _typedef_ == TYPEDEF_GENERIC_INT_ARRAY || _typedef_ == TYPEDEF_GENERIC_LONG_ARRAY
+     || _typedef_ == TYPEDEF_GENERIC_CHAR_ARRAY || _typedef_ == TYPEDEF_GENERIC_BOOL_ARRAY
+     || _typedef_ == TYPEDEF_GENERIC_FLOAT_ARRAY || _typedef_ == TYPEDEF_GENERIC_DOUBLE_ARRAY);
+}
+
+// We perform a soft(shallow) delete
 void svmDumpObject(Object &obj){
   gc_objc++;
   obj.size_t.byte1 = 0;

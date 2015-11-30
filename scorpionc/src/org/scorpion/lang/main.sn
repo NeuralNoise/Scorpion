@@ -5,113 +5,13 @@
 */
 module org.scorpion.lang;
 
-// inline assembly decliration
-asm("
-    .mthd @foo:
-       cout 'in foo$n'
-       ret foo
-       
-    .mthd @foo2:
-       cout 'in foo2$n'
-       ret foo2
-    
-    .mthd @rshift:
-       i_const @mShiftOffset #3
-       i_const @mValue #5
-       
-       rsft mValue mShiftOffset
-       cout 'mValue shifted ' cout mShiftOffset cout ' units right is: '
-       cout mValue cout '$n'
-       
-       kill mValue
-       kill mShiftOffset
-       ret rshift
-    
-    .mthd @lshift:
-       i_const @mShiftOffset #3
-       i_const @mValue #5
-       
-       lsft mValue mShiftOffset
-       cout 'mValue shifted ' cout mShiftOffset cout ' units left is: '
-       cout mValue cout '$n'
-       
-       kill mValue
-       kill mShiftOffset
-       ret lshift
-       
-    .mthd @_cin:
-       c_const @_char ' '
-       cout 'Type a character: '
-       cin _char #0
-       cout '$nchar is now: ' cout _char cout '$n'
-       
-       kill _char
-       ret _cin
-    ");
-
 def __init__(string** args)
 {
-  asm("cout 'Hello, World!$n$t'
-       nop
-       cout 'hello, world 2!$n'
-       i_const @i #55
-       cout (int) i
-       d_const @pi #3.13152
-       cout 'pi is ' cout pi cout '!$n'
-       c_const @f #10
-       cout 'f ->' cout (int) f cout '$n'
-       str_const @g 'Hello, World 3!$n'
-       cout g
-       str_const @h 'str2'
-       str_apnd g h
-       cout 'g=$'' cout g cout '$'$n'
-       assn i pi
-       cout i cout '$n'
-       delete i
-       str_const @exc 'Exception'
-       str_const @msg 'This is a test'   ; this is a test
-       .lbl @exe
-		  call foo2
-		  call foo
-		  b_const @run #1
-		  b_const @run2 #0
-		  if run
-             cout 'run$n'	
-             if run2
-                cout 'run2$n'	
-	            throw msg exc  
-             end
-		  end
-		i_const @num #55
-		inc num
-		cout num cout '$n'
-		dec num
-		cout num cout '$n'
-		kill num
-		call lshift
-		call rshift
-		call _cin
-	    jif exe run
-	    
-	    i_const @a #1
-	    i_const @b #2
-	    i_const @c #3
-	    b_const @d #0
-	    
-	    iadd c b a 
-	    ilt d a b
-	    cout 'c is ' cout (int) c cout '$n'
-	    cout d
-	    at d exc c
-	    cout '$n d=' cout (char) d
-	    
-	    b_const @f1 #1
-	    b_const @f2 #0
-	    b_const @or #2
-	    
-	    or or f2 f1
-	    cout '$n$n or=' cout (bool) or
-	   ;hlt
+  int x;
+  asm(" 
+       cout 'var x:' cout x cout '$n'
+       f_const @dbl #4154.11103923333
+       cout 'dbl=' cout dbl
       ");
       
   return 15;

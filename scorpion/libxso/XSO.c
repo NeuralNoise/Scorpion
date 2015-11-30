@@ -477,7 +477,7 @@ static int LastChar = ' ';
         if(CurTok == OP_LBL) {// pre assign label locations
             u1 sz;
             sz.byte1 = 1;
-            SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arg1], TYPEDEF_GENERIC, sz);
+            SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arg1], TYPEDEF_GENERIC_LONG, sz);
             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arg1], streamcount);
         }
         
@@ -488,7 +488,7 @@ static int LastChar = ' ';
        || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF 
        || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST 
        || CurTok == OP_THROW || CurTok == OP_STR_APND || CurTok == OP_ASSN || CurTok == OP_ACONST 
-       || CurTok == OP_STR_ACONST){
+       || CurTok == OP_STR_ACONST || CurTok == OP_CAST){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
         setbyte(CurTok);

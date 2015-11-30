@@ -38,6 +38,7 @@
 #define SCORPION_VM_IMAGE_HOLDER
 
  #include "scorpionvm.h"
+ #include "../clib/u4.h"
  #include <sstream>
  #include <iostream>
  #include <string>
@@ -60,5 +61,7 @@ class ImageHolder {
        int getGroup();
 };
 
+extern u4_d op_ags;
+extern int instrgroup;
 
 #endif

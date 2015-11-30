@@ -38,10 +38,13 @@
  #define nil NULL
  #define obj_offset 50 // The offset address of all Object data sets
  
- #define var_return 0x0
- #define var_null   0x1
- #define var_true   0x2
- #define var_false  0x3
+ // Compiler used memory addressess
+ #define var_return      0x0
+ #define var_null        0x1
+ #define var_true        0x2
+ #define var_false       0x3
+ #define var_empty_array 0x4
+ #define var_dummy_data  0x5
  
  extern bool init;
  
