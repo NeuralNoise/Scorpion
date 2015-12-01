@@ -51,7 +51,12 @@ bool svmObjectHasInstance(Object &obj, int instance){
    return (obj.instanceData.byte1 == instance);
 }
 
-// TODO: add err() function to free object before throwing exception
+void init_err(Object &obj, string message)
+{
+    freeObj(obj);
+    Exception(message, "OutOfMemoryError");
+}
+
 void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
   
   if(svmObjectIsAlive(obj))
@@ -60,152 +65,154 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
   obj.init.byte1 = OBJECT_ALIVE;
   obj.instanceData.byte1 = _typedef_;
   obj.instanceData.byte2 = gc_status;
+  obj.size_t.byte1 = objsz_t.byte1;
   
   if(isgeneric(_typedef_)){
-   obj.obj = new (nothrow) DataObject[1];
-   
-   if(obj.obj == nullptr)
-      Exception("Object could not be created.", "OutOfMemoryError");
-
-   if(_typedef_ == TYPEDEF_GENERIC_BYTE){
-      obj.obj->pbyte = new (nothrow)  int8_t[1];
-      
-      if(obj.obj->arrayobj->pbyte == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_SHORT){
-      obj.obj->pshort = new (nothrow)  int16_t[1];
-      
-      if(obj.obj->arrayobj->pshort == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_INT){
-      obj.obj->pint = new (nothrow)  int32_t[1];
-      
-      if(obj.obj->arrayobj->pint == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_LONG){
-      obj.obj->plong = new (nothrow)  int64_t[1];
-      
-      if(obj.obj->arrayobj->plong == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_CHAR){
-      obj.obj->pchar = new (nothrow)  int16_t[1];
-      
-      if(obj.obj->arrayobj->pchar == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_BOOL){
-      obj.obj->pboolean = new (nothrow)  bool[1];
-      
-      if(obj.obj->arrayobj->pboolean == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_FLOAT){
-      obj.obj->pfloat = new (nothrow)  float[1];
-      
-      if(obj.obj->arrayobj->pfloat == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_DOUBLE){
-      obj.obj->pdouble = new (nothrow)  double[1];
-      
-      if(obj.obj->arrayobj->pdouble == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
+       obj.obj = new (nothrow) DataObject[1];
+       
+       if(obj.obj == nullptr)
+          init_err(obj, "Object could not be created.");
+    
+       if(_typedef_ == TYPEDEF_GENERIC_BYTE){
+          obj.obj->pbyte = new (nothrow)  sbyte[1];
+          
+          if(obj.obj->pbyte == nullptr)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_SHORT){
+          obj.obj->pshort = new (nothrow)  sshort[1];
+          
+          if(obj.obj->pshort == nullptr)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_INT){
+          obj.obj->pint = new (nothrow)  sint[1];
+          
+          if(obj.obj->pint == nullptr)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_LONG){
+          obj.obj->plong = new (nothrow)  slong[1];
+          
+          if(obj.obj->plong == nullptr)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_CHAR){
+          obj.obj->pchar = new (nothrow)  schar[1];
+          
+          if(obj.obj->pchar == nullptr)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_BOOL){
+          obj.obj->pboolean = new (nothrow)  sbool[1];
+          
+          if(obj.obj->pboolean == nullptr)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_FLOAT){
+          obj.obj->pfloat = new (nothrow)  sfloat[1];
+          
+          if(obj.obj->pfloat == nullptr)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_DOUBLE){
+          obj.obj->pdouble = new (nothrow)  sdouble[1];
+          
+          if(obj.obj->pdouble == nullptr)
+              init_err(obj, "Array object could not be created.");
+       }
+       return;
   }
   if(_typedef_ == TYPEDEF_STRING){
-   obj.obj = new (nothrow) DataObject[1];
-   obj.obj->strobj = new (nothrow) StringObject[1];
-   obj.obj->strobj->array = new (nothrow) ArrayObject[1];
-   
-   if(obj.obj == nullptr || obj.obj->strobj == nullptr 
-      || obj.obj->strobj->array == nullptr)
-       Exception("String object could not be created.", "OutOfMemoryError");
+       obj.obj = new (nothrow) DataObject[1];
+       obj.obj->strobj = new (nothrow) StringObject[1];
+       obj.obj->strobj->array = new (nothrow) ArrayObject[1];
+       
+       if(obj.obj == nullptr || obj.obj->strobj == nullptr 
+          || obj.obj->strobj->array == nullptr)
+           init_err(obj, "String object could not be created.");
+     return;
   }
   if(isgenericarray(_typedef_)) {
-   obj.obj = new (nothrow) DataObject[1];
-   obj.obj->arrayobj = new (nothrow) ArrayObject[1];
-   
-   if(obj.obj == nullptr || obj.obj->arrayobj == nullptr)
-       Exception("Array object could not be created.", "OutOfMemoryError");
-   
-   obj.obj->arrayobj->length = objsz_t.byte1;
-   
-   if(_typedef_ == TYPEDEF_GENERIC_BYTE_ARRAY){
-      obj.obj->arrayobj->pbyte =  (int8_t*)malloc(objsz_t.byte1);
-      
-      if(obj.obj->arrayobj->pbyte == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_SHORT_ARRAY){
-      obj.obj->arrayobj->pshort = (int16_t*)malloc(objsz_t.byte1);
-      
-      if(obj.obj->arrayobj->pshort == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_INT_ARRAY){
-      obj.obj->arrayobj->pint = (int32_t*)malloc(objsz_t.byte1);
-      
-      if(obj.obj->arrayobj->pint == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_LONG_ARRAY){
-      obj.obj->arrayobj->plong = (int64_t*)malloc(objsz_t.byte1);
-      
-      if(obj.obj->arrayobj->plong == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_CHAR_ARRAY){
-      obj.obj->arrayobj->pchar = (int16_t*)malloc(objsz_t.byte1);
-      
-      if(obj.obj->arrayobj->pchar == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_BOOL_ARRAY){
-      obj.obj->arrayobj->pboolean = (bool*)malloc(objsz_t.byte1);
-      
-      if(obj.obj->arrayobj->pboolean == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_FLOAT_ARRAY){
-      obj.obj->arrayobj->pfloat = (float*)malloc(objsz_t.byte1);
-      
-      if(obj.obj->arrayobj->pfloat == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
-   else if(_typedef_ == TYPEDEF_GENERIC_DOUBLE_ARRAY){
-      obj.obj->arrayobj->pdouble = (double*)malloc(objsz_t.byte1);
-      
-      if(obj.obj->arrayobj->pdouble == NULL)
-          Exception("Array object could not be created.", "OutOfMemoryError");
-   }
+       obj.obj = new (nothrow) DataObject[1];
+       obj.obj->arrayobj = new (nothrow) ArrayObject[1];
+       
+       if(obj.obj == nullptr || obj.obj->arrayobj == nullptr)
+           init_err(obj, "Array object could not be created.");
+       
+       obj.obj->arrayobj->length = objsz_t.byte1;
+       
+       if(_typedef_ == TYPEDEF_GENERIC_BYTE_ARRAY){
+          obj.obj->arrayobj->pbyte =  (sbyte*)malloc(objsz_t.byte1);
+          
+          if(obj.obj->arrayobj->pbyte == NULL)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_SHORT_ARRAY){
+          obj.obj->arrayobj->pshort = (sshort*)malloc(objsz_t.byte1);
+          
+          if(obj.obj->arrayobj->pshort == NULL)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_INT_ARRAY){
+          obj.obj->arrayobj->pint = (sint*)malloc(objsz_t.byte1);
+          
+          if(obj.obj->arrayobj->pint == NULL)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_LONG_ARRAY){
+          obj.obj->arrayobj->plong = (slong*)malloc(objsz_t.byte1);
+          
+          if(obj.obj->arrayobj->plong == NULL)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_CHAR_ARRAY){
+          obj.obj->arrayobj->pchar = (schar*)malloc(objsz_t.byte1);
+          
+          if(obj.obj->arrayobj->pchar == NULL)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_BOOL_ARRAY){
+          obj.obj->arrayobj->pboolean = (sbool*)malloc(objsz_t.byte1);
+          
+          if(obj.obj->arrayobj->pboolean == NULL)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_FLOAT_ARRAY){
+          obj.obj->arrayobj->pfloat = (sfloat*)malloc(objsz_t.byte1);
+          
+          if(obj.obj->arrayobj->pfloat == NULL)
+              init_err(obj, "Array object could not be created.");
+       }
+       else if(_typedef_ == TYPEDEF_GENERIC_DOUBLE_ARRAY){
+          obj.obj->arrayobj->pdouble = (sdouble*)malloc(objsz_t.byte1);
+          
+          if(obj.obj->arrayobj->pdouble == NULL)
+              init_err(obj, "Array object could not be created.");
+       }
+       return;
   }
   if(_typedef_ == TYPEDEF_STRING_ARRAY) {
-   obj.obj = new (nothrow) DataObject[1];
-   obj.obj->arrayobj = new (nothrow) ArrayObject[1];
-   
-   if(obj.obj == nullptr || obj.obj->arrayobj == nullptr)
-       Exception("String array object could not be created.", "OutOfMemoryError");
-    
-   obj.obj->arrayobj->length = objsz_t.byte1;
-   obj.obj->arrayobj->strobj = (StringObject*)malloc(objsz_t.byte1);
-   
-   if(obj.obj->arrayobj->strobj == NULL)
-       Exception("String array object could not be created.", "OutOfMemoryError");
-   
-   for(long i = 0; i < objsz_t.byte1; i++){ // initalize all strings
-      obj.obj->arrayobj->strobj[i].array = new (nothrow) ArrayObject[1];
-      
-      if(obj.obj->arrayobj->strobj[i].array == nullptr)
-        Exception("String array object could not be created.", "OutOfMemoryError");
-   }
-      
+       obj.obj = new (nothrow) DataObject[1];
+       obj.obj->arrayobj = new (nothrow) ArrayObject[1];
+       
+       if(obj.obj == nullptr || obj.obj->arrayobj == nullptr)
+           init_err(obj, "String array object could not be created.");
+        
+       obj.obj->arrayobj->length = objsz_t.byte1;
+       obj.obj->arrayobj->strobj = (StringObject*)malloc(objsz_t.byte1);
+       
+       if(obj.obj->arrayobj->strobj == NULL)
+           init_err(obj, "String array object could not be created.");
+       
+       for(long i = 0; i < objsz_t.byte1; i++){ // initalize all strings
+          obj.obj->arrayobj->strobj[i].array = new (nothrow) ArrayObject[1];
+          
+          if(obj.obj->arrayobj->strobj[i].array == nullptr)
+            init_err(obj, "String array object could not be created.");
+       }
+      return;
   }
-   
-  obj.size_t.byte1 = objsz_t.byte1;
 }
 
 
@@ -216,7 +223,14 @@ long jmpLocation(Method &m){
 long returnLocation(Method &m){
     return m.ref.byte1;
 }
-  
+
+float  btof(bool b)
+{
+    if(b)
+      return 1;
+    else return 0;
+}
+
 void svmSetGenericValue(Object &obj, double value){
     if(!svmObjectIsAlive(obj))
       Exception("Object was not initalized.", "DeadObjectException");
@@ -234,7 +248,7 @@ void svmSetGenericValue(Object &obj, double value){
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
        obj.obj->pchar[default_loc] = value;
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
-       obj.obj->pboolean[default_loc] = value;
+       obj.obj->pboolean[default_loc] = (bool) value;
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
        obj.obj->pdouble[default_loc] = value;
 }
@@ -245,21 +259,21 @@ double svmGetGenericValue(Object &obj){
    
     
     if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BYTE)
-       return (double) obj.obj->pbyte[default_loc];
+       return obj.obj->pbyte[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
-       return (double) obj.obj->pshort[default_loc];
+       return obj.obj->pshort[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
-       return (double) obj.obj->pint[default_loc];
+       return obj.obj->pint[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
-       return (double) obj.obj->plong[default_loc];
+       return obj.obj->plong[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
-       return (double) obj.obj->pfloat[default_loc];
+       return obj.obj->pfloat[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
-       return (double) obj.obj->pchar[default_loc];
+       return obj.obj->pchar[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
-       return (double) obj.obj->pboolean[default_loc];
+       return obj.obj->pboolean[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
-       return (double) obj.obj->pdouble[default_loc];
+       return obj.obj->pdouble[default_loc];
 }
 
 void svmIncGenericValue(Object &obj){

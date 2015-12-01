@@ -1,4 +1,4 @@
- #include "imgholder.h"
+ #include "imgprocessor.h"
  #include "scorpionvm.h"
  #include "Opcodes.h"
  #include "Globals.h"
@@ -66,8 +66,10 @@ unsigned long pos;
      else if(LastChar == OP_ICONST || LastChar == OP_DCONST || LastChar == OP_FCONST || 
         LastChar == OP_SCONST || LastChar == OP_BCONST || LastChar == OP_CCONST || LastChar == OP_RSHFT 
         || LastChar == OP_LSHFT || LastChar == OP_CIN || LastChar == OP_STR_APND || LastChar == OP_ASSN 
-        || LastChar == OP_JIF || LastChar == OP_JIT || LastChar == OP_THROW || LastChar == OP_ACONST 
-        || LastChar == OP_STR_ACONST || LastChar == OP_CAST){ // mthd @9
+        || LastChar == OP_JIF || LastChar == OP_JIT || LastChar == OP_THROW
+        || LastChar == OP_STR_ACONST || LastChar == OP_CAST || LastChar == OP_BYTE_CONST || LastChar == OP_LCONST
+        || LastChar == OP_DACONST || LastChar == OP_IACONST || LastChar == OP_FACONST || LastChar == OP_CACONST 
+        || LastChar == OP_BACONST || LastChar == OP_BYTE_ACONST || LastChar == OP_SACONST || LastChar == OP_LACONST){ // mthd @9
          instrgroup = 2;
          op_ags.byte1 = getb();
          op_ags.byte2 = getb();
@@ -120,23 +122,23 @@ unsigned long pos;
  }
 
 
-string ImageHolder::getStr(){
+string ImageProcessor::getStr(){
      return word.str();
  }
 
-u4_d ImageHolder::getAgs(){
+u4_d ImageProcessor::getAgs(){
     return op_ags;
 }
       
-long ImageHolder::getOp(){
+long ImageProcessor::getOp(){
     return CurByte;
 }
 
-int ImageHolder::getGroup(){
+int ImageProcessor::getGroup(){
    return instrgroup;
 }
 
- int ImageHolder::getNextInstr(){ //parse this alike the Compilr library
+ int ImageProcessor::getNextInstr(){ //parse this alike the Compilr library
      return getByte();
  }
  

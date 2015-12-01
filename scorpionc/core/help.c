@@ -104,7 +104,6 @@ void help()
    cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    --build<file>     set the dev build scipt file. This option is required." << endl;
    cout <<               "    -o<file>          set the output object file. Default is application.xso." << endl;
-   cout <<               "    -Xsz<value>       set the standard heap size for compilation allocation (standard size is usually ok)." << endl;
    cout <<               "    -O<value>         set the standard heap size for object file allocation (standard size is usually ok)." << endl;
    cout <<               "    -c                compile only and do not generate object file." << endl;
    cout <<               "    -w                allow warnings to be displayed." << endl;
@@ -177,7 +176,7 @@ void parseargs(int argc, const char **args)
          
             options.output_file = args[i];
          }
-         else if(OPTION == "-Xsz"){
+         else if(OPTION == "-O"){
             i++;
             file_start++;
             
@@ -185,7 +184,7 @@ void parseargs(int argc, const char **args)
                cout << "Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." << endl;
                exit(1);   
             }
-         
+            
             unsigned long _heap_std=cplr_item_buflen;
             data = args[i];
             double segment;
@@ -211,48 +210,9 @@ void parseargs(int argc, const char **args)
             double mb = atoi(data.c_str());
             mb *= segment; // convert to actual bytes
             cplr_item_buflen = mb;
-            if(cplr_bitmap_len <= 0){
+            if(cplr_item_buflen <= 0){
               cplr_item_buflen = _heap_std;
-              cout << "scorpionc:  warning: requested object heap may be too large or equal to 0.\n";
-            }
-         }
-         else if(OPTION == "-O"){
-            i++;
-            file_start++;
-            
-            if(!(i < argc)){
-               cout << "Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." << endl;
-               exit(1);   
-            }
-            
-            unsigned long _heap_std=cplr_bitmap_len;
-            data = args[i];
-            double segment;
-            if(data.at(data.length() - 1) == 'b'){ // bytes
-               segment = 1;
-               data = trim(data);
-            }
-            else if(data.at(data.length() - 1) == 'k'){ // kb
-               segment = 1000;
-               data = trim(data);
-            }
-            else if(data.at(data.length() - 1) == 'm'){ // mb
-               segment = 1000000;
-               data = trim(data);
-            }
-            else if(data.at(data.length() - 1) == 'g'){ // gb
-               segment = 1000000000;
-               data = trim(data);
-            }
-            else
-               segment = 1000;
-            
-            double mb = atoi(data.c_str());
-            mb *= segment; // convert to actual bytes
-            cplr_bitmap_len = mb;
-            if(cplr_bitmap_len <= 0){
-              cplr_bitmap_len = _heap_std;
-              cout << "scorpionc:  warning: requested heap may be too large or equal to 0.\n";
+              cout << "scorpionc:  warning: requested object memory may be too large or equal to 0.\n";
             }
          }
          else if(OPTION == "-c")

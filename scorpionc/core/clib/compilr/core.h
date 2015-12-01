@@ -49,7 +49,6 @@
  extern bool init;
  
  extern unsigned long cplr_item_buflen;
- extern unsigned long cplr_bitmap_len;
  
  // TODO: create standard memory structure variables
  
@@ -158,9 +157,9 @@
  * These are used for object instantiation
  */
  #define TYPEDEF_STRING (0x12)
- #define TYPEDEF_GENERIC_ARRAY (0x13)
  #define TYPEDEF_STRING_ARRAY (0x14)
  #define TYPEDEF_GENERIC (0x15)
+ #define TYPEDEF_GENERIC_ARRAY (0x19)
  
  struct DataObject {
  
@@ -252,11 +251,6 @@
    
    /* These are our special object types */    
    StringObject* strobj;
-   
-   /*
-   * Generic data (**int, **float, etc..)
-   */
-   double *generic;
  };
 
  /*

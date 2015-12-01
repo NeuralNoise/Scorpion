@@ -300,7 +300,7 @@ string rmnln(string data){
      else if(zres._warnings_.str() != "")
          cout << zres._warnings_.str();
      
-     gSvm.image = __img_buf__.str();
+     gSvm.image = rmnln(__img_buf__.str());
      __img_buf__.str("");
      zlib.Cleanup();
  }
@@ -487,8 +487,10 @@ static int LastChar = ' ';
      else if(CurTok == OP_SCONST || CurTok == OP_BCONST || CurTok == OP_CCONST || CurTok == OP_RSHFT 
        || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF 
        || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST 
-       || CurTok == OP_THROW || CurTok == OP_STR_APND || CurTok == OP_ASSN || CurTok == OP_ACONST 
-       || CurTok == OP_STR_ACONST || CurTok == OP_CAST){
+       || CurTok == OP_THROW || CurTok == OP_STR_APND || CurTok == OP_ASSN
+       || CurTok == OP_STR_ACONST || CurTok == OP_CAST || CurTok == OP_BYTE_CONST || CurTok == OP_LCONST
+       || CurTok == OP_DACONST || CurTok == OP_IACONST || CurTok == OP_FACONST || CurTok == OP_CACONST 
+       || CurTok == OP_BACONST || CurTok == OP_BYTE_ACONST || CurTok == OP_SACONST || CurTok == OP_LACONST){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
         setbyte(CurTok);
@@ -523,7 +525,6 @@ static int LastChar = ' ';
        preexecute_err();
  }
  
- // TODO: preprocess a xso file
  void XSO::preprocess(string data) // very simple image preprocessor
  {
      Exception::trace.addproto("vm.internal.system.preprocess", "XSO", 1);

@@ -570,10 +570,9 @@ void Init_ShutdownScorpionVM()
     
       if(gSvm.env != nullptr){ // shut down all block table structures 
          if(gSvm.vm.vStaticRegs != nullptr && (gSvm.vm.vStaticRegs[VREG_SP] >= 0)){
-        //     cout << "address " << gSvm.vm.vStaticRegs[VREG_SP] << " val " << gSvm.env->getBitmap().objs[0].obj->generic << endl;
              unsigned long address = gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]--]; // simple stack pop
-             gSvm.exitval = (long) svmGetGenericValue(gSvm.env->getBitmap().objs[address]);
-             // TODO: check typedef(must be generic) of object pulled from stack
+             if(isgeneric(__typedef(gSvm.env->getBitmap().objs[address])))
+                gSvm.exitval = (slong) svmGetGenericValue(gSvm.env->getBitmap().objs[address]);
          }
            
         alog.ALOGD("Shutting down environments.");     

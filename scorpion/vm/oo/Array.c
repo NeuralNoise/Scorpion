@@ -45,6 +45,7 @@
  #include <stdint.h>
  
  using namespace std;
+ extern float btof(bool b);
   
  ArrayObject* tochararray(string data){
      ArrayObject* obj = new (nothrow) ArrayObject[1];
@@ -52,7 +53,7 @@
      if(obj == nullptr)
         return obj;
     
-     obj->pchar = new (nothrow) int16_t[data.size()];
+     obj->pchar = new (nothrow) schar[data.size()];
      obj->length = data.size();    
      
      if(obj->pchar == nullptr)
@@ -84,7 +85,7 @@
  }
  
  
- 
+ // TODO: Check array typedef and assign and get accordingly.
  /* Generic array parsing stuff */
  double get(Object &obj, long pos){
      if(!svmObjectIsAlive(obj))
@@ -96,7 +97,20 @@
        Exception(ss.str(), "ArrayIndexOutOfBoundsException");
      }
      
-     return obj.obj->arrayobj->pchar[pos];
+     if(__typedef(obj) == TYPEDEF_GENERIC_BOOL)
+       return btof(obj.obj->arrayobj->pboolean[pos]);
+     else if(__typedef(obj) == TYPEDEF_GENERIC_INT)
+       return obj.obj->arrayobj->pint[pos];
+     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT)
+       return obj.obj->arrayobj->pshort[pos];
+     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE)
+       return obj.obj->arrayobj->pbyte[pos];
+     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT)
+       return obj.obj->arrayobj->pfloat[pos];
+     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE)
+       return obj.obj->arrayobj->pdouble[pos];
+     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR)
+       return obj.obj->arrayobj->pchar[pos];
  }
  
  void set(Object &obj, long pos, double default_value){
@@ -109,7 +123,20 @@
        Exception(ss.str(), "ArrayIndexOutOfBoundsException");
      }
       
-      obj.obj->arrayobj->pchar[pos] = default_value;
+      if(__typedef(obj) == TYPEDEF_GENERIC_BOOL)
+         obj.obj->arrayobj->pboolean[pos] = (bool) default_value;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_INT)
+       obj.obj->arrayobj->pint[pos] = default_value;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT)
+       obj.obj->arrayobj->pshort[pos] = default_value;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE)
+       obj.obj->arrayobj->pbyte[pos] = default_value;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT)
+       obj.obj->arrayobj->pfloat[pos] = default_value;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE)
+       obj.obj->arrayobj->pdouble[pos] = default_value;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR)
+       obj.obj->arrayobj->pchar[pos] = default_value;
  }
  
  

@@ -88,6 +88,15 @@
  #define TYPEDEF_STRING (0x12)
  #define TYPEDEF_STRING_ARRAY (0x14)
  
+  typedef int8_t  sbyte;  
+  typedef int16_t sshort;
+  typedef int16_t schar;
+  typedef int32_t sint;
+  typedef int64_t slong;
+  typedef float   sfloat;
+  typedef double  sdouble;
+  typedef bool    sbool;
+ 
  /**
  * 8-Bit signed integer
  *   This data type has a minimum value of -128 and a maximum value of 127
@@ -148,9 +157,10 @@
  #define TYPEDEF_GENERIC_CHAR (0x46)
  
  /**
-  * Single-Bit value
+  * Undefined-Bit value
   *  This data type is a very trivial data type seen in almost all programming languages.
   *  It operates as a single bit that can only hold the values true or false (i.e 1 or 0)
+  *  Its size is left undefined.
   */
  #define TYPEDEF_GENERIC_BOOL (0x48)
  
@@ -176,14 +186,14 @@
      /*
      * native Scorpion primitive types
      */
-     int8_t  *pbyte;  
-     int16_t *pshort;
-     int16_t *pchar;
-     int32_t *pint;
-     int64_t *plong;
-     float   *pfloat;
-     double  *pdouble;
-     bool    *pboolean;
+     sbyte   *pbyte;  
+     sshort  *pshort;
+     schar   *pchar;
+     sint    *pint;
+     slong   *plong;
+     sfloat  *pfloat;
+     sdouble *pdouble;
+     sbool   *pboolean;
  };
  
  /*
@@ -207,7 +217,7 @@
  *                          data that is used in the Scorpion.
  *
  * typedef-generic-array ::=  A "generic" array object
- *                              - An array og generic data
+ *                              - An array of generic data
  *
  * typedef-string-array  ::=  A string array object
  *                              - An array of string objects
@@ -271,14 +281,14 @@
    /*
     * native Scorpion primitive types
     */
-     int8_t  *pbyte;  
-     int16_t *pshort;
-     int16_t *pchar;
-     int32_t *pint;
-     int64_t *plong;
-     float   *pfloat;
-     double  *pdouble;
-     bool    *pboolean;
+     sbyte   *pbyte;  
+     sshort  *pshort;
+     schar   *pchar;
+     sint    *pint;
+     slong   *plong;
+     sfloat  *pfloat;
+     sdouble *pdouble;
+     sbool   *pboolean;
  };
 
  /*

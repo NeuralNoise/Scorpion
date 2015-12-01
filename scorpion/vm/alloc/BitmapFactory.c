@@ -66,7 +66,7 @@ using namespace std;
      if(bitmap.stack == nullptr || bitmap.objs == NULL)
          goto bail;
      
-     bitmap.stack->plong = (int64_t*)malloc(stack);
+     bitmap.stack->plong = (slong*)malloc(stack);
      bitmap.stack->length = stack;
      
      if(bitmap.stack->plong == NULL)

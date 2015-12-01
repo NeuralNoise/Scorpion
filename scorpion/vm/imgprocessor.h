@@ -52,7 +52,7 @@
  };
 
 
-class ImageHolder {
+class ImageProcessor {
     public:
        int getNextInstr();
        string getStr();

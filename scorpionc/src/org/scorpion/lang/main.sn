@@ -5,14 +5,22 @@
 */
 module org.scorpion.lang;
 
+def foo()
+{
+   asm(" cout 'in foo'");
+}
+
 def __init__(string** args)
 {
-  int x;
-  asm(" 
-       cout 'var x:' cout x cout '$n'
-       f_const @dbl #4154.11103923333
-       cout 'dbl=' cout dbl
+  int i =0;
+  int max = 10000000;
+  bool go;
+  asm("
+       .lbl @loop
+         inc i
+         ;cout i cout '$n'
+         ilt go i max
+         jit loop go
       ");
       
-  return 15;
 }
