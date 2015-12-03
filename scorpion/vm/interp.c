@@ -88,7 +88,9 @@ long compare(long instruction){
      double a,b;
      a = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2]);
      b = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]);
-     
+   //  cout << "a = " << a << " b = " << b  << " i " << instruction << " bool " << (a<b) << endl;
+     if(instruction == OP_ISLT)
+        return a < b;
      if(instruction == OP_ISEQ)
         return a == b;
      if(instruction == OP_ISGE)
@@ -97,8 +99,6 @@ long compare(long instruction){
         return a > b;
      if(instruction == OP_ISLE)
         return a <= b;
-     if(instruction == OP_ISLT)
-        return a < b;
      if(instruction == OP_ISNEQ)
         return a != b;
      if(instruction == OP_ISNGE)
@@ -293,6 +293,22 @@ void _cout_(string output)
   }
 }
 
+string getStr(long k, long m, long len)
+{
+     char c;
+     stringstream ss;
+     for(int i = 0; i < len; i++){
+         c = (char) gSvm.bytestream.valueAt(k++);
+         ss << "" << c;
+     }
+     return ss.str();
+}
+void Protect(long k, long m)
+{
+    cout << "wtf.\n";
+    segfault();
+}
+
 
 // TODO: Finish implementing the rest of the instructions
 // TODO: Have interpreter utilize Scorpion primitive types during data transfer
@@ -300,11 +316,13 @@ void _cout_(string output)
 void Scorpion_VMExecute(){
   alog.ALOGD("running application.");
   
-  long i; // our dedicated instruction 
+  unsigned long i, k=gSvm.vm.vStaticRegs[VREG_PC], m=gSvm.bytestream.size();
   exe:
-    i = gSvm.appholder.getNextInstr();
-   // cout << "i=" << i << endl;
-
+    if(k>=m)
+      Protect(k,m);
+      
+    i = gSvm.bytestream.valueAt(k++);
+  //  cout << "i=" << i << endl;
     if(gSvm.vm.flags[VFLAG_NO] == 1 && i != OP_ENDNO) // do not run
         goto exe;
     
@@ -315,7 +333,7 @@ void Scorpion_VMExecute(){
    // if(gSvm.Debug)
       // do debug stuff
 
-    if(instrgroup == 0)
+  /*  if(instrgroup == 0)
       goto group0;
     if(instrgroup == 1)
       goto group1;
@@ -328,7 +346,7 @@ void Scorpion_VMExecute(){
     else{
       alog.ALOGV("unspecified fatal error: could not find executable group.");
       segfault();
-    }
+    }*/
 
     group0:
        switch( i ) {
@@ -350,7 +368,7 @@ void Scorpion_VMExecute(){
           case OP_HLT:
                Init_ShutdownScorpionVM();
        } // run each instr
-       goto exe; // we do this for non implemented instructions
+    op_ags.byte1=gSvm.bytestream.valueAt(k++);
     group1:
        switch( i ) {
           case OP_RETURN:
@@ -360,12 +378,20 @@ void Scorpion_VMExecute(){
                else
                  return_method((long) op_ags.byte1);
           goto exe;
+          break;
+          case OP_COUT: // output data to the console;
+              _cout_(getStr(k,m,op_ags.byte1));
+              k+=op_ags.byte1;
+          goto exe;
+          break;
           case OP_INC:
                svmIncGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
           goto exe;
+          break;
           case OP_DEC:
                svmDecGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
           goto exe;
+          break;
           case OP_IF:
                
                /*
@@ -402,6 +428,7 @@ void Scorpion_VMExecute(){
                gSvm.vm.flags[VFLAG_IFC]++;
                
           goto exe;
+          break;
           case OP_PUSH:
             {
                long stacksz = gSvm.env->getBitmap().stack->length;
@@ -412,6 +439,7 @@ void Scorpion_VMExecute(){
                gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]] = (long) op_ags.byte1;
             }
           goto exe;
+          break;
           case OP_POP:
                if(gSvm.vm.vStaticRegs[VREG_SP] < 0)
                    Exception("Failure to pull data from empty stack.", "StackUnderflowException");
@@ -419,6 +447,7 @@ void Scorpion_VMExecute(){
                svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], 
                       gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]--]);
           goto exe;
+          break;
           case OP_KILL:
                {
                    if(!svmObjectIsAlive(gSvm.env->getBitmap().objs[(long) op_ags.byte1]))
@@ -428,38 +457,54 @@ void Scorpion_VMExecute(){
                    checkGC(gSvm.env->bitmap);
                }
           goto exe;
+          break;
           case OP_JMP:
-               gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
+               k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
           goto exe;
+          break;
           case OP_CALL:
                {
                  gSvm.vm.flags[VFLAG_MTHDC]++;
                  Scorpion_InvokeMethod((long) op_ags.byte1);
                }
           goto exe;
-          case OP_MTHD: goto exe; // this instruction does nothing, it was executed during vm init
-          case OP_LBL: goto exe;  // this instruction does nothing, it was executed during vm init
+          break;
+          case OP_MTHD: goto exe; break; // this instruction does nothing, it was executed during vm init
+          case OP_LBL: goto exe;  break; // this instruction does nothing, it was executed during vm init
           default:
              if(i == OP_DELETE || i == OP_DELETE_ARRY){
                  if(!svmObjectIsAlive(gSvm.env->getBitmap().objs[(long) op_ags.byte1]))
                          goto exe;
                          
                    freeObj(gSvm.env->getBitmap().objs[(long) op_ags.byte1]); // arrays and generic objects can be freed the same way
+                   goto exe;
              }
-          goto exe;
+          break;
        } // run each instr
-       goto exe;
+    op_ags.byte2=gSvm.bytestream.valueAt(k++);
     group2:
        switch( i ) {
           case OP_ICONST:
                {
-                  //  cout << "iconst @" << (long) op_ags.byte1 << " ->" << (long) op_ags.byte2 << endl;
+                   // cout << "iconst @" << (long) op_ags.byte1 << " ->" << (long) op_ags.byte2 << endl;
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) op_ags.byte1], TYPEDEF_GENERIC_INT, sz);
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sint) op_ags.byte2);
+                   //  cout << "i is " << k << endl;
                }
           goto exe;
+          break;
+          case OP_STRCONST:
+               {
+                 u1 sz;
+                 sz.byte1 = 1;
+                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_STRING, sz);
+                 assign(gSvm.env->getBitmap().objs[(long) op_ags.byte1], getStr(k,m,op_ags.byte2));
+                 k+=op_ags.byte2;
+               }
+          goto exe;
+          break;
           case OP_DCONST:
                {
                     u1 sz;
@@ -468,6 +513,7 @@ void Scorpion_VMExecute(){
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], op_ags.byte2);
                }
           goto exe;
+          break;
           case OP_FCONST:
                {
                     u1 sz;
@@ -476,6 +522,7 @@ void Scorpion_VMExecute(){
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sfloat) op_ags.byte2);
                }
           goto exe;
+          break;
           case OP_SCONST:
                {
                     u1 sz;
@@ -484,6 +531,7 @@ void Scorpion_VMExecute(){
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sshort) op_ags.byte2);
                }
           goto exe;
+          break;
           case OP_BCONST:
                {
                     u1 sz;
@@ -492,6 +540,7 @@ void Scorpion_VMExecute(){
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], op_ags.byte2);
                }
           goto exe;
+          break;
           case OP_CCONST:
                {
                     u1 sz;
@@ -500,6 +549,7 @@ void Scorpion_VMExecute(){
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (schar) op_ags.byte2);
                }
           goto exe;
+          break;
           case OP_BYTE_CONST:
                {
                     u1 sz;
@@ -508,6 +558,7 @@ void Scorpion_VMExecute(){
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sbyte) op_ags.byte2);
                }
           goto exe;
+          break;
           case OP_LCONST:
                {
                     u1 sz;
@@ -516,6 +567,7 @@ void Scorpion_VMExecute(){
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (slong) op_ags.byte2);
                }
           goto exe;
+          break;
           case OP_IACONST:
                {
                 u1 sz;
@@ -523,6 +575,7 @@ void Scorpion_VMExecute(){
                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_INT_ARRAY, sz);
                }
           goto exe;
+          break;
           case OP_SACONST:
                {
                 u1 sz;
@@ -530,6 +583,7 @@ void Scorpion_VMExecute(){
                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_SHORT_ARRAY, sz);
                }
           goto exe;
+          break;
           case OP_BYTE_ACONST:
                {
                 u1 sz;
@@ -537,6 +591,7 @@ void Scorpion_VMExecute(){
                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_BYTE_ARRAY, sz);
                }
           goto exe;
+          break;
           case OP_BACONST:
                {
                 u1 sz;
@@ -544,6 +599,7 @@ void Scorpion_VMExecute(){
                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_BOOL_ARRAY, sz);
                }
           goto exe;
+          break;
           case OP_FACONST:
                {
                 u1 sz;
@@ -551,6 +607,7 @@ void Scorpion_VMExecute(){
                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_FLOAT_ARRAY, sz);
                }
           goto exe;
+          break;
           case OP_DACONST:
                {
                 u1 sz;
@@ -558,6 +615,7 @@ void Scorpion_VMExecute(){
                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_DOUBLE_ARRAY, sz);
                }
           goto exe;
+          break;
           case OP_LACONST:
                {
                 u1 sz;
@@ -565,6 +623,7 @@ void Scorpion_VMExecute(){
                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_LONG_ARRAY, sz);
                }
           goto exe;
+          break;
           case OP_STR_ACONST:
                {
                 u1 sz;
@@ -572,6 +631,7 @@ void Scorpion_VMExecute(){
                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_STRING_ARRAY, sz);
                }
           goto exe;
+          break;
           case OP_CAST:
                {
                    sdouble newData, data = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2]);
@@ -589,14 +649,17 @@ void Scorpion_VMExecute(){
                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2], newData);
                }
           goto exe;
+          break;
           case OP_JIT:
                if((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2]) == 1)
-                  gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
+                  k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
           goto exe;
+          break;
           case OP_JIF:
                if((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2]) == 0)
-                  gSvm.vm.vStaticRegs[VREG_PC] =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
+                  k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
           goto exe;
+          break;
           case OP_RSHFT:
                {
                  long num = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
@@ -604,6 +667,7 @@ void Scorpion_VMExecute(){
                  svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], num);
                }
           goto exe;
+          break;
           case OP_LSHFT:
                {
                  long num = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
@@ -611,10 +675,12 @@ void Scorpion_VMExecute(){
                  svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], num);
                }
           goto exe;
+          break;
           case OP_THROW: 
                    Exception(getstr(gSvm.env->getBitmap().objs[(long) op_ags.byte1]), 
                              getstr(gSvm.env->getBitmap().objs[(long) op_ags.byte2]));
           goto exe;
+          break;
           case OP_CIN:
                {
                   int i;
@@ -627,15 +693,18 @@ void Scorpion_VMExecute(){
                   svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], i);
                }
           goto exe;
+          break;
           case OP_STR_APND:
                  concat(gSvm.env->getBitmap().objs[(long) op_ags.byte1], 
                         getstr(gSvm.env->getBitmap().objs[(long) op_ags.byte2]));
           goto exe;
+          break;
           case OP_ASSN:
                  gSvm.env->getBitmap().objs[(long) op_ags.byte1] = gSvm.env->getBitmap().objs[(long) op_ags.byte2];
           goto exe;
+          break;
        } // run each instr
-       goto exe;
+    op_ags.byte3=gSvm.bytestream.valueAt(k++);
     group3:
        switch( i ) {
           case OP_AT:
@@ -645,6 +714,7 @@ void Scorpion_VMExecute(){
                              svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3])));
                }
           goto exe;
+          break;
           case OP_ALOAD:
                {
                    long pos = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]);
@@ -662,6 +732,7 @@ void Scorpion_VMExecute(){
                      Exception("Object is not an array type.", "IncompatibleTypeException");
                }
           goto exe;
+          break;
           case OP_ASTORE:
                {
                    long pos = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]);
@@ -679,35 +750,26 @@ void Scorpion_VMExecute(){
                      Exception("Object is not an array type.", "IncompatibleTypeException");
                }
           goto exe;
+          break;
+          case OP_ISLT:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])<svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3])); goto exe;
+          break;
           default:
                if(i == OP_ISEQ || i == OP_ISNEQ || i == OP_ISLT || i == OP_ISNLT || i == OP_ISLE || i == OP_ISNLE
                   || i == OP_ISGT || i == OP_ISNGT || i == OP_ISGE || i == OP_ISNGE || i == OP_OR || i == OP_AND)
-               svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], compare(i));
+                  {
+                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], compare(i)); goto exe;
+                  }
                else if(i == OP_IADD || i == OP_ISUB || i == OP_IMULT || i == OP_IDIV || i == OP_SADD
                   || i == OP_SSUB || i == OP_SMULT || i == OP_SDIV || i == OP_DADD
                   || i == OP_DSUB || i == OP_DMULT || i == OP_DDIV || i == OP_FADD
                   || i == OP_FSUB || i == OP_FMULT || i == OP_FDIV || i == OP_CADD
                   || i == OP_CSUB || i == OP_CMULT || i == OP_CDIV || i == OP_IMOD 
                   || i == OP_SMOD || i == OP_CMOD){
-                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], math(i));
+                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], math(i)); goto exe;
                   }
-          goto exe;
-       } // run each instr
-       goto exe;
-    group4:
-       switch( i ) {
-          case OP_STRCONST:
-               {
-                 string output =  gSvm.appholder.getStr();
-                 u1 sz;
-                 sz.byte1 = 1;
-                 SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_STRING, sz);
-                 assign(gSvm.env->getBitmap().objs[(long) op_ags.byte1], output);
-               }
-          goto exe;
-          case OP_COUT: // output data to the console;
-              _cout_(gSvm.appholder.getStr());
-          goto exe;
+          break;
        } // run each instr
        goto exe;
 

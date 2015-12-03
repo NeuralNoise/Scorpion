@@ -58,14 +58,13 @@ void init_err(Object &obj, string message)
 }
 
 void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
-  
   if(svmObjectIsAlive(obj))
     return;
   
   obj.init.byte1 = OBJECT_ALIVE;
   obj.instanceData.byte1 = _typedef_;
   obj.instanceData.byte2 = gc_status;
-  obj.size_t.byte1 = objsz_t.byte1;
+  obj.size_t = objsz_t;
   
   if(isgeneric(_typedef_)){
        obj.obj = new (nothrow) DataObject[1];
@@ -236,21 +235,21 @@ void svmSetGenericValue(Object &obj, double value){
       Exception("Object was not initalized.", "DeadObjectException");
    
     if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BYTE)
-       obj.obj->pbyte[default_loc] = value;
+       { obj.obj->pbyte[default_loc] = value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
-       obj.obj->pshort[default_loc] = value;
+       { obj.obj->pshort[default_loc] = value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
-       obj.obj->pint[default_loc] = value;
+       { obj.obj->pint[default_loc] = value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
-       obj.obj->plong[default_loc] = value;
+       { obj.obj->plong[default_loc] = value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
-       obj.obj->pfloat[default_loc] = value;
+       { obj.obj->pfloat[default_loc] = value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
-       obj.obj->pchar[default_loc] = value;
+       { obj.obj->pchar[default_loc] = value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
-       obj.obj->pboolean[default_loc] = (bool) value;
+       { obj.obj->pboolean[default_loc] = (bool) value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
-       obj.obj->pdouble[default_loc] = value;
+       { obj.obj->pdouble[default_loc] = value; return; }
 }
 
 double svmGetGenericValue(Object &obj){
@@ -286,7 +285,7 @@ void svmIncGenericValue(Object &obj){
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
        ++obj.obj->pshort[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
-       ++obj.obj->pint[default_loc];
+       { ++obj.obj->pint[default_loc]; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
        ++obj.obj->plong[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)

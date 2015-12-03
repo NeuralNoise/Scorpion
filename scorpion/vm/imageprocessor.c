@@ -59,7 +59,7 @@ unsigned long pos;
        || LastChar == OP_MTHD || LastChar == OP_LBL || LastChar == OP_IF || LastChar == OP_INC || LastChar == OP_DEC
        || LastChar == OP_KILL || LastChar == OP_DELETE || LastChar == OP_DELETE_ARRY){ // push 7 or push *x
          instrgroup = 1;
-         op_ags.byte1 = getb();
+         op_ags.byte1 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
          
          return LastChar;
      }
@@ -71,8 +71,8 @@ unsigned long pos;
         || LastChar == OP_DACONST || LastChar == OP_IACONST || LastChar == OP_FACONST || LastChar == OP_CACONST 
         || LastChar == OP_BACONST || LastChar == OP_BYTE_ACONST || LastChar == OP_SACONST || LastChar == OP_LACONST){ // mthd @9
          instrgroup = 2;
-         op_ags.byte1 = getb();
-         op_ags.byte2 = getb();
+         op_ags.byte1 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
+         op_ags.byte2 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
          return LastChar;
      }
      else if(LastChar == OP_ISEQ || LastChar == OP_ISNEQ || LastChar == OP_ISLT || LastChar == OP_ISNLT || LastChar == OP_ISLE || LastChar == OP_ISNLE
@@ -85,18 +85,18 @@ unsigned long pos;
        || LastChar == OP_CMOD || LastChar == OP_SMOD || LastChar == OP_OR || LastChar == OP_AND
        || LastChar == OP_AT || LastChar == OP_ALOAD || LastChar == OP_ASTORE){ //
          instrgroup = 3;
-         op_ags.byte1 = getb();
-         op_ags.byte2 = getb();
-         op_ags.byte3 = getb();
+         op_ags.byte1 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
+         op_ags.byte2 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
+         op_ags.byte3 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
          return LastChar;
      }
      else if(LastChar == OP_COUT){ // string 13 'Hello, World!'
          instrgroup = 4;
-         op_ags.byte1 = getb();
+         op_ags.byte1 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
          char c;
          word.str("");
          for(int i = 0; i < op_ags.byte1; i++){
-             c = (char) getb();
+             c = (char) gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
              word << "" << c;
          }
          
@@ -104,13 +104,13 @@ unsigned long pos;
      }
      else if(LastChar == OP_STRCONST){ // string 13 'Hello, World!'
          instrgroup = 4;
-         op_ags.byte1 = getb();
-         op_ags.byte2 = getb();
+         op_ags.byte1 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
+         op_ags.byte2 = gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
          
          char c;
          word.str("");
          for(int i = 0; i < op_ags.byte2; i++){
-             c = (char) getb();
+             c = (char) gSvm.bytestream.valueAt(gSvm.vm.vStaticRegs[VREG_PC]++);
              word << "" << c;
          }
          

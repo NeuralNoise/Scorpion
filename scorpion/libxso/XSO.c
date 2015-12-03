@@ -410,7 +410,7 @@ static int LastChar = ' ';
       svmInitMethod(l, name, jmp);
  
  void HandleMethod(){ // @^name0location0
-     getNextToken();
+     getNextToken(); 
      if(CurTok != OP_MTHD)
          preexecute_err();
 
@@ -427,7 +427,7 @@ static int LastChar = ' ';
  }
  
  void HandleStringInstruction(){
-     getNextToken();
+     getNextToken(); 
      if(CurTok == OP_COUT){
          string msg = getheadertxt();
          long arg1 = msg.size();
@@ -461,7 +461,7 @@ static int LastChar = ' ';
      getNextToken();
      if(!(CurTok > 0) && !(CurTok <= sMaxOpcodeLimit))
          preexecute_err();
-         
+     
      if(CurTok == OP_NOP || CurTok == OP_END || CurTok == OP_HLT || CurTok == OP_NO || CurTok == OP_ENDNO){  
          setbyte(CurTok);
          getNextToken();
