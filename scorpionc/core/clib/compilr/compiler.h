@@ -26,14 +26,33 @@
  #ifndef _COMPILR_COMPILER
  #define _COMPILR_COMPILER
 
-#include "../../Archive.h"
+ #include "../../Archive.h"
+ #include "lexr/lexr.h"
  #include <sstream>
  #include <string>
  
  using namespace std;
 
- long Scz_get_file_length( FILE *fp );
+ struct Globals
+ {
+     int method_t, success, mode, eof, 
+         scopeLevel, block_stack;
+     std::string package, file;
+     lexr::parser_helper lex;
+     stringstream out;
+     bool infunc, inclass, innamespace;
+ };
+ 
+ enum lex_Modes
+ {
+    mode_eat_endl = 0x1, mode_ignore_endl = 0x2
+ };
 
+ enum scope_Modes
+ {
+    mode_namespace = 0x1, mode_function = 0x2,
+    mode_class = 0x3
+ };
 
 /************************************************************************/
 /* Cmplr_Compile_Buffer2Buffer - Compile string input buffer	*/

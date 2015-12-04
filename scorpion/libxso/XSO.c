@@ -410,7 +410,7 @@ static int LastChar = ' ';
       svmInitMethod(l, name, jmp);
  
  void HandleMethod(){ // @^name0location0
-     getNextToken(); 
+     CurTok=atof(getheadertxt().c_str());
      if(CurTok != OP_MTHD)
          preexecute_err();
 
@@ -427,7 +427,7 @@ static int LastChar = ' ';
  }
  
  void HandleStringInstruction(){
-     getNextToken(); 
+     CurTok=atof(getheadertxt().c_str());
      if(CurTok == OP_COUT){
          string msg = getheadertxt();
          long arg1 = msg.size();
@@ -458,7 +458,7 @@ static int LastChar = ' ';
  
  // TODO: pre assign const values (i_const ect.)
  void HandleInstruction(){ // ^180200290
-     getNextToken();
+     CurTok=atof(getheadertxt().c_str());
      if(!(CurTok > 0) && !(CurTok <= sMaxOpcodeLimit))
          preexecute_err();
      

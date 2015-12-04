@@ -108,8 +108,7 @@ namespace lexr
                 ('%' == c) || (':' == c) ||
                 ('?' == c) || ('&' == c) ||
                 ('|' == c) || (';' == c) ||
-                ('!' == c) || ('.' == c) ||
-                ('@' == c) || ('#' == c);
+                ('!' == c) || ('.' == c);
       }
 
       inline bool is_letter(const char c)
@@ -153,6 +152,7 @@ namespace lexr
                 !is_operator_char(c) &&
                 !is_letter(c)        &&
                 !is_digit(c)         &&
+                ('.' != c)           &&
                 ('_' != c)           &&
                 ('$' != c)           &&
                 ('~' != c)           &&
@@ -328,7 +328,7 @@ namespace lexr
       inline token& set_line()
       {
          type     = e_line;
-         value    ="\n";
+         value    ="\\n";
          position = 0;
          return *this;
       }
@@ -640,7 +640,7 @@ namespace lexr
          skip_whitespace();
          skip_comments();
  
-         //cout << "char " << (*s_itr_) << endl;
+         //cout << "char " << (int) (*s_itr_) << endl;
          if (is_end(s_itr_))
          {
             //cout << "eof\n";
@@ -680,7 +680,7 @@ namespace lexr
          {
             //cout << "error_char\n";
             token_t t;
-            t.set_error(token::e_error,s_itr_,s_itr_ + 2,base_itr_);
+            t.set_error(token::e_error,s_itr_,s_itr_ + 1,base_itr_);
             token_list_.push_back(t);
             ++s_itr_;
          }
@@ -725,6 +725,8 @@ namespace lexr
          else if ('&' == *s_itr_)
             t.set_symbol(s_itr_,s_itr_ + 1,base_itr_);
          else if ('|' == *s_itr_)
+            t.set_symbol(s_itr_,s_itr_ + 1,base_itr_);
+         else if ('+' == *s_itr_)
             t.set_symbol(s_itr_,s_itr_ + 1,base_itr_);
          else
             t.set_operator(token_t::token_type(*s_itr_),s_itr_,s_itr_ + 1,base_itr_);
@@ -878,7 +880,7 @@ namespace lexr
          else
          {
             std::string parsed_string(begin,s_itr_);
-           // details::cleanup_escapes(parsed_string);
+            details::cleanup_escapes(parsed_string);
             t.set_string(parsed_string, std::distance(base_itr_,begin));
          }
 
@@ -905,7 +907,7 @@ namespace lexr
 
          while (!is_end(s_itr_))
          {
-            if (!escaped && ('$' == *s_itr_))
+            if (!escaped && ('\\' == *s_itr_))
             {
                escaped_found = true;
                escaped = true;
@@ -934,7 +936,7 @@ namespace lexr
          else
          {
             std::string parsed_string(begin,s_itr_);
-         //   details::cleanup_escapes(parsed_string);
+            details::cleanup_escapes(parsed_string);
             t.set_string(parsed_string, std::distance(base_itr_,begin));
          }
 

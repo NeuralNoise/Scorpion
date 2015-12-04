@@ -24,6 +24,7 @@ class ListAdapter {
             size_t=0;
             init=false;
         }
+        bool _init() { return init; }
         void add(T value)
         {
             if(!init)

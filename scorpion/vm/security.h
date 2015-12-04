@@ -58,7 +58,7 @@
            
            permissionList[0] = "scorpion.permission.READ_INTERNAL_STORAGE";
            permissionList[1] = "scorpion.permission.WRITE_INTERNAL_STORAGE";
-           permissionList[2] = "scorpion.permission.GPIO";
+           permissionList[2] = "scorpion.permission.GPIO"; // for raspberry pi only
            permissionList[3] = "scorpion.permission.REBOOT";
        }
        bool permissionExists(Permission perm){

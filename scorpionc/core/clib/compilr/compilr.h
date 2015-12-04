@@ -91,7 +91,6 @@
      
      public:
         void Compile_Buffer2Buffer(Archive &zip_archive, stringstream &__obuff__);
-        void Link_Buffer2Buffer(string buffer, stringstream &__obuff__, bool lastbuf);
         void Cleanup(bool full_flush);
  };
  

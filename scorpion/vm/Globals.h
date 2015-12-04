@@ -51,7 +51,6 @@
  #include "../logservice/dlog.h"
  #include "policy.h"
  #include "oo/Object.h"
- #include "imgprocessor.h"
  #include "permission.h"
  #include <sstream>
  #include <iostream>
@@ -83,7 +82,6 @@ class SecurityManager;
  
    SecurityManager appmanager;
    Policy appolicy;
-   ImageProcessor appholder;
  
    header appheader; // application header
    Variable* vars; // tempory created variables popped from the stack

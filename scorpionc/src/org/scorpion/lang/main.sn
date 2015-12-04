@@ -3,21 +3,35 @@
 * for the language.
 *
 */
-module org.scorpion.lang;
+package org.scorpion.lang;
 
+import System;
+import String.io;
+import String.gpio;
 
-def __init__(string** args)
+namespace Home
 {
-  int i =0;
-  int max = 100000000;
-  bool go;
-  asm("
-       .lbl @loop
-         inc i
-         ;cout i cout '$n'
-         ilt go i max
-         jit loop go
-         cout i cout ' ' cout (long) go cout '$n'
-      ");
-      
+   namespace Home2
+   {
+      public static class A
+      {
+         private string name = "Dave" + " " + 5;
+         
+         public static def getName()
+         {
+            return name;
+         }
+      }
+   }
+}
+
+def print(string s)
+{
+   asm("cout s");
+}
+
+def __init__(string[] args)
+{
+   string name = Home::Home2::A.getName();
+   print(name);
 }

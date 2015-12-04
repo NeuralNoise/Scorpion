@@ -38,17 +38,15 @@
  #define nil NULL
  #define obj_offset 50 // The offset address of all Object data sets
  
- // Compiler used memory addressess
- #define var_return      0x0
- #define var_null        0x1
- #define var_true        0x2
- #define var_false       0x3
- #define var_empty_array 0x4
- #define var_dummy_data  0x5
+ #define var_return 0x0
+ #define var_null   0x1
+ #define var_true   0x2
+ #define var_false  0x3
  
  extern bool init;
  
  extern unsigned long cplr_item_buflen;
+ extern unsigned long cplr_bitmap_len;
  
  // TODO: create standard memory structure variables
  
@@ -59,7 +57,7 @@
      
      string* str;
      
-     struct u1_d* sub_item;
+     struct cmplr_item* sub_item;
  } ;
  
  struct cmplr_item_2 { /* Data structure for holding buffer items with index. */
@@ -130,208 +128,103 @@
  */
  #define default_loc (0)
  
- /*
- * Instance data variables
- *
- * When creating a new instance of data,
- * we need to set both the (typedef) and the (gc_self)
- * data sets to provide the vm with information on how 
- * to preocess each object.
- *
- */
- #define _typedef (0x0)
- #define gc_self (0x1)
+ /**
+  * Compiler Access specifiers
+  * 
+  */
+ #define access_public 0x3
+ #define access_private 0x2
+ #define access_protected 0x1
  
- /*
- * Init values
- * 
- * OBJECT_DEAD 0x0      when an object has not been instantiated
- * OBJECT_ALIVE 0x1     when an object has been instantiated
- */
- #define OBJECT_DEAD (0x0)
- #define OBJECT_ALIVE (0x129)
+ /**
+  * Compiler Object types
+  * 
+  */
+ #define typedef_byte   0x8
+ #define typedef_short  0x7
+ #define typedef_char   0x6
+ #define typedef_int    0x5
+ #define typedef_long   0x4
+ #define typedef_float  0x3
+ #define typedef_double 0x2
+ #define typedef_string 0x1
+ #define typedef_class  0x0
+ struct ClassObject;
  
- /*
- * Typedef values
- * 
- * These are used for object instantiation
- */
- #define TYPEDEF_STRING (0x12)
- #define TYPEDEF_STRING_ARRAY (0x14)
- #define TYPEDEF_GENERIC (0x15)
- #define TYPEDEF_GENERIC_ARRAY (0x19)
- 
- struct DataObject {
- 
-     /* These are our special object types */    
-     StringObject* strobj;
-     ArrayObject* arrayobj;
- };
- 
- /*
- * In Scorpion, all object must be instantiated before
- * use.
- *
- * Objects in Scorpion down to its lowest possible entity
- * are all double. Objects are abstract containers that 
- * can hold 1 of 4 different typedefs at any given time.
- *
- * A typedef in Scorpion is the primive "type" of a defined object.
- * Each typedef has its own rules that must be followed to avoid an exception.
- * There are 4 main types of typedefs:
- * 
- * typedef-string ::=   A string object
- *                        - String Objects are simply a char[] of data which 
- *                          represents the string.
- *
- * typedef-generic ::=  A "generic" object
- *                        - Generic data in Scorpion represents any non-specific piece of 
- *                          data that is used in the Scorpion.
- *
- * typedef-generic-array ::=  A "generic" array object
- *                              - An array og generic data
- *
- * typedef-string-array  ::=  A string array object
- *                              - An array of string objects
- *
- */
  struct Object {
-  
-   /*
-   * Wether or not the object is 
-   * initalized & its address.
-   */
-   u2 init;  
+     int type;
+     u1 size_t;
      
-   /*
-   * This will hold the important information 
-   *
-   * byte1 = _typedef_
-   * byte2 = gc_status
-   */
-   u2 instanceData;
+     bool isStatic, isarray, isConst;
+     int access;
+     
+     std::string name, package;
+     std::string _namespace;
+     std::string parentclass;
+     
+     struct ClassObject *C;
+     
+     bool _static(){ return isStatic; }
+     bool array(){ return isarray; }
+     bool _const(){ return isConst; }
+     unsigned long size(){ return size_t.byte1; }
+     bool _private(){ return (access == access_private); }
+     bool _public(){ return (access == access_public); }
+     bool _protected(){ return (access == access_protected); }
+     
+ };
+ 
+ struct ClassObject {
+     ListAdapter<Object> classObjects;
+     
+     u1 size_t;
+     
+     bool isStatic, isarray;
+     int access;
+     
+     std::string name, package;
+     std::string _namespace;
+     std::string superclass;
     
-   /*
-   * This is the actual data 
-   */
-   DataObject* obj;
-   
-   string symbol, m, klazz, stype; // the name of our object and the module it belongs to
-   
-   /* The size of our object */
-   u1 size_t;
+     bool _static(){ return isStatic; }
+     bool array(){ return isarray; }
+     unsigned long size(){ return size_t.byte1; }
+     bool _private(){ return (access == access_private); }
+     bool _public(){ return (access == access_public); }
+     bool _protected(){ return (access == access_protected); }
+     
  };
  
- #define STR_LIMIT (65535)
- 
- /*
- * Strings are used frequently enough that we may want to give them their
- * own unique type.
- *
- * Currently this is just equal to a array of DataObjects, and we pull the fields out
- * like we do for any other object.
- * 
- * Creating this type prevents data from stepping over each others toes, while still keeping 
- * the memory access time to similar or equal speeds.
- */
- struct StringObject {
-   
-    /** Returns this string's length in characters. */
-    unsigned int length;
-
-
-    /** Returns this string's char[] as an ArrayObject. */
-    ArrayObject* array;
- };
- 
- struct ArrayObject {
-   
-   /* The length of our object array */
-   unsigned long length;
-   
-   /* These are our special object types */    
-   StringObject* strobj;
- };
-
- /*
- * Methods in Scorpion are forms of runnable objects
- * methods and lables are the only things that can directly
- * modify memory placement.
- * 
- * This maintains the structure and flow of the program
- */
  struct Method {
-    string clazz, module, name;
-    
-    
-    ListAdapter<string> varlist;
-    ListAdapter<int> vartypes;
-    ListAdapter<int> pointertype;
-    
-    /*
-    * Wether or not this method is
-    * native
-    */
-    bool native;
-    
-    u1 address;
-  
+     std::string name, package;
+     
+     std::string _namespace;
+     std::string parentclass;
+     
+     bool isStatic;
+     int access;
+     
+     ListAdapter<Object> args;
+     
+     bool _static(){ return isStatic; }
+     bool _private(){ return (access == access_private); }
+     bool _public(){ return (access == access_public); }
+     bool _protected(){ return (access == access_protected); }
+     
  };
  
-  /*
- * Scorpion Garbage Collector
- *
- * The GC Marks Objects with 1 of 3 status
- *
- * GC_DIRTY :       This is when an Object has has a "shallow delete".
- *
- * GC_IDLE :        This is when an Object has been removed by the GC and is waiting to be re-instantiated;
- *
- * GC_CLEAN :       This is when an object is currently in use and should NOT be touched by the GC.
- *
- * The GC gets activated only after the number of Objects with the status GC_DIRTY passes the limit of
- * dirty objects. Once the GC activated, each dirty Object is invalidated.
- *
- * GC Terms
- *
- * - Shallow Delete
- *       A "shallow delete" is when an Object has been identified non-initalized, but 
- *     hasn't been offically deleted yet. This is done to not slow down the overall 
- *     performance of the virtual machine and to allow the GC to remove it later.
- */
- #define GC_DIRTY (0x472)
- #define GC_CLEAN (0x482)
- #define GC_IDLE (0x302)
- 
- bool svmObjectIsAlive(Object obj);
-
- bool svmObjectHasInstance(Object obj, int instance);
-
- void svmInitHeapObject(int _typedef_, u1 objsz_t, string name, string m, string klazz, string stype, int gc_status);
- 
- bool findObjectByDescriptor(string desc);
- bool findObjectByClassDescriptor(string desc, string klazz);
- bool findSpecificObjectByDescriptor(string module, string desc);
- bool findSpecificMethodByDescriptor(string module, string desc);
- unsigned long findSpecificObjectAddressByDescriptor(string module, string desc);
- unsigned long findActualObjectAddressByDescriptor(string module, string desc);
- unsigned long findActualMethodAddressByDescriptor(string module, string desc);
- unsigned long findSpecificMethodAddressByDescriptor(string module, string desc);
- 
-/*
- * Properly initialize an Object.
- * void SVM_OBJECT_INIT(int _typedef, u1 sz, string name, string module, string class)
- */
- #define SVM_OBJECT_INIT(_tdef, sz, name, m, k, s_type) \
-     svmInitHeapObject(_tdef, sz, name, m, k, s_type, GC_CLEAN)
-
- bool isObjArray(Object obj);
-
- void freeObj(long adr);
+ struct _namespace
+ {
+     std::string name;
+     std::string parent;
+     
+     ListAdapter<_namespace> subnamespace;
+ };
  
  /* Dynamic memory */
- extern ListAdapter<Object> memoryObjs;
- extern ListAdapter<Method> staticMethods;
+ extern ListAdapter<Object> objects;
+ extern ListAdapter<Method> methods;
+ extern ListAdapter<_namespace> namespaces;
  
  #endif // _COMPILR_CORE
  
