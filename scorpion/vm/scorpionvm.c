@@ -407,25 +407,25 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
       alog.ALOGV("Processing .xso file.");
        // use libxso/ to process xso file
       string xso = FileStream::getfile(options.XSOF.c_str());
-      f[0].process(xso);
+      f->process(xso);
       xso = "";
 
 
       if(options.out){
           printf("XSO Header content:\n--------------------\n\n");
-          f[0].printfullheaderinfo();
+          f->printfullheaderinfo();
           printf("--------------------\n\n");
       }
 
       validateProtoSize(f[0]);
-      gSvm.appheader = f[0].headerInf;
+      gSvm.appheader = f->headerInf;
 
       alog.ALOGD("Scorpion Virtual Machine compatibility check.");
       appIsCompatible(f[0]);
 
       stringstream ss;
-      ss << "Application " << f[0].headerInf.application_id << " is compatible.\n\tMinimum Dev version: " 
-        << f[0].headerInf.minimum_dev_vers.byte1 << "\n\tRequired: " << revision_num;
+      ss << "Application " << f->headerInf.application_id << " is compatible.\n\tMinimum Dev version: " 
+        << f->headerInf.minimum_dev_vers.byte1 << "\n\tRequired: " << revision_num;
       alog.ALOGV(ss.str());
       
       alog.setClass("XSOImg");
@@ -436,7 +436,7 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
       
       // setup application Logging service
       alog.ALOGD("Usr log service setup running.");
-      gSvm.dlog.setup(f[0], f[0].headerInf.log_precedence.byte1);
+      gSvm.dlog.setup(f[0], f->headerInf.log_precedence.byte1);
       
       // setup environment structures
       if (gSvm.vmCount > 1)
@@ -447,7 +447,7 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
      alog.ALOGI("Setting up environment structures and memory.");
      
      int status;
-     gSvm.mtds = new (nothrow) Method[f[0].headerInf.method_size.byte1];
+     gSvm.mtds = new (nothrow) Method[f->headerInf.method_size.byte1];
      
      if(gSvm.mtds == nullptr)
      {
@@ -456,7 +456,7 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
      }
      
      status = env->InitEnvironmentSetup("ScorpionVirtualMachine", options.minHeap, options.maxHeap, options.minHeap, stack_limit); 
-     gSvm.methodc = f[0].headerInf.method_size.byte1;
+     gSvm.methodc = f->headerInf.method_size.byte1;
     
     err:
       //vm = p_vm;
@@ -488,7 +488,7 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
     
     performSecuritySetup();
     gSvm.appolicy.preparePolicy();
-    f[0].preprocess(gSvm.image);
+    f->preprocess(gSvm.image);
 
   //  gSvm.appolicy.usingPolicy("scorpion.permission.GPIO"); 
 

@@ -330,13 +330,15 @@
        void parse_string_decliration(lexr::parser_helper& lex, std::string var)
        {
            lexr::token temp_t;
-           bool plus, needStr;
+           bool plus=false, needStr=false;
            stringstream ss;
+           int bracket_stack=0;
            for( ;; )
            {
                temp_t = getNextToken(lex);
                if(cglobals.eof)
                  break;
+               
                if(temp_t.type == temp_t.e_string){
                    plus = false;
                    ss << temp_t.value;
@@ -373,7 +375,78 @@
                        cglobals.out << "Expected string literal after previous '+'.";
                        error(cglobals.lex);
                    }
+                   
+                   if(bracket_stack != 0)
+                   {
+                       cglobals.out << "Expected ')' at end of statement.";
+                       error(cglobals.lex);
+                   }
                    cout << "string " << var << " = \"" << ss.str() << "\"" << endl;
+                   break;
+               }
+               else if(temp_t.value == "(")
+                   bracket_stack++;
+               else if(temp_t.value == ")")
+                   bracket_stack--;
+               else {
+                   cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
+                   error(cglobals.lex);
+               }
+           }
+       }
+       
+       void parse_return_decliration(lexr::parser_helper& lex)
+       {
+           lexr::token temp_t;
+           bool plus, needStr;
+           stringstream ss;
+           for( ;; )
+           {
+               temp_t = getNextToken(lex);
+               if(cglobals.eof)
+                 break;
+               if(temp_t.type == temp_t.e_string){
+                   plus = false;
+                   ss << temp_t.value;
+                   needStr = false;
+               }
+               else if(temp_t.type == temp_t.e_number){
+                   if(needStr)
+                   {
+                       cglobals.out << "Expected string literal or qulafied symbol after previous numeric literal.";
+                       error(cglobals.lex);
+                   }
+                   
+                   needStr = true;
+                   plus = false;
+                   ss << temp_t.value;
+               }
+               else if(temp_t.type == temp_t.e_symbol){
+                   plus = false;
+                   ss << "$[v" << temp_t.value << "|";
+                   needStr = false;
+               }
+               else if(temp_t.value == "+"){
+                   if(plus)
+                   {
+                       cglobals.out << "Expected string literal or qulafied symbol after previous '+'.";
+                       error(cglobals.lex);
+                   }
+                   plus = true;
+               }
+               else if(temp_t.value == ";" || reserved(temp_t.value)){
+                   if(reserved(temp_t.value)){
+                     lex.lexer().token_sz1--;
+                       cglobals.out << "Expected ';' before symbol '" << temp_t.value << "'.";
+                       error(cglobals.lex);
+                   }
+                     
+                   if(plus)
+                   {
+                       cglobals.out << "Expected string literal or qulafied symbol after previous '+'.";
+                       error(cglobals.lex);
+                   }
+                   cout << "return \"" << ss.str() << "\"" << endl;
                    break;
                }
                else {
@@ -383,14 +456,72 @@
            }
        }
        
-       void parse_return_decliration(lexr::parser_helper& lex, std::string var)
-       {
-           
-       }
-       
        void parse_byte_decliration(lexr::parser_helper& lex, std::string var)
        {
-           
+           lexr::token temp_t;
+           bool plus=false, needStr=false;
+           stringstream ss;
+           int bracket_stack=0;
+           for( ;; )
+           {
+               temp_t = getNextToken(lex);
+               if(cglobals.eof)
+                 break;
+               
+               if(temp_t.type == temp_t.e_string){
+                   plus = false;
+                   ss << temp_t.value;
+                   needStr = false;
+               }
+               else if(temp_t.type == temp_t.e_number){
+                   if(needStr)
+                   {
+                       cglobals.out << "Expected string literal after previous numeric literal.";
+                       error(cglobals.lex);
+                   }
+                   
+                   needStr = true;
+                   plus = false;
+                   ss << temp_t.value;
+               }
+               else if(temp_t.value == "+"){
+                   if(plus)
+                   {
+                       cglobals.out << "Expected string literal after previous '+'.";
+                       error(cglobals.lex);
+                   }
+                   plus = true;
+               }
+               else if(temp_t.value == ";" || reserved(temp_t.value)){
+                   if(reserved(temp_t.value)){
+                     lex.lexer().token_sz1--;
+                       cglobals.out << "Expected ';' before symbol '" << temp_t.value << "'.";
+                       error(cglobals.lex);
+                   }
+                     
+                   if(plus)
+                   {
+                       cglobals.out << "Expected string literal after previous '+'.";
+                       error(cglobals.lex);
+                   }
+                   
+                   if(bracket_stack != 0)
+                   {
+                       cglobals.out << "Expected ')' at end of statement.";
+                       error(cglobals.lex);
+                   }
+                   cout << "string " << var << " = \"" << ss.str() << "\"" << endl;
+                   break;
+               }
+               else if(temp_t.value == "(")
+                   bracket_stack++;
+               else if(temp_t.value == ")")
+                   bracket_stack--;
+               else {
+                   cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
+                   error(cglobals.lex);
+               }
+           }
        }
        
        void parse_short_decliration(lexr::parser_helper& lex, std::string var)
@@ -423,7 +554,7 @@
            
        }
        
-       void parse_typedef_block(lexr::parser_helper& lex, std::string type)
+       void parse_typedef_block(lexr::parser_helper& lex, std::string type, object_attrib atribs)
        {
            lexr::token temp_t = getNextToken(lex);
            std::string var=temp_t.value;
@@ -432,13 +563,45 @@
                cglobals.out << "Excpected unqualified symbol before '" << temp_t.value << "'.";
                error(cglobals.lex);
            }
+           else if(reserved(var))
+           {
+               cglobals.out << "Cannot assign reserved word to " << type << " variable.";
+               error(cglobals.lex);
+           }
            
            temp_t = getNextToken(lex);
-           if(temp_t.value != "=")
+           if(temp_t.value == "[")
+           {
+              temp_t = getNextToken(lex);
+              if(temp_t.value == "]")
+              {
+                 temp_t = getNextToken(lex);
+              }
+              else if(temp_t.type == temp_t.e_number){
+                  cout << "array[" << temp_t.value << "]\n";
+                  std::string num=temp_t.value;
+                  temp_t = getNextToken(lex);
+                  if(temp_t.value != "]")
+                  {
+                      cglobals.out << "Excpected ']' after numeric literal '" << type << "-array::[" << num << "]'.";
+                      error(cglobals.lex);
+                  }
+                  temp_t = getNextToken(lex);
+              }
+              else {
+                  cglobals.out << "Excpected ']' before '" << temp_t.value << "'.";
+                  error(cglobals.lex);
+              }
+           }
+           
+           if(temp_t.value != "=" && temp_t.value != ";")
            {
                cglobals.out << "Excpected '=' before '" << temp_t.value << "'.";
                error(cglobals.lex);
            }
+           
+           if(temp_t.value == ";")
+              lex.lexer().token_sz1--;
            
            if(type == "string")
              memoryhelper::helper::parse_string_decliration(lex, var);
@@ -545,7 +708,9 @@
                        atribs.access = strtoaccess(temp_t.value);
                        memoryhelper::helper::parse_access_specifier(cglobals.lex, atribs, temp_t);
                        if(_typedef(temp_t.value))
-                           memoryhelper::helper::parse_typedef_block(cglobals.lex, temp_t.value);
+                       {
+                           memoryhelper::helper::parse_typedef_block(cglobals.lex, temp_t.value, atribs);
+                       }
                    }
                    else if(temp_t.value == "return")
                            memoryhelper::helper::parse_return_decliration(cglobals.lex);
@@ -596,7 +761,10 @@
                            memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
                        }
                        else if(_typedef(temp_t.value))
-                           memoryhelper::helper::parse_typedef_block(cglobals.lex, temp_t.value);
+                       {
+                           object_attrib atribs;
+                           memoryhelper::helper::parse_typedef_block(cglobals.lex, temp_t.value, atribs);
+                       }
                        else if(temp_t.value == "def"){
                            temp_t = getNextToken(lex);
                            if(temp_t.type != temp_t.e_symbol){
@@ -653,10 +821,12 @@
                       cout << "namespace " << name << endl;
                       memoryhelper::helper::parse_namespace_block(cglobals.lex, cglobals.block_stack);
                    }
-                   else if(accessspecifier(temp_t.value))
+                   else if(accessspecifier(temp_t.value) || temp_t.value == "static" || temp_t.value == "const")
                    {
                        object_attrib atribs;
-                       atribs.access = strtoaccess(temp_t.value);
+                       atribs.access = ((temp_t.value == "static") ? access_public : strtoaccess(temp_t.value));
+                       if(temp_t.value == "static") lex.lexer().token_sz1--;
+                       
                        memoryhelper::helper::parse_access_specifier(cglobals.lex, atribs, temp_t);
                        if(temp_t.value == "class"){
                            temp_t = getNextToken(lex);
@@ -675,7 +845,7 @@
                            memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
                        }
                        else if(_typedef(temp_t.value))
-                           memoryhelper::helper::parse_typedef_block(cglobals.lex, temp_t.value);
+                           memoryhelper::helper::parse_typedef_block(cglobals.lex, temp_t.value, atribs);
                        else if(temp_t.value == "def"){
                            temp_t = getNextToken(lex);
                            if(temp_t.type != temp_t.e_symbol){
@@ -701,6 +871,59 @@
                           memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack);
                            
                        }
+                       else {
+                           cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
+                           error(cglobals.lex);
+                       }
+                   }
+                   else if(temp_t.value == "class"){
+                           temp_t = getNextToken(lex);
+                           if(temp_t.type != temp_t.e_symbol){
+                               cglobals.out << "Expected unqualified symbol before '" << temp_t.value << "'.";
+                               error(cglobals.lex);
+                           }
+                           
+                           cout << "class " << temp_t.value << endl;
+                           temp_t = getNextToken(lex);
+                           if(temp_t.value != "{"){
+                               cglobals.out << "Expected '{' before '" << temp_t.value << "'.";
+                               error(cglobals.lex);
+                           }
+                           
+                           memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
+                       }
+                   else if(_typedef(temp_t.value))
+                   {
+                       object_attrib atribs;
+                       atribs.access = access_public;
+                       atribs.isStatic = false;
+                       atribs.isConst = false;
+                       memoryhelper::helper::parse_typedef_block(cglobals.lex, temp_t.value, atribs);
+                   }
+                   else if(temp_t.value == "def"){
+                       temp_t = getNextToken(lex);
+                       if(temp_t.type != temp_t.e_symbol){
+                           cglobals.out << "Expected unqualified symbol before '" << temp_t.value << "'.";
+                           error(cglobals.lex);
+                       }   
+                           
+                       
+                       cout << "def " << temp_t.value << endl;
+                       temp_t = getNextToken(lex);
+                       if(temp_t.value != "("){
+                           cglobals.out << "Expected '(' before '" << temp_t.value << "'.";
+                           error(cglobals.lex);
+                       }
+                       
+                       memoryhelper::helper::parse_method_args(cglobals.lex);
+                       temp_t = getNextToken(lex);
+                       if(temp_t.value != "{"){
+                           cglobals.out << "Expected '{' before '" << temp_t.value << "'.";
+                           error(cglobals.lex);
+                       }
+                       
+                      memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack);
+                       
                    }
                    else {
                        cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
@@ -986,6 +1209,8 @@ int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &__out_buf__ )
            head.log_precedence.byte1 = 2; // verbose
         
            head.log_file = "/usr/share/scorpion/lib/";
+           head.target_dev_vers.byte1  = 200;
+           head.minimum_dev_vers.byte1 = 7;
         
            head.application_id = "com.scorpion.microsystems";
            head.permissions = new string[2];

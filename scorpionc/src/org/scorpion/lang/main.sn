@@ -5,33 +5,13 @@
 */
 package org.scorpion.lang;
 
-import System;
-import String.io;
-import String.gpio;
-
 namespace Home
 {
-   namespace Home2
-   {
-      public static class A
-      {
-         private string name = "Dave" + " " + 5;
-         
-         public static def getName()
-         {
-            return name;
-         }
-      }
-   }
-}
-
-def print(string s)
-{
-   asm("cout s");
-}
-
-def __init__(string[] args)
-{
-   string name = Home::Home2::A.getName();
-   print(name);
+   private string name1 = "Dave" + " " + 5;
+   private static string str = "Dave" + " " + 6;
+   static string str1 = "Dave" + " " + 7;
+   static const string str2 = "Dave" + " " + 8;
+   public static string str3[] = "Dave" + " " + 9;
+   string str;
+   string str = 7 + ""; // TODO: parse numbers as if(temp_t == num) then sub for check for other numbers and add them
 }
