@@ -14,4 +14,7 @@ namespace Home
    public static string str3[] = "Dave" + " " + 9;
    string str;
    string str = 7 + ""; // TODO: parse numbers as if(temp_t == num) then sub for check for other numbers and add them
+   byte b = 8;
+   byte b = 129;
+   int i = 9 + 9;
 }

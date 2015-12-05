@@ -459,31 +459,34 @@
        void parse_byte_decliration(lexr::parser_helper& lex, std::string var)
        {
            lexr::token temp_t;
-           bool plus=false, needStr=false;
+           bool plus=false, needNum=false, singleNum=true;
            stringstream ss;
            int bracket_stack=0;
-           for( ;; )
+  	   double maxValue = 127, minValue = -128;        
+
+	   for( ;; )
            {
                temp_t = getNextToken(lex);
                if(cglobals.eof)
                  break;
                
-               if(temp_t.type == temp_t.e_string){
-                   plus = false;
-                   ss << temp_t.value;
-                   needStr = false;
-               }
-               else if(temp_t.type == temp_t.e_number){
-                   if(needStr)
+               if(temp_t.type == temp_t.e_number){
+                   if(needNum)
                    {
                        cglobals.out << "Expected string literal after previous numeric literal.";
                        error(cglobals.lex);
-                   }
+              	       singleNum=false;
+	           }
                    
-                   needStr = true;
+                   needNum = true;
                    plus = false;
                    ss << temp_t.value;
                }
+               else if(temp_t.value == ",")
+	       {
+		  temp_t = getNextToken(lex);
+		  
+	       }
                else if(temp_t.value == "+"){
                    if(plus)
                    {
@@ -491,6 +494,7 @@
                        error(cglobals.lex);
                    }
                    plus = true;
+                   singleNum=false;
                }
                else if(temp_t.value == ";" || reserved(temp_t.value)){
                    if(reserved(temp_t.value)){
@@ -510,7 +514,18 @@
                        cglobals.out << "Expected ')' at end of statement.";
                        error(cglobals.lex);
                    }
-                   cout << "string " << var << " = \"" << ss.str() << "\"" << endl;
+                
+  		   if(singleNum)
+		   {
+		       double num = atoi(ss.str().c_str());
+		       if(num > maxValue || num < minValue)
+		       {
+			   cglobals.out << "Constant value '" << num << "' cannot be converted into `byte`.";
+                           error(cglobals.lex);
+		       }
+		   }
+  		
+		   cout << "string " << var << " = \"" << ss.str() << "\"" << endl;
                    break;
                }
                else if(temp_t.value == "(")
