@@ -153,7 +153,7 @@
  
  struct Object {
      int type;
-     u1 size_t;
+     u1 size_t, eadr;
      
      bool isStatic, isarray, isConst;
      int access;
@@ -176,26 +176,16 @@
  
  struct ClassObject {
      ListAdapter<Object> classObjects;
+     ListAdapter<ClassObject> superclass;
+     ListAdapter<cmplr_item> iqueue;
      
-     u1 size_t;
-     
-     bool isStatic, isarray;
-     int access;
-     
-     std::string name, package;
-     std::string _namespace;
-     std::string superclass;
-    
-     bool _static(){ return isStatic; }
-     bool array(){ return isarray; }
-     unsigned long size(){ return size_t.byte1; }
-     bool _private(){ return (access == access_private); }
-     bool _public(){ return (access == access_public); }
-     bool _protected(){ return (access == access_protected); }
-     
+     ListAdapter<Object> classItems;
+     std::string name; // used for class nesting
  };
  
  struct Method {
+     u1 eadr;
+     
      std::string name, package;
      
      std::string _namespace;

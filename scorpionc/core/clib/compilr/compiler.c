@@ -135,13 +135,155 @@
      }
      else {
          cglobals.eof=1;
-         return lexer.lexer()[0];
+         lexr::token t;
+         return t;
      }
      
 }
 
  namespace memoryhelper 
  {
+       string ttostr(int type)
+       {
+           if(type == typedef_byte)
+              return "byte";
+           else if(type == typedef_char)
+              return "char";
+           else if(type == typedef_class)
+              return "class";
+           else if(type == typedef_double)
+              return "double";
+           else if(type == typedef_float)
+              return "float";
+           else if(type == typedef_int)
+              return "int";
+           else if(type == typedef_long)
+              return "long";
+           else if(type == typedef_short)
+              return "short";
+           else if(type == typedef_string)
+              return "string";
+           else 
+              return "unknown";
+       }
+       
+       int ttoint(string type)
+       {
+           if(type == "byte")
+              return typedef_byte;
+           else if(type == "char")
+              return typedef_char;
+           else if(type == "class")
+              return typedef_class;
+           else if(type == "double")
+              return typedef_double;
+           else if(type == "float")
+              return typedef_float;
+           else if(type == "int")
+              return typedef_int;
+           else if(type == "long")
+              return typedef_long;
+           else if(type == "short")
+              return typedef_short;
+           else if(type == "string")
+              return typedef_string;
+           else 
+              return -1;
+       }
+       
+       string atostr(int access)
+       {
+          if(access == access_private)
+             return "private";
+          else if(access == access_protected)
+             return "protected";
+          else if(access == access_public)
+             return "public";
+          else 
+             return "unknown";
+       }
+       
+       void level1(int OP)
+       {
+           u2 init;
+           init.byte1=OP;
+           init.byte2=0;
+          
+           double* op_data;
+          
+           if(cglobals.classdepth == 0)
+              cmplr_add_item( new_cmplr_item(init, op_data, "") ); 
+           else if(cglobals.classdepth == 1)
+              cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to main queue
+           else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to sub queue
+       }
+       
+       void level2(int OP, double arg1)
+       {
+           u2 init;
+           init.byte1=OP;
+           init.byte2=1;
+          
+           double* op_data=new double[1];
+           op_data[0] = arg1;
+          
+           if(cglobals.classdepth == 0)
+              cmplr_add_item( new_cmplr_item(init, op_data, "") ); 
+           else if(cglobals.classdepth == 1)
+              cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to main queue
+           else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to sub queue 
+       }
+       
+       void level3(int OP, double arg1, double arg2)
+       {
+           u2 init;
+           init.byte1=OP;
+           init.byte2=2;
+          
+           double* op_data=new double[2];
+           op_data[0] = arg1;
+           op_data[1] = arg2;
+          
+           if(cglobals.classdepth == 0)
+              cmplr_add_item( new_cmplr_item(init, op_data, "") ); 
+           else if(cglobals.classdepth == 1)
+              cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to main queue
+           else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to sub queue
+       }
+       
+       void level4(int OP, double arg1, double arg2, double arg3)
+       {
+           u2 init;
+           init.byte1=OP;
+           init.byte2=3;
+          
+           double* op_data=new double[3];
+           op_data[0] = arg1;
+           op_data[1] = arg2;
+           op_data[2] = arg3;
+          
+           if(cglobals.classdepth == 0)
+             cmplr_add_item( new_cmplr_item(init, op_data, "") ); 
+           else if(cglobals.classdepth == 1)
+             cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to main queue
+           else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to sub queue 
+       }
+       
+       void _cout(string data)
+       {
+           u2 init;
+           init.byte1=OP_COUT;
+           init.byte2=0;
+          
+           double* op_data;
+          
+            if(cglobals.classdepth == 0)
+              cmplr_add_item( new_cmplr_item(init, op_data, data) ); 
+            else if(cglobals.classdepth == 1)
+              cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, data)) ); // add item to main queue
+            else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, data)) ); // add item to sub queue
+       }
+       
     namespace objecthelper
     {
        Object at(long i)
@@ -154,29 +296,77 @@
             
           for(long i =0; i < objects.size(); i++)
           {
-             if(at(i).type == o.type && at(i).name == o.name)
+             if(at(i).type == o.type && at(i)._namespace == o._namespace)
              {
-                return (at(i).package == o.package && at(i)._namespace == o._namespace 
-                        && at(i).parentclass == o.parentclass);
+                if(at(i).name == o.name && at(i).parentclass == o.parentclass) 
+                      return true;
              }
           }
           
           return false;
        }
+       
+       long oadr(Object &o, const bool internal = true)
+       {
+          if(!objects._init())
+            return 0;
+            
+          for(long i =0; i < objects.size(); i++)
+          {
+             if(at(i).type == o.type && at(i)._namespace == o._namespace )
+             {
+                if(at(i).name == o.name && at(i).parentclass == o.parentclass) 
+                      return ((internal) ? i : at(i).eadr.byte1);
+             }
+          }
+          
+          return 0;
+       }
+       
+       string oinfo(Object &o)
+       {
+          if(!objects._init())
+            return "<null>";
+        
+          stringstream ss;    
+          for(long i =0; i < objects.size(); i++)
+          {
+             if(at(i).type == o.type && at(i).name == o.name)
+             {
+                if(at(i)._namespace == o._namespace && at(i).parentclass == o.parentclass)
+                {
+                    ss << "from package:" << at(i).package << "  ";
+                    
+                    if(o._namespace != "<null>")
+                        ss << o._namespace << "::";
+                    
+                    ss << atostr(at(i).access) << " ";
+                    if(at(i).isStatic)
+                       ss << "static ";
+                    if(at(i).isConst)
+                       ss << "const ";
+                    
+                    if(o.parentclass != "<null>")
+                        ss << o.parentclass << ".";
+                        
+                    ss << o.name << ((at(i).isarray) ? "[]" : "") << " `" << ttostr(o.type) << "`";
+                    return ss.str();
+                }
+             }
+          }
+          
+          return "<null>";
+       }
      
        bool exists(Object &o)
        { return ocmp(o); }
        
-       bool find(std::string name, int type, bool isStatic, bool isarray, int access, 
-                 std::string package, std::string _namespace, std::string parentclass)
+       bool find(std::string name, int type, std::string _namespace, 
+              std::string parentclass)
        { 
            Object o;
            o.name = name;
            o.type = type;
-           o.isStatic = isStatic;
-           o.isarray = isarray;
-           o.access = access;
-           o.package = package;
            o._namespace = _namespace;
            o.parentclass = parentclass;
            return ocmp(o); 
@@ -194,6 +384,11 @@
            o.package = package;
            o._namespace = _namespace;
            o.parentclass = parentclass;
+           o.size_t.byte1 = 0;
+           o.eadr.byte1 = cglobals.objectadr++;
+           
+           if(type == typedef_class)
+               o.C = new ClassObject[1];
            
            if(ocmp(o))
              return false;
@@ -202,11 +397,293 @@
                return true;
            }
        }
+       
+       long address(std::string name, int type, std::string _namespace, 
+                 std::string parentclass, const bool internal = true)
+       {
+           Object o;
+           o.name = name;
+           o.type = type;
+           o._namespace = _namespace;
+           o.parentclass = parentclass;
+           
+           return oadr(o, internal);
+       }
+       
+       string getobjinfo(std::string name, int type, std::string _namespace, 
+                      std::string parentclass)
+       {
+           Object o;
+           o.name = name;
+           o.type = type;
+           o._namespace = _namespace;
+           o.parentclass = parentclass;
+           return oinfo(o);
+       }
     }
     
     namespace methodhelper
     {
-      
+       string argstostr(ListAdapter<Object> &args);
+       bool sameargs(ListAdapter<Object> args1, ListAdapter<Object> args2);
+       
+       Method at(long i)
+       { return methods.valueAt(i); }
+       
+       // TODO: create a sameargs(Object argset1, Object argset2) to compare method arguments
+       bool mcmp(Method &o, ListAdapter<Object> &args)
+       {
+          if(!methods._init())
+            return false;
+            
+          for(long i =0; i < methods.size(); i++)
+          {
+             if(at(i).name == o.name && at(i)._namespace == o._namespace)
+             {
+                if(at(i).parentclass == o.parentclass && sameargs(at(i).args, args) ) 
+                      return true;
+             }
+          }
+          
+          return false;
+       }
+       
+       long madr(Method &o, ListAdapter<Object> &args)
+       {
+          if(!methods._init())
+            return 0;
+            
+          for(long i =0; i < methods.size(); i++)
+          {
+             if(at(i).name == o.name && at(i)._namespace == o._namespace)
+             {
+                if(at(i).parentclass == o.parentclass && sameargs(at(i).args, args) ) 
+                      return i;
+             }
+          }
+          
+          return 0;
+       }
+       
+       string minfo(Method &o, ListAdapter<Object> &args)
+       {
+          if(!methods._init())
+            return "<null>";
+        
+          stringstream ss;    
+          for(long i =0; i < methods.size(); i++)
+          {
+             if(at(i).name == o.name || at(i)._namespace == o._namespace)
+             {
+                if(at(i).parentclass == o.parentclass && sameargs(at(i).args, args) )
+                {
+                    ss << "from package:" << at(i).package << "  ";
+                    
+                    if(o._namespace != "<null>")
+                        ss << o._namespace << "::";
+                    
+                    ss << atostr(at(i).access) << " ";
+                    if(at(i).isStatic)
+                       ss << "static ";
+                       
+                    if(o.parentclass != "<null>")
+                        ss << o.parentclass << ".";
+                        
+                    ss << o.name << "(" << argstostr(args) << ") `function`"; // TODO: create a getargs() to turn the methods args to a string
+                    return ss.str();
+                }
+             }
+          }
+          
+          return "<null>";
+       }
+       
+       bool sameargs(ListAdapter<Object> args1, ListAdapter<Object> args2)
+       {
+           if(!args1._init() || !args2._init())
+              return false;
+              
+           if(args1.size() != args2.size())
+             return false;
+             
+           for(int i = 0; i < args1.size(); i++)
+           {
+               if((args1.valueAt(i).type != args2.valueAt(i).type) || 
+                    (args1.valueAt(i).array() != args2.valueAt(i).array()))
+                      return false;
+           }
+          return true;
+       }
+       
+       string argstostr(ListAdapter<Object> &args)
+       {
+           stringstream ss;
+           if(!args._init())
+             return ""; // A function can have no args
+             
+           for(int i = 0; i < args.size(); i++)
+           {
+               ss << ttostr(args.valueAt(i).type) << ((args.valueAt(i).array()) ? "[]" : "") 
+                    << " " << args.valueAt(i).name << (((i + 1) < args.size()) ? "," : "");
+           }     
+             
+           return ss.str();
+       }
+       
+       bool exists(Method &o, ListAdapter<Object> &args)
+       { return mcmp(o, args); }
+       
+       bool find(std::string name, std::string _namespace, std::string parentclass, 
+              ListAdapter<Object> &args)
+       { 
+           Method o;
+           o.name = name;
+           o._namespace = _namespace;
+           o.parentclass = parentclass;
+           return mcmp(o, args); 
+       }
+       
+       bool create(std::string name, bool isStatic, int access, std::string package, 
+                std::string _namespace, std::string parentclass, ListAdapter<Object> &args)
+       {
+           Method o;
+           o.name = name;
+           o.access = access;
+           o.package = package;
+           o.args = args;
+           o.eadr.byte1 = cglobals.methodadr++;
+           o._namespace = _namespace;
+           o.parentclass = parentclass;
+           
+           if(mcmp(o, args))
+             return false;
+           else {
+               methods.add(o);
+               return true;
+           }
+       }
+       
+       long address(std::string name, std::string _namespace, std::string parentclass, 
+                 ListAdapter<Object> &args)
+       {
+           Method o;
+           o.name = name;
+           o._namespace = _namespace;
+           o.parentclass = parentclass;
+           
+           return madr(o, args);
+       }
+       
+       string getmethodinfo(std::string name, std::string _namespace, 
+                 std::string parentclass, ListAdapter<Object> &args)
+       {
+           Method o;
+           o.name = name;
+           o._namespace = _namespace;
+           o.parentclass = parentclass;
+           return minfo(o, args);
+       }
+       
+    }
+    
+    namespace queuehelper
+    {
+        namespace classhelper
+        {
+            
+            void addObject()
+            {
+                if(cglobals.classdepth == 0){ return; }
+                else if(cglobals.classdepth == 1){ cglobals.classParent.size_t.byte1++; }
+                else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).size_t.byte1++;
+            }
+            
+            bool inserted = false;
+            
+            long queuesize()
+            {
+                if(cglobals.classdepth == 0){ return 0; }
+                else if(cglobals.classdepth == 1){ cglobals.classParent.C->iqueue.size(); }
+                else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.size();
+            }
+            
+            /* Insert a class init instruction to the beginning of the queue */
+            void insert(long size, std::string name, int type, std::string _namespace, 
+                    std::string parentclass)
+            {
+                if(cglobals.classdepth == 0)
+                { return; }
+                
+                inserted = true;
+                if(cglobals.classdepth == 1)
+                {
+                    if(queuesize() == 0)
+                    {
+                        level3(OP_NODE, memoryhelper::objecthelper::address
+                                    (name, type, _namespace, parentclass, false), size);
+                    }
+                    else 
+                    {
+                        u2 init;
+                        init.byte1=OP_NODE;
+                        init.byte2=2;
+                      
+                        double* op_data=new double[2];
+                        op_data[0] = memoryhelper::objecthelper::address
+                                        (name, type, _namespace, parentclass, false);
+                        op_data[1] = size;
+                        cglobals.classParent.C->iqueue.insert( (*new_cmplr_item(init, op_data, "")), 0);
+                    }
+                }
+                else
+                {
+                    if(queuesize() == 0)
+                    {
+                        level3(OP_NODE, memoryhelper::objecthelper::address
+                                    (name, type, _namespace, parentclass, false), size);
+                    }
+                    else 
+                    {
+                        u2 init;
+                        init.byte1=OP_NODE;
+                        init.byte2=2;
+                      
+                        double* op_data=new double[2];
+                        op_data[0] = memoryhelper::objecthelper::address
+                                        (name, type, _namespace, parentclass, false);
+                        op_data[1] = size;
+                        cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue
+                             .insert( (*new_cmplr_item(init, op_data, "")), 0);
+                    }
+                    
+                }    
+            }
+            
+            /* Release a queue */
+            void release()
+            {
+                
+                if(!inserted || cglobals.classdepth == 0)
+                {
+                    cglobals.out << "Class init instruction was not added to the queue.";
+                    error(cglobals.lex);
+                    return;
+                }
+                
+                long len = queuesize();
+                for(long i = 0; i < len; i++)
+                {
+                    cmplr_item* item;
+                    if(cglobals.classdepth == 1){ item = &cglobals.classParent.C->iqueue.valueAt(i); }
+                    else item = &cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.valueAt(i);
+            
+                    cmplr_add_item( item );
+                }
+                
+                inserted = false;
+                cglobals.classdepth--;
+            }
+        }
     }
     
     namespace namespacehelper 
@@ -330,7 +807,7 @@
        void parse_string_decliration(lexr::parser_helper& lex, std::string var)
        {
            lexr::token temp_t;
-           bool plus=false, needStr=false;
+           bool plus=false, needStr=false, finished=false;
            stringstream ss;
            int bracket_stack=0;
            for( ;; )
@@ -355,6 +832,48 @@
                    plus = false;
                    ss << temp_t.value;
                }
+               else if(temp_t.value == ","){
+                   if(reserved(temp_t.value)){
+                     lex.lexer().token_sz1--;
+                       cglobals.out << "Expected ';' before symbol '" << temp_t.value << "'.";
+                       error(cglobals.lex);
+                   }
+                     
+                   if(plus)
+                   {
+                       cglobals.out << "Expected string literal after previous '+'.";
+                       error(cglobals.lex);
+                   }
+                   
+                   if(bracket_stack != 0)
+                   {
+                       cglobals.out << "Expected ')' at end of statement.";
+                       error(cglobals.lex);
+                   }
+                   cout << "string " << var << " = \"" << ss.str() << "\"" << endl;
+  
+        	      temp_t = getNextToken(lex);
+                 if(temp_t.type == temp_t.e_symbol)
+                 {
+                     string var = temp_t.value;
+        	         temp_t = getNextToken(lex);
+        	         if(temp_t.value != "=")
+        	         {
+        	             cglobals.out << "Expected '=' before '" << temp_t.value << "'.";
+                         error(cglobals.lex);
+        	         }
+        	         parse_string_decliration(lex, var);
+                 }
+                 else if(temp_t.value == ";")
+                 {
+                     cglobals.out << "Unexpected unqualified symbol before '" << temp_t.value << "'.";
+                     error(cglobals.lex);
+                 }
+                 else {
+                     cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
+                     error(cglobals.lex);
+                 }
+               }
                else if(temp_t.value == "+"){
                    if(plus)
                    {
@@ -364,6 +883,10 @@
                    plus = true;
                }
                else if(temp_t.value == ";" || reserved(temp_t.value)){
+                   
+                   if(finished)
+                      break;
+                      
                    if(reserved(temp_t.value)){
                      lex.lexer().token_sz1--;
                        cglobals.out << "Expected ';' before symbol '" << temp_t.value << "'.";
@@ -459,12 +982,13 @@
        void parse_byte_decliration(lexr::parser_helper& lex, std::string var)
        {
            lexr::token temp_t;
-           bool plus=false, needNum=false, singleNum=true;
+           bool plus=false, needNum=false, singleNum=true,
+                negate=false, finished=false;
            stringstream ss;
            int bracket_stack=0;
-  	   double maxValue = 127, minValue = -128;        
+  	       double maxValue = 127, minValue = -128;        
 
-	   for( ;; )
+    	   for( ;; )
            {
                temp_t = getNextToken(lex);
                if(cglobals.eof)
@@ -476,27 +1000,18 @@
                        cglobals.out << "Expected string literal after previous numeric literal.";
                        error(cglobals.lex);
               	       singleNum=false;
-	           }
+                   }
                    
                    needNum = true;
                    plus = false;
-                   ss << temp_t.value;
+                   if(!negate)
+                     ss << temp_t.value;
+                   else 
+                     ss << "-" << temp_t.value;
                }
                else if(temp_t.value == ",")
-	       {
-		  temp_t = getNextToken(lex);
-		  
-	       }
-               else if(temp_t.value == "+"){
-                   if(plus)
-                   {
-                       cglobals.out << "Expected string literal after previous '+'.";
-                       error(cglobals.lex);
-                   }
-                   plus = true;
-                   singleNum=false;
-               }
-               else if(temp_t.value == ";" || reserved(temp_t.value)){
+               {
+                   finished = true;
                    if(reserved(temp_t.value)){
                      lex.lexer().token_sz1--;
                        cglobals.out << "Expected ';' before symbol '" << temp_t.value << "'.";
@@ -515,23 +1030,90 @@
                        error(cglobals.lex);
                    }
                 
-  		   if(singleNum)
-		   {
-		       double num = atoi(ss.str().c_str());
-		       if(num > maxValue || num < minValue)
-		       {
-			   cglobals.out << "Constant value '" << num << "' cannot be converted into `byte`.";
-                           error(cglobals.lex);
-		       }
-		   }
-  		
-		   cout << "string " << var << " = \"" << ss.str() << "\"" << endl;
+              	   if(singleNum)
+            	   {
+            	       double num = atoi(ss.str().c_str());
+            	       if(num > maxValue || num < minValue)
+            	       {
+            		        cglobals.out << "Constant value '" << num << "' cannot be converted into `byte`.";
+                            error(cglobals.lex);
+            	       }
+            	   }
+      	
+    	         cout << "string " << var << " = \"" << ss.str() << "\"" << endl;
+                   
+        	     temp_t = getNextToken(lex);
+                 if(temp_t.type == temp_t.e_symbol)
+                 {
+                     string var = temp_t.value;
+        	         temp_t = getNextToken(lex);
+        	         if(temp_t.value != "=")
+        	         {
+        	             cglobals.out << "Expected '=' before '" << temp_t.value << "'.";
+                         error(cglobals.lex);
+        	         }
+        	         parse_byte_decliration(lex, var);
+                 }
+                 else if(temp_t.value == ";")
+                 {
+                     cglobals.out << "Unexpected unqualified symbol before '" << temp_t.value << "'.";
+                     error(cglobals.lex);
+                 }
+                 else {
+                     cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
+                     error(cglobals.lex);
+                 }
+               }
+               else if(temp_t.value == "+"){
+                   if(plus)
+                   {
+                       cglobals.out << "Expected string literal after previous '+'.";
+                       error(cglobals.lex);
+                   }
+                   plus = true;
+                   singleNum=false;
+               }
+               else if(temp_t.value == ";" || reserved(temp_t.value)){
+                   if(finished)
+                      break;
+                   
+                   if(reserved(temp_t.value)){
+                     lex.lexer().token_sz1--;
+                       cglobals.out << "Expected ';' before symbol '" << temp_t.value << "'.";
+                       error(cglobals.lex);
+                   }
+                     
+                   if(plus)
+                   {
+                       cglobals.out << "Expected string literal after previous '+'.";
+                       error(cglobals.lex);
+                   }
+                   
+                   if(bracket_stack != 0)
+                   {
+                       cglobals.out << "Expected ')' at end of statement.";
+                       error(cglobals.lex);
+                   }
+                
+              	   if(singleNum)
+            	   {
+            	       double num = atoi(ss.str().c_str());
+            	       if(num > maxValue || num < minValue)
+            	       {
+            		        cglobals.out << "Constant value '" << num << "' cannot be converted into `byte`.";
+                            error(cglobals.lex);
+            	       }
+            	   }
+      	
+    	           cout << "string " << var << " = \"" << ss.str() << "\"" << endl;
                    break;
                }
                else if(temp_t.value == "(")
                    bracket_stack++;
                else if(temp_t.value == ")")
                    bracket_stack--;
+               else if(temp_t.value == "-")
+                   negate = true;
                else {
                    cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
                    error(cglobals.lex);
@@ -636,7 +1218,45 @@
              memoryhelper::helper::parse_double_decliration(lex, var);
        }
        
-       void parse_method_args(lexr::parser_helper& lex)
+       void parse_asm_decliration(long begin, string _asm)
+       {
+           lexr::token temp_t;
+           bool intro=false;
+        
+           lexr::parser_helper lex;
+           lex.init(_asm);
+           lex.lexer().line_t = begin;
+           
+           for( ;; )
+           {
+               temp_t = getNextToken(lex);
+               if(cglobals.eof)
+                 break;
+               if(temp_t.value == "cout")
+               {
+                   temp_t = getNextToken(lex);
+                   if(temp_t.type == temp_t.e_string)
+                       _cout(temp_t.value);
+                   else
+                   {
+                       if(!intro)
+                         cout << "Assembler messages:\n";
+                       cglobals.out << "Expected string literal before '" << temp_t.value << "'.";
+                       error(cglobals.lex);
+                   }
+               }
+               else {
+                   if(!intro)
+                      cout << "Assembler messages:\n";
+                   cglobals.out << "Expected assembly instruction before '" << temp_t.value << "'.";
+                   error(cglobals.lex);
+               }
+           }
+           
+           cglobals.eof=0;
+       }
+       
+       void parse_method_args(lexr::parser_helper& lex, ListAdapter<Object> &args)
        {
            lexr::token temp_t;
            bool comma;
@@ -646,23 +1266,33 @@
                temp_t = getNextToken(lex);
                if(cglobals.eof)
                  break;
-               if(temp_t.value == ")")
+               if(temp_t.value == ")" || (reserved(temp_t.value) && !_typedef(temp_t.value)) 
+                  || temp_t.value == "{")
                {
+                   if(temp_t.value != ")")
+                   {
+                       cglobals.out << "Expected ')' at end of function decliration before '" << temp_t.value << "'.";
+                       error(cglobals.lex);
+                   }
+                   
                    if(comma)
                    {
-                       cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
+                       cglobals.out << "Expected qualified symbol before ')'.";
                        error(cglobals.lex);
                    }
                    break;
                }
                else if(temp_t.type == temp_t.e_symbol)
                {
+                   Object o;
                    comma = false;
-                   if(!reserved(temp_t.value))
+                   if(!_typedef(temp_t.value))
                    {
-                       cglobals.out << "Unexpected qualified symbol '" << temp_t.value << "'.";
+                       cglobals.out << "Expected qualified symbol before '" << temp_t.value << "'.";
                        error(cglobals.lex);
                    }
+                   
+                   o.type = ttoint(temp_t.value);
                    
                    temp_t = getNextToken(lex);
                    if(temp_t.value == "[")
@@ -672,26 +1302,27 @@
                        {
                            cglobals.out << "Cannot have array size in function argument definition '[" << temp_t.value << "]'.";
                            error(cglobals.lex);
+                           temp_t = getNextToken(lex);
                        }
-                       else if(temp_t.value == "]")
-                       {
-                           
-                       }
-                       temp_t = getNextToken(lex);
+                       
+                       if(temp_t.value == "]")
+                       { temp_t = getNextToken(lex); }
+                       o.isarray = true;
                    }
                    
                    if(temp_t.type != temp_t.e_symbol)
                    {
-                       cglobals.out << "Unexpected unqualified symbol '" << temp_t.value << "'.";
+                       cglobals.out << "Expected unqualified symbol before '" << temp_t.value << "'.";
                        error(cglobals.lex);
                    }
-                   
+                   o.name = temp_t.value;
+                  args.add(o);   
                }
                else if(temp_t.value == ",")
                {
                    if(comma)
                    {
-                       cglobals.out << "Unexpected qulafied symbol '" << temp_t.value << "'.";
+                       cglobals.out << "Expected qulafied symbol before '" << temp_t.value << "'.";
                        error(cglobals.lex);
                    }
                    
@@ -715,6 +1346,8 @@
                  break;
                if(temp_t.value == "}")
                   cglobals.block_stack--;
+               else if(temp_t.value == "{")
+                  cglobals.block_stack++;
                else if(reserved(temp_t.value))
                {
                    if(accessspecifier(temp_t.value))
@@ -729,11 +1362,46 @@
                    }
                    else if(temp_t.value == "return")
                            memoryhelper::helper::parse_return_decliration(cglobals.lex);
+                   else if(temp_t.value == "asm")
+                   {
+                      temp_t = getNextToken(lex);
+                      if(temp_t.value != "(")
+                      {
+                          cglobals.out << "Expected '(' before '" << temp_t.value << "'.";
+                          error(cglobals.lex);
+                      }
+                      
+                      temp_t = getNextToken(lex);
+                      if(temp_t.type == temp_t.e_string)
+                      {
+                          memoryhelper::helper::parse_asm_decliration(cglobals.lex.lexer().line_t, temp_t.value);
+                      }
+                      else {
+                          cglobals.out << "Expected string literal before '" << temp_t.value << "'.";
+                          error(cglobals.lex);
+                      }
+                      
+                      temp_t = getNextToken(lex);
+                      if(temp_t.value != ")")
+                      {
+                          cglobals.out << "Expected ')' before '" << temp_t.value << "'.";
+                          error(cglobals.lex);
+                      }
+                      
+                      temp_t = getNextToken(lex);
+                      if(temp_t.value != ";")
+                      {
+                          cglobals.out << "Expected ';' at end of statement.";
+                          error(cglobals.lex);
+                      }
+                   }
                    else {
                        cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
                        error(cglobals.lex);
                    }
                }
+               else if(temp_t.value == ";")
+               { }
                else {
                    cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
                    error(cglobals.lex);
@@ -754,33 +1422,23 @@
                   cglobals.block_stack--;
                else if(reserved(temp_t.value))
                {
-                   if(accessspecifier(temp_t.value))
+                   if(accessspecifier(temp_t.value) || temp_t.value == "static" || temp_t.value == "const"
+                       || temp_t.value == "def")
                    {
                        object_attrib atribs;
-                       atribs.access = strtoaccess(temp_t.value);
-                       memoryhelper::helper::parse_access_specifier(cglobals.lex, atribs, temp_t);
-                       if(temp_t.value == "class"){
-                           temp_t = getNextToken(lex);
-                           if(temp_t.type != temp_t.e_symbol){
-                               cglobals.out << "Expected unqualified symbol before '" << temp_t.value << "'.";
-                               error(cglobals.lex);
-                           }
+                       if(temp_t.value != "def"){
+                           atribs.access = ((temp_t.value == "static" || temp_t.value == "const") ? access_public : memoryhelper::helper::strtoaccess(temp_t.value));
+                           if(temp_t.value == "static" || temp_t.value == "const") cglobals.lex.lexer().token_sz1--;
                            
-                           cout << "class " << temp_t.value << endl;
-                           temp_t = getNextToken(lex);
-                           if(temp_t.value != "{"){
-                               cglobals.out << "Expected '{' before '" << temp_t.value << "'.";
-                               error(cglobals.lex);
-                           }
-                           
-                           memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
+                           memoryhelper::helper::parse_access_specifier(cglobals.lex, atribs, temp_t);
                        }
-                       else if(_typedef(temp_t.value))
-                       {
-                           object_attrib atribs;
-                           memoryhelper::helper::parse_typedef_block(cglobals.lex, temp_t.value, atribs);
+                       else {
+                           atribs.access = access_public;
+                           atribs.isStatic = false;
+                           atribs.isConst = false;
                        }
-                       else if(temp_t.value == "def"){
+                       
+                       if(temp_t.value == "def"){
                            temp_t = getNextToken(lex);
                            if(temp_t.type != temp_t.e_symbol){
                                cglobals.out << "Expected unqualified symbol before '" << temp_t.value << "'.";
@@ -789,13 +1447,75 @@
                                
                            
                            cout << "def " << temp_t.value << endl;
+                           string functionname = temp_t.value;
+                           bool methodfound = false;
+                           
                            temp_t = getNextToken(lex);
                            if(temp_t.value != "("){
                                cglobals.out << "Expected '(' before '" << temp_t.value << "'.";
                                error(cglobals.lex);
                            }
                            
-                           memoryhelper::helper::parse_method_args(cglobals.lex);
+                           ListAdapter<Object> args;
+                           memoryhelper::helper::parse_method_args(cglobals.lex, args);
+                           
+                           
+                           string parentclass = "";
+                           if(cglobals.classdepth == 0)
+                              parentclass = "<null>";
+                           else if(cglobals.classdepth == 1)
+                              parentclass = cglobals.classParent.name;
+                           else parentclass = cglobals.classParent.C->classObjects.valueAt(cglobals.classdepth-1).C->name;
+                           
+                           if(!memoryhelper::methodhelper::create(functionname, atribs.isStatic, atribs.access, 
+                                    cglobals.package, "<null>", parentclass, args))
+                           {
+                               methodfound = true;
+                               cglobals.out << "Symbol of type `function` has already been declared.\nPreviously declared here:\n\t" 
+                                    << memoryhelper::methodhelper::getmethodinfo(functionname, "<null>", parentclass, args);
+                               error(cglobals.lex);    
+                           }
+                           
+                          Object arg1;
+                          arg1.type = typedef_string;
+                          arg1.isarray = true;
+                         
+                          ListAdapter<Object> initargs, functionargs = methods.valueAt(memoryhelper::methodhelper::address
+                                                                         (functionname, "<null>", parentclass, args)).args;
+                          initargs.add(arg1);
+     
+                           if(!methodfound && functionname == "__init__" && memoryhelper::methodhelper::sameargs(initargs, functionargs))
+                           {
+                               cout << "hasinit" << endl;
+                               long adr = memoryhelper::methodhelper::address("__init__", "<null>", parentclass, functionargs);
+                               Method m = methods.valueAt(adr);
+                               m.eadr.byte1 = 0;
+                            
+                               methods.replace(m, adr);
+                               
+                               if(!atribs.isStatic)
+                               {
+                                   cglobals.out << "Entry point method 'public static def __init__(string[] args)' must be static.";
+                                   error(cglobals.lex);
+                               }
+                               
+                               if(atribs.access != access_public)
+                               {
+                                   cglobals.out << "Entry point method 'public static def __init__(string[] args)' must be public.";
+                                   error(cglobals.lex);
+                               }
+                               
+                               cglobals.hasInit = true;
+                           }
+                           
+                           if(atribs.isConst)
+                           {
+                               cglobals.out << "Method '" << memoryhelper::atostr(atribs.access) << " " 
+                                              << ((atribs.isStatic) ? "static " : "") << ((atribs.isConst) ? "const " : "") 
+                                                << functionname << "(" << memoryhelper::methodhelper::argstostr(functionargs) << ")' cannot be const.";
+                               error(cglobals.lex);
+                           }
+                           
                            temp_t = getNextToken(lex);
                            if(temp_t.value != "{"){
                                cglobals.out << "Expected '{' before '" << temp_t.value << "'.";
@@ -876,7 +1596,8 @@
                                error(cglobals.lex);
                            }
                            
-                           memoryhelper::helper::parse_method_args(cglobals.lex);
+                           ListAdapter<Object> args;
+                           memoryhelper::helper::parse_method_args(cglobals.lex, args);
                            temp_t = getNextToken(lex);
                            if(temp_t.value != "{"){
                                cglobals.out << "Expected '{' before '" << temp_t.value << "'.";
@@ -930,7 +1651,8 @@
                            error(cglobals.lex);
                        }
                        
-                       memoryhelper::helper::parse_method_args(cglobals.lex);
+                       ListAdapter<Object> args;
+                       memoryhelper::helper::parse_method_args(cglobals.lex, args);
                        temp_t = getNextToken(lex);
                        if(temp_t.value != "{"){
                            cglobals.out << "Expected '{' before '" << temp_t.value << "'.";
@@ -964,7 +1686,7 @@
             || symbol == "sizeof" || symbol == "null" || symbol == "self" || symbol == "byte" 
             || symbol == "long" || symbol == "typedef" || symbol == "static" || symbol == "public"
             || symbol == "private" || symbol == "protected" || symbol == "import" || symbol == "instanceof"
-            || symbol == "package" || symbol == "namespace");
+            || symbol == "package" || symbol == "namespace" || symbol == "asm");
        }
        
        bool _typedef(std::string symbol)
@@ -1025,6 +1747,12 @@ bool validate_package_file(string pkg, string file)
 int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
  {
      cglobals.success = 0;
+     cglobals.classdepth = 0;
+     cglobals.namespacedepth = 0;
+     cglobals.hasInit = false;
+     cglobals.hasStarter = false;
+     cglobals.methodadr = 1;
+     
      for(int i = 0; i < zip_archive.header.sourcecount.byte1; i++)
      {
         cout << "compiling " << zip_archive.fmap[i].name << endl;
@@ -1045,6 +1773,7 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
         lexr::token temp_t;
         
         cglobals.lex.init(source.str());
+        source.str("");
         
         temp_t = getNextToken(cglobals.lex);
         if(temp_t.value != "package")
@@ -1100,6 +1829,95 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
                       cout << "namespace " << name << endl;
                       memoryhelper::helper::parse_namespace_block(cglobals.lex, cglobals.block_stack);
                   }
+                  else if(memoryhelper::helper::accessspecifier(temp_t.value) || temp_t.value == "static" || temp_t.value == "const"
+                          || temp_t.value == "class")
+                   {
+                       object_attrib atribs;
+                       if(temp_t.value != "class") {
+                           atribs.access = ((temp_t.value == "static" || temp_t.value == "const") ? access_public : memoryhelper::helper::strtoaccess(temp_t.value));
+                           if(temp_t.value == "static" || temp_t.value == "const") cglobals.lex.lexer().token_sz1--;
+                           
+                           memoryhelper::helper::parse_access_specifier(cglobals.lex, atribs, temp_t);
+                       }
+                       else {
+                           atribs.access = access_public;
+                           atribs.isStatic = false;
+                           atribs.isConst = false;
+                       }
+                       
+                       if(temp_t.value == "class"){
+                           temp_t = getNextToken(cglobals.lex);
+                           if(temp_t.type != temp_t.e_symbol){
+                               cglobals.out << "Expected unqualified symbol before '" << temp_t.value << "'.";
+                               error(cglobals.lex);
+                           }
+                           
+                          //cout << "class " << temp_t.value << endl;
+                           string classname = temp_t.value;
+                           bool classfound = false;
+                           
+                           if(!memoryhelper::objecthelper::create(temp_t.value, typedef_class, atribs.isStatic, false, 
+                                  atribs.access, cglobals.package, "<null>", "<null>"))
+                           {
+                               classfound = true;
+                               cglobals.out << "Symbol of type `class` has already been declared.\nPreviously declared here:\n\t" 
+                                    << memoryhelper::objecthelper::getobjinfo(temp_t.value, typedef_class, "<null>", "<null>");
+                               error(cglobals.lex);
+                           }
+                           
+                           cglobals.classdepth++;
+                           if(!classfound && classname == "Starter")
+                           {
+                               if(atribs.access != access_public)
+                               {
+                                   cglobals.out << "Main class 'Starter' must be public.";
+                                   error(cglobals.lex);
+                               }
+                               
+                               if(atribs.isStatic)
+                               {
+                                   cglobals.out << "Main class 'Starter' cannot be static.";
+                                   error(cglobals.lex);
+                               }
+                               
+                               cglobals.hasStarter = true;
+                           }
+                           
+                           if(atribs.isConst)
+                           {
+                               cglobals.out << "Object '" << classname << "' of type `class` cannot be const.";
+                               error(cglobals.lex);
+                           }
+                           
+                           temp_t = getNextToken(cglobals.lex);
+                           if(temp_t.value != "{"){
+                               cglobals.out << "Expected '{' before '" << temp_t.value << "'.";
+                               error(cglobals.lex);
+                           }
+                           
+                           if(cglobals.classParent.C != nullptr)
+                           {
+                               if(cglobals.classParent.C->classObjects._init())
+                                  cglobals.classParent.C->classObjects.clear();
+                               if(cglobals.classParent.C->iqueue._init())
+                                  cglobals.classParent.C->iqueue.clear();
+                           }
+                           
+                           cglobals.classParent = objects.valueAt(memoryhelper::objecthelper::address
+                                                      (classname, typedef_class, "<null>", "<null>"));
+                           
+                           memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
+                           
+                           memoryhelper::queuehelper::classhelper::insert(cglobals.classParent.size_t.byte1, classname, 
+                                     typedef_class, "<null>", "<null>");
+                           memoryhelper::queuehelper::classhelper::release();
+                           // TODO: release instruction que
+                       }
+                       else {
+                           cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
+                           error(cglobals.lex);
+                       }
+                   }
               }
               else {
                    cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
@@ -1113,6 +1931,32 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
            }
         }
      }
+     
+     if(!cglobals.hasStarter)
+     {
+         cglobals.out << "Main class 'Starter' is required in a Scorpion application.";
+         error(cglobals.lex);
+     }
+     
+     Object arg1;
+     arg1.type = typedef_string;
+     arg1.isarray = true;
+     
+     ListAdapter<Object> args;
+     args.add(arg1);
+     
+     if(!cglobals.hasInit)
+     {
+         cglobals.out << "Entry point method 'public static def __init__(string[] args)' is required in a Scorpion application.";
+         error(cglobals.lex);
+     }
+     
+     if(cglobals.block_stack != 0)
+     {
+         cglobals.out << "Expected '}' at end of input.";
+         error(cglobals.lex);
+     }
+     
      return cglobals.success;
  }
 
@@ -1200,7 +2044,7 @@ int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &__out_buf__ )
         cres.size_t.byte1=0;
         cglobals.method_t=0;
         success= Compilr_Compile_Buf(zip_archive, __out_buf__);
-      
+        
         if(success==0)
         {
            cout<<"success\n";
@@ -1254,6 +2098,7 @@ int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &__out_buf__ )
            return 0;
         }
         
+        cout << "failed\n";
         return success;
 
      }

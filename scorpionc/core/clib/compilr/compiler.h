@@ -28,6 +28,7 @@
 
  #include "../../Archive.h"
  #include "lexr/lexr.h"
+ #include "core.h"
  #include <sstream>
  #include <string>
  
@@ -41,6 +42,14 @@
      lexr::parser_helper lex;
      stringstream out;
      bool infunc, inclass, innamespace;
+     
+     // Required compiler values
+     bool hasStarter, hasInit;
+     _namespace namespaceParent;
+     Object classParent;
+     int classdepth, namespacedepth;
+     long objectadr, aoffset, methodadr;
+     
  };
  
  enum lex_Modes

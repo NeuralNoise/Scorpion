@@ -6,6 +6,8 @@
 #include <stdlib.h>
 using namespace std;
 
+#define nullptr ((void *)0)
+  
 extern bool hasstring(string str, string *arry, int size);
 
 template <class T>
@@ -36,6 +38,10 @@ class ListAdapter {
             
             size_t++;
             T* newValues = new T[size_t];
+            if(newValues == nullptr){
+                cout << "std: array_out_of_memory\n\tarray add[" << size_t << "]\n";
+                exit(1);
+            }
             
             for(long i = 0; i < size_t - 1; i++)
             {
@@ -43,6 +49,55 @@ class ListAdapter {
             }
             
             newValues[size_t - 1] = value;
+            values = &newValues[0];
+        }
+        void insert(T value, long pos)
+        {
+            if(!init)
+              return;
+             if(pos >= size_t || pos < 0){
+                cout << "std: array_out_of_bounds\n\tarray insert[" << pos << "] >= size[" << size_t << "]\n";
+                exit(1);
+            }
+            
+            size_t++;
+            T* newValues = new T[size_t];
+            if(newValues == nullptr){
+                cout << "std: array_out_of_memory\n\tarray insert[" << size_t << "]\n";
+                exit(1);
+            }
+            
+            for(long i = 0; i < size_t; i++)
+            {
+                if(i == pos)
+                {
+                  newValues[i] = value;
+                  newValues[++i] = values[i];
+                }
+                else 
+                  newValues[i] = values[i];
+            }
+            
+            values = &newValues[0];
+        }
+        void pushback()
+        {
+            if(!init)
+              return;
+            else if((size_t - 1) < 0) return;
+            
+            size_t--;
+            T* newValues = new T[size_t];
+            if(newValues == nullptr){
+                cout << "std: array_out_of_memory\n\tarray pushback[" << size_t << "]\n";
+                exit(1);
+            }
+            
+            for(long i = 0; i < size_t - 1; i++)
+            {
+                newValues[i] = values[i];
+            }
+        
             values = &newValues[0];
         }
         bool contains(T value)
@@ -56,17 +111,18 @@ class ListAdapter {
         }
         void replace(T value, long i)
         {
-            if(i >= size_t){
-                cout << "std: array_out_of_bounds\n\tarray at[" << i << "] >= size[" << size_t << "]\n";
+            if(i >= size_t || i < 0){
+                cout << "std: array_out_of_bounds\n\tarray replace[" << i << "] >= size[" << size_t << "]\n";
                 exit(1);
             }
             
             values[i] = value;
         }
-        unsigned long size(){ return size_t; }
-        T valueAt(long i)
+        unsigned long size()
+        { return ( (!init) ? 0 : size_t ); }
+        T& valueAt(long i)
         {
-            if(i >= size_t){
+            if(i >= size_t || i < 0){
                 cout << "std: array_out_of_bounds\n\tarray at[" << i << "] >= size[" << size_t << "]\n";
                 exit(1);
             }
