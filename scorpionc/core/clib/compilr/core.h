@@ -54,7 +54,7 @@
      
      string str;
      
-     struct cmplr_item* sub_item;
+     ListAdapter<struct cmplr_item> sub_item;
  } ;
  
  struct cmplr_item_2 { /* Data structure for holding buffer items with index. */
@@ -143,6 +143,7 @@
  #define typedef_double 0x2
  #define typedef_string 0x1
  #define typedef_class  0x0
+ #define typedef_node   (-0x1)
  struct ClassObject;
  
  struct Object {

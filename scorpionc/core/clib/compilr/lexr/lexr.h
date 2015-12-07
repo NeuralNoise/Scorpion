@@ -880,7 +880,7 @@ namespace lexr
          else
          {
             std::string parsed_string(begin,s_itr_);
-            details::cleanup_escapes(parsed_string);
+           // details::cleanup_escapes(parsed_string);
             t.set_string(parsed_string, std::distance(base_itr_,begin));
          }
 
@@ -936,7 +936,7 @@ namespace lexr
          else
          {
             std::string parsed_string(begin,s_itr_);
-            details::cleanup_escapes(parsed_string);
+           // details::cleanup_escapes(parsed_string);
             t.set_string(parsed_string, std::distance(base_itr_,begin));
          }
 

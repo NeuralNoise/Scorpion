@@ -48,15 +48,16 @@
  struct cmplr_item new_cmplr_item(u2 init, double* data, string str)
  {
     struct cmplr_item citem;
-    citem.sub_item = (cmplr_item*)malloc( sub_item_base_sz1);
-    
-    if(citem.sub_item == NULL){ cout << "compilr:  error: could not initalize temp internal memory structure.\n"; exit(1); }
     citem.size_t.byte1 = init.byte2;
     citem.item.byte1 = init.byte1;
     
     //citem->str = new string[1];
     for(int i = 0; i < init.byte2; i++)
-       citem.sub_item[i].item.byte1 = data[i];
+    {
+       struct cmplr_item it;
+       it.item.byte1 = data[i];
+       citem.sub_item.add( it );
+    }
        
     citem.str=str;
     return citem;
@@ -91,7 +92,6 @@
          //Flush everything
          objects.clear();
          methods.clear();
-         namespaces.clear();
          init=false;
      }
  }
@@ -114,7 +114,6 @@
  int cmplr_add_item( struct cmplr_item b2 )
  {
      cplrfreelist2->c_items.add(b2);
-     cres.size_t.byte1++;
      
      return 0;
  }

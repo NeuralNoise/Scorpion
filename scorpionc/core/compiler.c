@@ -82,10 +82,11 @@ int Compiler::compile(){
               return COMPILR_FAILURE;
         else if(zres._warnings_.str() != "")
               cout << cres._warnings_.str();
-        
+              
         if(_ostream_buf__.str() != ""){
             if(FileStream::out("/usr/share/scorpion/lib/compiler.xso",_ostream_buf__.str()) != 0)
-              return COMPILR_FAILURE;
+            { cout << "scorpionc:  error: could not write to executable file.\n"; return COMPILR_FAILURE; }
+              
         }
         
         kernal.Cleanup( true );

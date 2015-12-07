@@ -38,7 +38,7 @@
  #include <iostream>
  
  using namespace std;
-
+ 
  Globals cglobals;
     /*
     * ***************************************
@@ -304,6 +304,25 @@
           }
           
           return false;
+       }
+       
+       Object ofc(std::string _namesp, std::string parentclass)
+       {
+          Object o;
+          o.type = 9999;
+          if(!objects._init())
+            return o;
+            
+          for(long i =0; i < objects.size(); i++)
+          {
+             if((at(i).type != typedef_class && at(i).type != typedef_node) && at(i)._namespace == _namesp)
+             {
+                if(at(i).parentclass == parentclass) 
+                      return at(i);
+             }
+          }
+          
+          return o;
        }
        
        long oadr(Object &o, const bool internal = true)
@@ -591,6 +610,19 @@
         namespace classhelper
         {
             
+            void getAllNodeObjects(ListAdapter<Object> &nodeObjects, std::string _namesp, std::string parentclass)
+            {
+                Object o;
+                bool next=true;
+                do
+                {
+                    o = memoryhelper::objecthelper::ofc(_namesp, parentclass);
+                    if(o.type != 9999) next = false;
+                    else 
+                        nodeObjects.add(o);
+                }while(next);
+            }
+            
             void inc()
             {
                 if(cglobals.classdepth == 0){ return; }
@@ -632,6 +664,23 @@
                                         (name, type, _namespace, parentclass, false);
                         op_data[1] = size;
                         cglobals.classParent.C[0].iqueue.insert( new_cmplr_item(init, op_data, ""), 0 );
+                        
+                        /* Apply all node objects to create inital map */
+                        /*ListAdapter<Object> nodeObjects;
+                        getAllNodeObjects( nodeObjects , _namespace , parentclass );
+                        
+                        for(long i = 0; i < nodeObjects.size(); i++)
+                        {
+                            
+                            init.byte1=OP_NICCONST;
+                            init.byte2=2;
+                          
+                            double* op_data=new double[2];
+                            op_data[0] = memoryhelper::objecthelper::address
+                                            (name, type, _namespace, parentclass, false);
+                            op_data[1] = size;
+                            cglobals.classParent.C[0].iqueue.insert( new_cmplr_item(init, op_data, ""), 0 );
+                        }*/
                     }
                 }
                 else
@@ -659,13 +708,6 @@
                 inserted = true;
             }
             
-            double* citemstod(cmplr_item* items, long size_t)
-            {
-                double* d = new double[size_t];
-                for(int i = 0; i < size_t; i++)
-                   d[i] = items[i].item.byte1;
-            }
-            
             /* Release a queue */
             void release()
             {
@@ -679,7 +721,6 @@
                 long len = queuesize();
                 for(long i = 0; i < len; i++)
                 {
-                    //cmplr_item* item=new cmplr_item[1];
                     cmplr_item item1;
                     
                     if(cglobals.classdepth == 1)
@@ -927,7 +968,7 @@
            }
        }
        
-       void parse_return_decliration(lexr::parser_helper& lex)
+       void parse_return_decliration(lexr::parser_helper& lex, long addr)
        {
            lexr::token temp_t;
            bool plus, needStr;
@@ -978,7 +1019,11 @@
                        cglobals.out << "Expected string literal or qulafied symbol after previous '+'.";
                        error(cglobals.lex);
                    }
-                  // cout << "return \"" << ss.str() << "\"" << endl;
+                   
+                 //  cout << "return \"" << ss.str() << "\"" << endl;
+                   level3(OP_ICONST, var_return, atof(ss.str().c_str()));
+                   level2(OP_PUSH, var_return);
+                   level2(OP_RETURN, addr);
                    break;
                }
                else {
@@ -1345,7 +1390,7 @@
            }
        }
        
-       void parse_method_block(lexr::parser_helper& lex, int block_begin)
+       void parse_method_block(lexr::parser_helper& lex, int block_begin, long address)
        {
            cglobals.block_stack++;
            lexr::token temp_t;
@@ -1371,7 +1416,7 @@
                        }
                    }
                    else if(temp_t.value == "return")
-                           memoryhelper::helper::parse_return_decliration(cglobals.lex);
+                           memoryhelper::helper::parse_return_decliration(cglobals.lex, address);
                    else if(temp_t.value == "asm")
                    {
                       temp_t = getNextToken(lex);
@@ -1449,6 +1494,7 @@
                        }
                        
                        if(temp_t.value == "def"){
+                           cglobals.method_t++;
                            temp_t = getNextToken(lex);
                            if(temp_t.type != temp_t.e_symbol){
                                cglobals.out << "Expected unqualified symbol before '" << temp_t.value << "'.";
@@ -1532,10 +1578,17 @@
                                error(cglobals.lex);
                            }
                           
+                          initargs.clear();
                           level2(OP_MTHD, memoryhelper::methodhelper::address(functionname, "<null>", parentclass, 
-                                 args, false)); 
-                          memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack);
-                           
+                                 functionargs)); 
+                          memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack, memoryhelper::methodhelper::address
+                                         (functionname, "<null>", parentclass, functionargs));
+                          
+                          level3(OP_ICONST, var_return, 0); 
+                          level2(OP_PUSH, var_return); 
+                          level2(OP_RETURN, memoryhelper::methodhelper::address(functionname, "<null>", parentclass, 
+                                 functionargs)); 
+                          functionargs.clear();
                        }
                    }
                    else {
@@ -1616,7 +1669,7 @@
                                error(cglobals.lex);
                            }
                            
-                          memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack);
+                          memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack, 0);
                        }
                        else {
                            cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
@@ -1670,7 +1723,7 @@
                            error(cglobals.lex);
                        }
                        
-                      memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack);
+                      memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack,0);
                        
                    }
                    else {
@@ -1757,15 +1810,62 @@ bool validate_package_file(string pkg, string file)
 
 void parse_cmplr_items(stringstream &out_buf)
  {
+     cres.size_t.byte1 = cplrfreelist2[0].c_items.size();
      for(unsigned long i =0; i<cplrfreelist2->c_items.size(); i++)
      {
-         cplrfreelist1.clear();
-         cplrfreelist1.add(cplrfreelist2[0].c_items.valueAt(i));
+         cplrfreelist1.add(cplrfreelist2->c_items.valueAt(i));
          unsigned long ins= cplrfreelist1.valueAt(0).item.byte1;
+         cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
          
-         cout << "ins " << ins << endl;
-         
-       //  cmplrfree( cplrfreelist1 );
+       //  cout << "ins " << ins << endl;
+         if(ins == OP_MTHD){
+                Method m= methods.valueAt(cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1);
+                
+                out_buf << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0;
+                out_buf << m.eadr.byte1 << (char) 0;
+         }
+         else if(ins == OP_NODE) cres.size_t.byte1 -= 3;
+         else if(ins == OP_COUT){
+             cres.size_t.byte1 +=cplrfreelist1.valueAt(0).str.size();
+             out_buf << (char) cplr_string_instr << OP_COUT << (char) 0 << cplrfreelist1.valueAt(0).str << (char) 0;
+         }
+         else if(ins == OP_NOP || ins == OP_END || ins == OP_HLT || ins == OP_NO || ins == OP_ENDNO)
+             out_buf << (char) cplr_instr <<  ins << (char) 0 ;
+         else if( ins == OP_RETURN || ins == OP_CALL)
+         {
+              Method m= methods.valueAt(cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1);
+       //       cout << "returning " << m.eadr.byte1 << endl;
+              out_buf << (char) cplr_instr << ins << (char) 0 << m.eadr.byte1 << (char) 0;
+         }
+         else if(ins == OP_PUSH || ins == OP_POP || ins == OP_JMP || ins == OP_LBL || ins == OP_IF || ins == OP_INC || ins == OP_DEC
+                 || ins == OP_KILL || ins == OP_DELETE || ins == OP_DELETE_ARRY){ // for instructions that access memory
+    //           cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << endl;
+               out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0;
+         }        
+         else if(ins == OP_SCONST || ins == OP_BCONST || ins == OP_CCONST || ins == OP_RSHFT 
+                   || ins == OP_LSHFT || ins == OP_CIN || ins == OP_JIF 
+                   || ins == OP_JIT || ins == OP_ICONST || ins == OP_DCONST || ins == OP_FCONST 
+                   || ins == OP_THROW)
+         {
+                out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
+                << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0;   
+       //         cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << endl;
+         }
+         else if(ins == OP_IADD || ins == OP_ISEQ || ins == OP_ISNEQ
+                   || ins == OP_ISLT || ins == OP_ISNLT || ins == OP_ISLE || ins == OP_ISNLE
+                   || ins == OP_ISGT || ins == OP_ISNGT || ins == OP_ISGE || ins == OP_ISNGE
+                   || ins == OP_ISUB || ins == OP_IMULT || ins == OP_IDIV || ins == OP_SADD
+                   || ins == OP_SSUB || ins == OP_SMULT || ins == OP_SDIV || ins == OP_DADD
+                   || ins == OP_DSUB || ins == OP_DMULT || ins == OP_DDIV || ins == OP_FADD
+                   || ins == OP_FSUB || ins == OP_FMULT || ins == OP_FDIV || ins == OP_CADD
+                   || ins == OP_CSUB || ins == OP_CMULT || ins == OP_CDIV || ins == OP_IMOD
+                   || ins == OP_CMOD || ins == OP_SMOD || ins == OP_OR || ins == OP_AND
+                   || ins == OP_AT || ins == OP_ALOAD || ins == OP_ASTORE)
+                out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
+                << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0 << cplrfreelist1.valueAt(0).sub_item.valueAt(2).item.byte1 << (char) 0;
+                
+                
+         cmplrfree( cplrfreelist1 );
      }
  }
 
@@ -1777,6 +1877,7 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
      cglobals.hasInit = false;
      cglobals.hasStarter = false;
      cglobals.methodadr = 1;
+     cglobals.objectadr = 50;
      
      for(int i = 0; i < zip_archive.header.sourcecount.byte1; i++)
      {
@@ -1935,9 +2036,9 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
                           
                           memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
                            
-                          memoryhelper::queuehelper::classhelper::insert(cglobals.classParent.size_t.byte1, classname, 
-                                      typedef_class, "<null>", "<null>");
-
+                     //     memoryhelper::queuehelper::classhelper::insert(cglobals.classParent.size_t.byte1, classname, 
+                     //                 typedef_class, "<null>", "<null>");
+ memoryhelper::queuehelper::classhelper::inserted = true;
                           memoryhelper::queuehelper::classhelper::release();
                        }
                        else {
@@ -1964,13 +2065,6 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
          cglobals.out << "Main class 'Starter' is required in a Scorpion application.";
          error(cglobals.lex);
      }
-     
-     Object arg1;
-     arg1.type = typedef_string;
-     arg1.isarray = true;
-     
-     ListAdapter<Object> args;
-     args.add(arg1);
      
      if(!cglobals.hasInit)
      {

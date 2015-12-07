@@ -342,7 +342,7 @@ static int LastChar = ' ';
  }
  
  void svmInitMethod(long pos, string name, long jmp_adr){
-     if(pos >= gSvm.methodc){
+     if(pos > gSvm.methodc){
          alog.setClass("XSO");
          alog.ALOGV("There are more methods than the expected ammount. Have you compiled your application correctly?");
          preexecute_err();
@@ -545,6 +545,7 @@ static int LastChar = ' ';
      
     getNextToken();
      while( 1 ){
+       //  cout << "ctok " << CurTok << endl;
          switch( CurTok ){
              case 0:
                  getNextToken();
@@ -565,7 +566,8 @@ static int LastChar = ' ';
                 if(eof){
                   eof = false;
                   gSvm.image = "";
-                  if(streamcount != gSvm.appheader.filesize.byte1){
+                 // cout << "img sz " << streamcount << " file sz " << gSvm.appheader.filesize.byte1 << endl;
+                  if(--streamcount != gSvm.appheader.filesize.byte1){
                       alog.setClass("XSO");
                       alog.ALOGV("Image size does not match specified length. Try recompiling your application.");
                       preexecute_err();

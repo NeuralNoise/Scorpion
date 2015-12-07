@@ -350,7 +350,7 @@ void Scorpion_VMExecute(){
       Protect(k,m);
       
     i = gSvm.bytestream.valueAt(k++);
-  //  cout << "i=" << i << endl;
+    //cout << "i=" << i << endl;
     if((gSvm.vm.flags[VFLAG_NO] == 1 && i != OP_ENDNO) || 
        (gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && !(i == OP_END || i == OP_IF))){ // do not run
         k+=GETARG_SIZE(i,k);
@@ -441,7 +441,7 @@ void Scorpion_VMExecute(){
       
                if(++gSvm.vm.vStaticRegs[VREG_SP] >= stacksz) 
                  Exception("The stack has overflowed with too much data.", "StackOverfowlException");
-            //   cout << "push @" << gSvm.vm.vStaticRegs[VREG_SP] << " ->" << (long) op_ags.byte1 << endl;
+               //cout << "push @" << gSvm.vm.vStaticRegs[VREG_SP] << " ->" << (long) op_ags.byte1 << endl;
                gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]] = (long) op_ags.byte1;
             }
           goto exe;
@@ -487,12 +487,12 @@ void Scorpion_VMExecute(){
        switch( i ) {
           case OP_ICONST:
                {
-                   // cout << "iconst @" << (long) op_ags.byte1 << " ->" << (long) op_ags.byte2 << endl;
+                    //cout << "iconst @" << (long) op_ags.byte1 << " ->" << (long) op_ags.byte2 << endl;
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) op_ags.byte1], TYPEDEF_GENERIC_INT, sz);
                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sint) op_ags.byte2);
-                   //  cout << "i is " << k << endl;
+                     //cout << "i is " << k << endl;
                }
           goto exe;
           case OP_STRCONST:

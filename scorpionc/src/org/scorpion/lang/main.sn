@@ -15,7 +15,5 @@ public class Starter
           ");
       return 1;
    }
-   
-   def foo() { }
 }
 
