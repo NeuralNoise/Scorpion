@@ -22,6 +22,7 @@ class ListAdapter {
         }
         void clear()
         {
+            if(!init) return;
             delete[] values;
             size_t=0;
             init=false;
@@ -53,13 +54,16 @@ class ListAdapter {
         }
         void insert(T value, long pos)
         {
-            if(!init)
-              return;
-             if(pos >= size_t || pos < 0){
+             if(pos >= size_t || pos < 0 || !init){
                 cout << "std: array_out_of_bounds\n\tarray insert[" << pos << "] >= size[" << size_t << "]\n";
                 exit(1);
             }
             
+           if(!init)
+           {
+              add(value);
+              return;    
+           }
             size_t++;
             T* newValues = new T[size_t];
             if(newValues == nullptr){
@@ -67,18 +71,20 @@ class ListAdapter {
                 exit(1);
             }
             
-            for(long i = 0; i < size_t; i++)
+            int i2 = 0;
+            for(long i = 0; i < size_t-1; i++)
             {
                 if(i == pos)
                 {
-                  newValues[i] = value;
-                  newValues[++i] = values[i];
+                  newValues[i2] = value;
+                  newValues[++i2] = values[i];
                 }
-                else 
-                  newValues[i] = values[i];
+                else
+                  newValues[i2] = values[i];
+                i2++;
             }
             
-            values = &newValues[0];
+            values = newValues;
         }
         void pushback()
         {
@@ -86,8 +92,7 @@ class ListAdapter {
               return;
             else if((size_t - 1) < 0) return;
             
-            size_t--;
-            T* newValues = new T[size_t];
+            T* newValues = new T[size_t-1];
             if(newValues == nullptr){
                 cout << "std: array_out_of_memory\n\tarray pushback[" << size_t << "]\n";
                 exit(1);
@@ -98,6 +103,7 @@ class ListAdapter {
                 newValues[i] = values[i];
             }
         
+            size_t--;
             values = &newValues[0];
         }
         bool contains(T value)
@@ -111,7 +117,7 @@ class ListAdapter {
         }
         void replace(T value, long i)
         {
-            if(i >= size_t || i < 0){
+            if(i >= size_t || i < 0 || !init){
                 cout << "std: array_out_of_bounds\n\tarray replace[" << i << "] >= size[" << size_t << "]\n";
                 exit(1);
             }
@@ -122,7 +128,7 @@ class ListAdapter {
         { return ( (!init) ? 0 : size_t ); }
         T& valueAt(long i)
         {
-            if(i >= size_t || i < 0){
+            if(i >= size_t || i < 0 || !init){
                 cout << "std: array_out_of_bounds\n\tarray at[" << i << "] >= size[" << size_t << "]\n";
                 exit(1);
             }

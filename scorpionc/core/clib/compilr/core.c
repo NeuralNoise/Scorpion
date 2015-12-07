@@ -33,7 +33,7 @@
  
  using namespace std;
 
- cmplr_item *cplrfreelist1=0;
+ ListAdapter<cmplr_item> cplrfreelist1;
  
  cmplr_item_2 *cplrfreelist2=0;
  #define sub_item_base_sz1 4
@@ -43,48 +43,39 @@
  ListAdapter<_namespace> namespaces;
  
  bool init = false;
- unsigned long cplr_item_buflen=4 * 1048576;
- unsigned long cplr_bitmap_len=2 * 1748576;
- unsigned long cplr_item_sz1=0;
  
  
- struct cmplr_item *new_cmplr_item(u2 init, double* data, string str)
+ struct cmplr_item new_cmplr_item(u2 init, double* data, string str)
  {
-    struct cmplr_item *citem = new cmplr_item[1];
-    citem->sub_item = (cmplr_item*)malloc( sub_item_base_sz1 );
-    citem->str = new string[1];
+    struct cmplr_item citem;
+    citem.sub_item = (cmplr_item*)malloc( sub_item_base_sz1);
     
-    if(citem->sub_item == NULL){ cres.reason << "compilr:  error: could not initalize temp internal memory structure.\n"; return NULL;}
-    citem->size_t.byte1 = init.byte2;
-    citem->item.byte1 = init.byte1;
+    if(citem.sub_item == NULL){ cout << "compilr:  error: could not initalize temp internal memory structure.\n"; exit(1); }
+    citem.size_t.byte1 = init.byte2;
+    citem.item.byte1 = init.byte1;
     
+    //citem->str = new string[1];
     for(int i = 0; i < init.byte2; i++)
-       citem->sub_item[i].item.byte1 = data[i];
+       citem.sub_item[i].item.byte1 = data[i];
        
-    citem->str[0]=str;
+    citem.str=str;
     return citem;
  }
- 
- void cmplrfree( struct cmplr_item *tmppt )
- {
-     free(tmppt);
- }
-
 
  struct cmplr_item_2 *new_cmplr_item2()
  {
      struct cmplr_item_2 *citem2 = new cmplr_item_2[1];
-     citem2->c_items = (cmplr_item*)malloc( cplr_item_buflen+1 );
-     if(citem2->c_items == NULL){ cres.reason << "compilr:  error: could not initalize internal memory structures.\n"; return NULL;}
-     citem2->j=cplr_item_buflen+1;
-     
      return citem2;
  }
 
+ void cmplrfree( ListAdapter<cmplr_item> &tmppt )
+ {
+     tmppt.clear();
+ }
+ 
  void cmplrfree2( struct cmplr_item_2 *tmppt )
  {
-     tmppt->j = 0;
-     free(tmppt->c_items);
+    tmppt->c_items.clear();
  }
  
  void cmplr_cleanup(bool fullFlush)
@@ -92,8 +83,7 @@
      if(!init)
         return;
      
-     cplr_item_sz1=0;
-     cmplrfree2(cplrfreelist2); // TODO: fix seg fault
+     cmplrfree2(cplrfreelist2);
      cmplrfree(cplrfreelist1);
      
      if(fullFlush)
@@ -101,9 +91,9 @@
          //Flush everything
          objects.clear();
          methods.clear();
+         namespaces.clear();
          init=false;
      }
-    cplrfreelist1=NULL;
  }
 
 /*-----------------------*/
@@ -114,10 +104,6 @@
  int cmplr_init()
  {
      cplrfreelist2 = new cmplr_item_2[1];
-     cplrfreelist2->c_items = (cmplr_item*) malloc (cplr_item_buflen+1);
-     if(cplrfreelist2->c_items == NULL){ cres.reason << "compilr:  error: could not initalize internal memory structures.\n"; return -1; }
-     
-     cplrfreelist2->j=cplr_item_buflen+1;
      init=true;
      return 0;
  }
@@ -125,10 +111,9 @@
 /*-----------------------*/
 /* Add item to a buffer. */
 /*-----------------------*/
- int cmplr_add_item( struct cmplr_item *b2 )
+ int cmplr_add_item( struct cmplr_item b2 )
  {
-     if(cplr_item_sz1 > cplr_item_buflen+1){ cres.reason << "compilr:  error: could not add object item to buffer. Out of memory!\n"; return -1; }
-     cplrfreelist2->c_items[cplr_item_sz1++]=(*b2);
+     cplrfreelist2->c_items.add(b2);
      cres.size_t.byte1++;
      
      return 0;

@@ -45,9 +45,6 @@
  
  extern bool init;
  
- extern unsigned long cplr_item_buflen;
- extern unsigned long cplr_bitmap_len;
- 
  // TODO: create standard memory structure variables
  
  struct cmplr_item { /* Data structure for holding buffer items. */
@@ -55,19 +52,18 @@
      
      u1 size_t;
      
-     string* str;
+     string str;
      
      struct cmplr_item* sub_item;
  } ;
  
  struct cmplr_item_2 { /* Data structure for holding buffer items with index. */
-     int j;
-     cmplr_item* c_items;
+     ListAdapter<cmplr_item> c_items;
  } ;
  
- extern struct cmplr_item *new_cmplr_item(u2 init, double* data, string str);
+ extern struct cmplr_item new_cmplr_item(u2 init, double* data, string str);
  
- void cmplrfree( struct cmplr_item *tmppt );
+ void cmplrfree( ListAdapter<cmplr_item> &tmppt );
 
 
  extern struct cmplr_item_2 *new_cmplr_item2();
@@ -77,11 +73,9 @@
  void cmplr_cleanup(bool fullFlush);
 
 
- extern struct cmplr_item *cplrfreelist1;
+ extern ListAdapter<cmplr_item> cplrfreelist1;
  
  extern struct cmplr_item_2 *cplrfreelist2;
-
- extern unsigned long cplr_item_sz1;
 
 /*-----------------------*/
 /* Initalize the Compilr library */
@@ -93,7 +87,7 @@
 /*-----------------------*/
 /* Add item to a buffer. */
 /*-----------------------*/
- int cmplr_add_item( struct cmplr_item *b2 );
+ int cmplr_add_item( struct cmplr_item b2 );
  
  
  // *********************[[ Compiler flag id's ]]**********************

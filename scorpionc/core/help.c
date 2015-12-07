@@ -43,7 +43,7 @@
 using namespace std;
 
 string build_version = "v0.1.0.9";
-#define NUM_OPTIONS 12
+#define NUM_OPTIONS 10
 string args[ NUM_OPTIONS ];
 
 string OPTION = "";
@@ -66,12 +66,10 @@ void setup()
    args[3] = "-o";
    args[4] = "-showversion";
    args[5] = "-?";
-   args[6] = "-Xsz";
-   args[7] = "-O";
-   args[8] = "-c";
-   args[9] = "-w";
-   args[10] = "-wextra";
-   args[11] = "-sl";
+   args[6] = "-c";
+   args[7] = "-w";
+   args[8] = "-wextra";
+   args[9] = "-sl";
 }
 
 bool isarg(string arg)
@@ -104,7 +102,6 @@ void help()
    cout <<               "    -showversion      print the current product version and continue." << endl;
    cout <<               "    --build<file>     set the dev build scipt file. This option is required." << endl;
    cout <<               "    -o<file>          set the output object file. Default is application.xso." << endl;
-   cout <<               "    -O<value>         set the standard heap size for object file allocation (standard size is usually ok)." << endl;
    cout <<               "    -c                compile only and do not generate object file." << endl;
    cout <<               "    -w                allow warnings to be displayed." << endl;
    cout <<               "    -wextra           allow extended warnings to be displayed." << endl;
@@ -175,45 +172,6 @@ void parseargs(int argc, const char **args)
             }
          
             options.output_file = args[i];
-         }
-         else if(OPTION == "-O"){
-            i++;
-            file_start++;
-            
-            if(!(i < argc)){
-               cout << "Error: could not start Scorpion compiler. \nA fatal Error has occurred, shutting down." << endl;
-               exit(1);   
-            }
-            
-            unsigned long _heap_std=cplr_item_buflen;
-            data = args[i];
-            double segment;
-            if(data.at(data.length() - 1) == 'b'){ // bytes
-               segment = 1;
-               data = trim(data);
-            }
-            else if(data.at(data.length() - 1) == 'k'){ // kb
-               segment = 1000;
-               data = trim(data);
-            }
-            else if(data.at(data.length() - 1) == 'm'){ // mb
-               segment = 1000000;
-               data = trim(data);
-            }
-            else if(data.at(data.length() - 1) == 'g'){ // gb
-               segment = 1000000000;
-               data = trim(data);
-            }
-            else
-               segment = 1000;
-            
-            double mb = atoi(data.c_str());
-            mb *= segment; // convert to actual bytes
-            cplr_item_buflen = mb;
-            if(cplr_item_buflen <= 0){
-              cplr_item_buflen = _heap_std;
-              cout << "scorpionc:  warning: requested object memory may be too large or equal to 0.\n";
-            }
          }
          else if(OPTION == "-c")
             options.compileOnly=true;

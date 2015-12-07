@@ -214,8 +214,8 @@
            if(cglobals.classdepth == 0)
               cmplr_add_item( new_cmplr_item(init, op_data, "") ); 
            else if(cglobals.classdepth == 1)
-              cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to main queue
-           else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to sub queue
+              cglobals.classParent.C[0].iqueue.add( new_cmplr_item(init, op_data, "") ); // add item to main queue
+           else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.add( new_cmplr_item(init, op_data, "") ); // add item to sub queue
        }
        
        void level2(int OP, double arg1)
@@ -230,8 +230,8 @@
            if(cglobals.classdepth == 0)
               cmplr_add_item( new_cmplr_item(init, op_data, "") ); 
            else if(cglobals.classdepth == 1)
-              cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to main queue
-           else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to sub queue 
+              cglobals.classParent.C[0].iqueue.add( new_cmplr_item(init, op_data, "") ); // add item to main queue
+           else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.add( new_cmplr_item(init, op_data, "") ); // add item to sub queue 
        }
        
        void level3(int OP, double arg1, double arg2)
@@ -247,8 +247,8 @@
            if(cglobals.classdepth == 0)
               cmplr_add_item( new_cmplr_item(init, op_data, "") ); 
            else if(cglobals.classdepth == 1)
-              cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to main queue
-           else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to sub queue
+              cglobals.classParent.C[0].iqueue.add( new_cmplr_item(init, op_data, "") ); // add item to main queue
+           else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.add( new_cmplr_item(init, op_data, "") ); // add item to sub queue
        }
        
        void level4(int OP, double arg1, double arg2, double arg3)
@@ -265,8 +265,8 @@
            if(cglobals.classdepth == 0)
              cmplr_add_item( new_cmplr_item(init, op_data, "") ); 
            else if(cglobals.classdepth == 1)
-             cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to main queue
-           else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, "")) ); // add item to sub queue 
+             cglobals.classParent.C[0].iqueue.add( new_cmplr_item(init, op_data, "") ); // add item to main queue
+           else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.add( new_cmplr_item(init, op_data, "") ); // add item to sub queue 
        }
        
        void _cout(string data)
@@ -280,8 +280,8 @@
             if(cglobals.classdepth == 0)
               cmplr_add_item( new_cmplr_item(init, op_data, data) ); 
             else if(cglobals.classdepth == 1)
-              cglobals.classParent.C->iqueue.add( (*new_cmplr_item(init, op_data, data)) ); // add item to main queue
-            else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.add( (*new_cmplr_item(init, op_data, data)) ); // add item to sub queue
+              cglobals.classParent.C[0].iqueue.add( new_cmplr_item(init, op_data, data) ); // add item to main queue
+            else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.add( new_cmplr_item(init, op_data, data) ); // add item to sub queue
        }
        
     namespace objecthelper
@@ -448,7 +448,7 @@
           return false;
        }
        
-       long madr(Method &o, ListAdapter<Object> &args)
+       long madr(Method &o, ListAdapter<Object> &args, bool internal)
        {
           if(!methods._init())
             return 0;
@@ -458,7 +458,7 @@
              if(at(i).name == o.name && at(i)._namespace == o._namespace)
              {
                 if(at(i).parentclass == o.parentclass && sameargs(at(i).args, args) ) 
-                      return i;
+                      return ((internal) ? i : at(i).eadr.byte1);
              }
           }
           
@@ -564,14 +564,14 @@
        }
        
        long address(std::string name, std::string _namespace, std::string parentclass, 
-                 ListAdapter<Object> &args)
+                 ListAdapter<Object> &args, const bool internal = true)
        {
            Method o;
            o.name = name;
            o._namespace = _namespace;
            o.parentclass = parentclass;
            
-           return madr(o, args);
+           return madr(o, args, internal);
        }
        
        string getmethodinfo(std::string name, std::string _namespace, 
@@ -591,11 +591,11 @@
         namespace classhelper
         {
             
-            void addObject()
+            void inc()
             {
                 if(cglobals.classdepth == 0){ return; }
                 else if(cglobals.classdepth == 1){ cglobals.classParent.size_t.byte1++; }
-                else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).size_t.byte1++;
+                else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).size_t.byte1++;
             }
             
             bool inserted = false;
@@ -603,8 +603,8 @@
             long queuesize()
             {
                 if(cglobals.classdepth == 0){ return 0; }
-                else if(cglobals.classdepth == 1){ cglobals.classParent.C->iqueue.size(); }
-                else cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.size();
+                else if(cglobals.classdepth == 1){ cglobals.classParent.C[0].iqueue.size(); }
+                else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.size();
             }
             
             /* Insert a class init instruction to the beginning of the queue */
@@ -614,7 +614,6 @@
                 if(cglobals.classdepth == 0)
                 { return; }
                 
-                inserted = true;
                 if(cglobals.classdepth == 1)
                 {
                     if(queuesize() == 0)
@@ -632,7 +631,7 @@
                         op_data[0] = memoryhelper::objecthelper::address
                                         (name, type, _namespace, parentclass, false);
                         op_data[1] = size;
-                        cglobals.classParent.C->iqueue.insert( (*new_cmplr_item(init, op_data, "")), 0);
+                        cglobals.classParent.C[0].iqueue.insert( new_cmplr_item(init, op_data, ""), 0 );
                     }
                 }
                 else
@@ -652,17 +651,24 @@
                         op_data[0] = memoryhelper::objecthelper::address
                                         (name, type, _namespace, parentclass, false);
                         op_data[1] = size;
-                        cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue
-                             .insert( (*new_cmplr_item(init, op_data, "")), 0);
+                        cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue
+                             .insert( new_cmplr_item(init, op_data, ""), 0);
                     }
                     
                 }    
+                inserted = true;
+            }
+            
+            double* citemstod(cmplr_item* items, long size_t)
+            {
+                double* d = new double[size_t];
+                for(int i = 0; i < size_t; i++)
+                   d[i] = items[i].item.byte1;
             }
             
             /* Release a queue */
             void release()
             {
-                
                 if(!inserted || cglobals.classdepth == 0)
                 {
                     cglobals.out << "Class init instruction was not added to the queue.";
@@ -673,11 +679,14 @@
                 long len = queuesize();
                 for(long i = 0; i < len; i++)
                 {
-                    cmplr_item* item;
-                    if(cglobals.classdepth == 1){ item = &cglobals.classParent.C->iqueue.valueAt(i); }
-                    else item = &cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).C->iqueue.valueAt(i);
+                    //cmplr_item* item=new cmplr_item[1];
+                    cmplr_item item1;
+                    
+                    if(cglobals.classdepth == 1)
+                    { item1 = cglobals.classParent.C[0].iqueue.valueAt(i); }
+                    else item1 = cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.valueAt(i);
             
-                    cmplr_add_item( item );
+                    cmplr_add_item( item1 );
                 }
                 
                 inserted = false;
@@ -969,7 +978,7 @@
                        cglobals.out << "Expected string literal or qulafied symbol after previous '+'.";
                        error(cglobals.lex);
                    }
-                   cout << "return \"" << ss.str() << "\"" << endl;
+                  // cout << "return \"" << ss.str() << "\"" << endl;
                    break;
                }
                else {
@@ -1218,7 +1227,7 @@
              memoryhelper::helper::parse_double_decliration(lex, var);
        }
        
-       void parse_asm_decliration(long begin, string _asm)
+       long parse_asm_decliration(long begin, string _asm)
        {
            lexr::token temp_t;
            bool intro=false;
@@ -1254,6 +1263,7 @@
            }
            
            cglobals.eof=0;
+           return lex.lexer().line_t;
        }
        
        void parse_method_args(lexr::parser_helper& lex, ListAdapter<Object> &args)
@@ -1374,7 +1384,7 @@
                       temp_t = getNextToken(lex);
                       if(temp_t.type == temp_t.e_string)
                       {
-                          memoryhelper::helper::parse_asm_decliration(cglobals.lex.lexer().line_t, temp_t.value);
+                          cglobals.lex.lexer().line_t = memoryhelper::helper::parse_asm_decliration(cglobals.lex.lexer().line_t, temp_t.value);
                       }
                       else {
                           cglobals.out << "Expected string literal before '" << temp_t.value << "'.";
@@ -1446,7 +1456,7 @@
                            }   
                                
                            
-                           cout << "def " << temp_t.value << endl;
+                         //  cout << "def " << temp_t.value << endl;
                            string functionname = temp_t.value;
                            bool methodfound = false;
                            
@@ -1465,7 +1475,7 @@
                               parentclass = "<null>";
                            else if(cglobals.classdepth == 1)
                               parentclass = cglobals.classParent.name;
-                           else parentclass = cglobals.classParent.C->classObjects.valueAt(cglobals.classdepth-1).C->name;
+                           else parentclass = cglobals.classParent.C[0].classObjects.valueAt(cglobals.classdepth-1).C[0].name;
                            
                            if(!memoryhelper::methodhelper::create(functionname, atribs.isStatic, atribs.access, 
                                     cglobals.package, "<null>", parentclass, args))
@@ -1484,9 +1494,9 @@
                                                                          (functionname, "<null>", parentclass, args)).args;
                           initargs.add(arg1);
      
-                           if(!methodfound && functionname == "__init__" && memoryhelper::methodhelper::sameargs(initargs, functionargs))
+                           if(!methodfound && functionname == "__init__" && memoryhelper::methodhelper::sameargs(initargs, functionargs)
+                              && parentclass == "Starter")
                            {
-                               cout << "hasinit" << endl;
                                long adr = memoryhelper::methodhelper::address("__init__", "<null>", parentclass, functionargs);
                                Method m = methods.valueAt(adr);
                                m.eadr.byte1 = 0;
@@ -1521,7 +1531,9 @@
                                cglobals.out << "Expected '{' before '" << temp_t.value << "'.";
                                error(cglobals.lex);
                            }
-                           
+                          
+                          level2(OP_MTHD, memoryhelper::methodhelper::address(functionname, "<null>", parentclass, 
+                                 args, false)); 
                           memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack);
                            
                        }
@@ -1589,7 +1601,7 @@
                            }   
                                
                            
-                           cout << "def " << temp_t.value << endl;
+                          // cout << "def " << temp_t.value << endl;
                            temp_t = getNextToken(lex);
                            if(temp_t.value != "("){
                                cglobals.out << "Expected '(' before '" << temp_t.value << "'.";
@@ -1605,7 +1617,6 @@
                            }
                            
                           memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack);
-                           
                        }
                        else {
                            cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
@@ -1644,7 +1655,7 @@
                        }   
                            
                        
-                       cout << "def " << temp_t.value << endl;
+                     //  cout << "def " << temp_t.value << endl;
                        temp_t = getNextToken(lex);
                        if(temp_t.value != "("){
                            cglobals.out << "Expected '(' before '" << temp_t.value << "'.";
@@ -1744,6 +1755,20 @@ bool validate_package_file(string pkg, string file)
     return ss.str() == pkg;
 }
 
+void parse_cmplr_items(stringstream &out_buf)
+ {
+     for(unsigned long i =0; i<cplrfreelist2->c_items.size(); i++)
+     {
+         cplrfreelist1.clear();
+         cplrfreelist1.add(cplrfreelist2[0].c_items.valueAt(i));
+         unsigned long ins= cplrfreelist1.valueAt(0).item.byte1;
+         
+         cout << "ins " << ins << endl;
+         
+       //  cmplrfree( cplrfreelist1 );
+     }
+ }
+
 int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
  {
      cglobals.success = 0;
@@ -1769,6 +1794,8 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
         }
         else if(zres._warnings_.str() != "")
             cout << zres._warnings_.str();
+        
+        zippy.Cleanup();
         
         lexr::token temp_t;
         
@@ -1897,21 +1924,21 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
                            
                            if(cglobals.classParent.C != nullptr)
                            {
-                               if(cglobals.classParent.C->classObjects._init())
-                                  cglobals.classParent.C->classObjects.clear();
-                               if(cglobals.classParent.C->iqueue._init())
-                                  cglobals.classParent.C->iqueue.clear();
+                               if(cglobals.classParent.C[0].classObjects._init())
+                                  cglobals.classParent.C[0].classObjects.clear();
+                               if(cglobals.classParent.C[0].iqueue._init())
+                                  cglobals.classParent.C[0].iqueue.clear();
                            }
-                           
+                             
                            cglobals.classParent = objects.valueAt(memoryhelper::objecthelper::address
-                                                      (classname, typedef_class, "<null>", "<null>"));
+                                                       (classname, typedef_class, "<null>", "<null>"));
+                          
+                          memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
                            
-                           memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
-                           
-                           memoryhelper::queuehelper::classhelper::insert(cglobals.classParent.size_t.byte1, classname, 
-                                     typedef_class, "<null>", "<null>");
-                           memoryhelper::queuehelper::classhelper::release();
-                           // TODO: release instruction que
+                          memoryhelper::queuehelper::classhelper::insert(cglobals.classParent.size_t.byte1, classname, 
+                                      typedef_class, "<null>", "<null>");
+
+                          memoryhelper::queuehelper::classhelper::release();
                        }
                        else {
                            cglobals.out << "Unexpected symbol '" << temp_t.value << "'.";
@@ -1956,6 +1983,9 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
          cglobals.out << "Expected '}' at end of input.";
          error(cglobals.lex);
      }
+     
+     if(cglobals.success == 0)
+        parse_cmplr_items(out_buf);
      
      return cglobals.success;
  }
