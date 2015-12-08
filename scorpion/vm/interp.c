@@ -491,7 +491,7 @@ void Scorpion_VMExecute(){
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) op_ags.byte1], TYPEDEF_GENERIC_INT, sz);
-                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sint) op_ags.byte2);
+                    gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->pint[default_loc] = (sint) op_ags.byte2;
                      //cout << "i is " << k << endl;
                }
           goto exe;
@@ -508,7 +508,7 @@ void Scorpion_VMExecute(){
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) op_ags.byte1], TYPEDEF_GENERIC_DOUBLE, sz);
-                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], op_ags.byte2);
+                    gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->pdouble[default_loc] = (sdouble) op_ags.byte2;
                }
           goto exe;
           case OP_FCONST:
@@ -516,7 +516,7 @@ void Scorpion_VMExecute(){
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_FLOAT, sz);
-                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sfloat) op_ags.byte2);
+                    gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->pfloat[default_loc] = (sfloat) op_ags.byte2;
                }
           goto exe;
           case OP_SCONST:
@@ -524,7 +524,7 @@ void Scorpion_VMExecute(){
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_SHORT, sz);
-                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sshort) op_ags.byte2);
+                    gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->pshort[default_loc] = (sshort) op_ags.byte2;
                }
           goto exe;
           case OP_BCONST:
@@ -532,7 +532,7 @@ void Scorpion_VMExecute(){
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_BOOL, sz);
-                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], op_ags.byte2);
+                    gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->pboolean[default_loc] = (sbool) op_ags.byte2;
                }
           goto exe;
           case OP_CCONST:
@@ -540,7 +540,7 @@ void Scorpion_VMExecute(){
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_CHAR, sz);
-                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (schar) op_ags.byte2);
+                    gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->pchar[default_loc] = (schar) op_ags.byte2;
                }
           goto exe;
           case OP_BYTE_CONST:
@@ -548,7 +548,7 @@ void Scorpion_VMExecute(){
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_BYTE, sz);
-                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (sbyte) op_ags.byte2);
+                    gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->pbyte[default_loc] = (sbyte) op_ags.byte2;
                }
           goto exe;
           case OP_LCONST:
@@ -556,7 +556,7 @@ void Scorpion_VMExecute(){
                     u1 sz;
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_GENERIC_LONG, sz);
-                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], (slong) op_ags.byte2);
+                    gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->plong[default_loc] = (slong) op_ags.byte2;
                }
           goto exe;
           case OP_IACONST:

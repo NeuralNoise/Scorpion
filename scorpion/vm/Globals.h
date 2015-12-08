@@ -77,6 +77,7 @@ class SecurityManager;
    Method* mtds;  // our shared method array
    long methodc;
 
+
    Permission *permissions;
    int psize_t;
  

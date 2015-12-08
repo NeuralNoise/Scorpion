@@ -11,9 +11,7 @@ public class Starter
    public static def __init__(string[] args)
    {
       asm("
-           cout 'Hello, World!$n'
+          cout 'Hello, World!$n' 
           ");
-      return 1;
    }
 }
-

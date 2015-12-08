@@ -118,9 +118,3 @@
      return 0;
  }
  
- void freeObj(Object obj)
- {
-     
- }
- 
- 

@@ -1020,7 +1020,6 @@
                        error(cglobals.lex);
                    }
                    
-                 //  cout << "return \"" << ss.str() << "\"" << endl;
                    level3(OP_ICONST, var_return, atof(ss.str().c_str()));
                    level2(OP_PUSH, var_return);
                    level2(OP_RETURN, addr);
@@ -1980,7 +1979,6 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
                                error(cglobals.lex);
                            }
                            
-                          //cout << "class " << temp_t.value << endl;
                            string classname = temp_t.value;
                            bool classfound = false;
                            
@@ -2036,9 +2034,8 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
                           
                           memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
                            
-                     //     memoryhelper::queuehelper::classhelper::insert(cglobals.classParent.size_t.byte1, classname, 
-                     //                 typedef_class, "<null>", "<null>");
- memoryhelper::queuehelper::classhelper::inserted = true;
+                          memoryhelper::queuehelper::classhelper::insert(cglobals.classParent.size_t.byte1, classname, 
+                                      typedef_class, "<null>", "<null>");
                           memoryhelper::queuehelper::classhelper::release();
                        }
                        else {
