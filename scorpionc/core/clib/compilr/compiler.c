@@ -771,6 +771,7 @@
        int ttop(int type);
        int _strttot(std::string symbol);
        int _asm_strttot(std::string symbol);
+       int _asm_strtop(string op);
        
        std::string parse_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, const bool asterisk = false)
        {
@@ -1455,7 +1456,7 @@
                else if(temp_t.value == "hlt" || temp_t.value == "end" || temp_t.value == "nop" 
                    || temp_t.value == "no" || temp_t.value == "endno")
                {
-                   
+                   level1();
                }     
                else if(temp_t.value == "iconst" || temp_t.value == "cconst" || temp_t.value == "fconst" || temp_t.value == "dconst"
                      || temp_t.value == "sconst" || temp_t.value == "lconst" || temp_t.value == "bconst")
@@ -1505,18 +1506,8 @@
 					   error(cglobals.lex);
 				   }
 				   
-				   if(!objecthelper::create(varname, _asm_strttot(type), false, false, access_public, 
-                        cglobals.package, "<null>", classparent))
-                   {
-                       if(!intro)
-					   {
-						   intro = true;
-						   cout << "Assembler messages:\n";
-					   }
-					   cglobals.out << "Symbol '" << varname << "' has already been declared.\nPreviously declared here:\n\t"
-					                  << objecthelper::getobjinfo(varname, _asm_strttot(type), "<null>", classparent);
-					   error(cglobals.lex);
-                   }
+				   objecthelper::create(varname, _asm_strttot(type), false, false, access_public, 
+                        cglobals.package, "<null>", classparent);
                    
                    cglobals.ignorestrays = true;
                    temp_t = getNextToken(lex);
@@ -2046,6 +2037,27 @@
             if(type == typedef_double) return OP_DCONST;
             if(type == typedef_float) return OP_FCONST;
             if(type == typedef_string) return OP_STRCONST;
+            else return -33;
+       }
+      
+       int _asm_strtop(string op)
+       {
+            if(op == "nop") return typedef_char;
+            if(op == "push") return typedef_byte;
+            if(op == "pop") return typedef_short;
+            if(op == "jmp") return typedef_int;
+            if(op == "mthd") return typedef_long;
+            if(op == "ret") return typedef_double;
+            if(op == "end") return typedef_float;
+            if(op == "call") return typedef_string;
+            if(op == "ieq") return typedef_string;
+            if(op == "ineq") return typedef_string;
+            if(op == "ilt") return typedef_string;
+            if(op == "ilnt") return typedef_string;
+            if(op == "ile") return typedef_string;
+            if(op == "inle") return typedef_string;
+            if(op == "igt") return typedef_string;
+            if(op == "string") return typedef_string;
             else return -33;
        }
       
