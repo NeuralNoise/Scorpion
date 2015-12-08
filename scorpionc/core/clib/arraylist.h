@@ -87,35 +87,31 @@ class ListAdapter {
             
             values = newValues;
         }
-        // void remove(long pos) // TODO: implement function
-        // {
-        //      if(pos >= size_t || pos < 0 || !init){
-        //         cout << "std: array_out_of_bounds\n\tarray insert[" << pos << "] >= size[" << size_t << "]\n";
-        //         exit(1);
-        //      }
+        void remove(long pos)
+        {
+             if(pos >= size_t || pos < 0 || !init){
+                cout << "std: array_out_of_bounds\n\tarray insert[" << pos << "] >= size[" << size_t << "]\n";
+                exit(1);
+             }
     
-        //     size_t--;
-        //     T* newValues = new T[size_t];
-        //     if(newValues == nullptr){
-        //         cout << "std: array_out_of_memory\n\tarray insert[" << size_t << "]\n";
-        //         exit(1);
-        //     }
+            size_t--;
+            T* newValues = new T[size_t];
+            if(newValues == nullptr){
+                cout << "std: array_out_of_memory\n\tarray insert[" << size_t << "]\n";
+                exit(1);
+            }
             
-        //     int i2 = 0;
-        //     for(long i = 0; i < size_t-1; i++)
-        //     {
-        //         if(i == pos)
-        //         {
-        //           newValues[i2] = value;
-        //           newValues[++i2] = values[i];
-        //         }
-        //         else
-        //           newValues[i2] = values[i];
-        //         i2++;
-        //     }
+            int i2 = 0;
+            for(long i = 0; i < size_t-1; i++)
+            {
+                if(i == pos){}
+                else
+                  newValues[i2] = values[i];
+                i2++;
+            }
             
-        //     values = newValues;
-        // }      
+            values = newValues;
+        }      
         void pushback()
         {
             if(!init)
@@ -163,7 +159,7 @@ class ListAdapter {
                 exit(1);
             }
               
-            else return values[i];
+            return values[i];
         }
 };
 

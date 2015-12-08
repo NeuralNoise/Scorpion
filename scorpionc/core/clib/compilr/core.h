@@ -144,6 +144,8 @@
  #define typedef_string 0x1
  #define typedef_class  0x0
  #define typedef_node   (-0x1)
+ #define typedef_function (-0x2)
+ 
  struct ClassObject;
  
  struct Object {

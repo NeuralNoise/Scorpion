@@ -125,7 +125,7 @@
          cglobals.eof=1;
          return lexer.lexer()[0];
        }
-       else if(t.type == t.e_error) { 
+       else if(t.type == t.e_error && !cglobals.ignorestrays) { 
         cglobals.out << "Stray `" << t.value << "` in program.";
         error(lexer);
         return getNextToken(lexer);
@@ -768,12 +768,15 @@
        bool accessspecifier(std::string symbol);
        int strtoaccess(std::string s);
        bool _typedef(std::string symbol);
+       int ttop(int type);
+       int _strttot(std::string symbol);
+       int _asm_strttot(std::string symbol);
        
        std::string parse_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, const bool asterisk = false)
        {
           lexr::token temp_t;
           bool needsWord=false;
-          int asterisk_flag = 0;
+          int asterisk_flag = 0, err_flag=0;
           stringstream word;
           
           for( ;; )
@@ -832,19 +835,26 @@
                  needsWord = true;
                  cglobals.out << "Unexpected symbol '" << temp_t.value << "', expecting '.' or ';'.";
                  error(cglobals.lex);
+                 err_flag++;
+                 if(err_flag==2) break;
               }
           }
           return word.str();
        }
-       
-        ListAdapter< ListAdapter<std::string> > parse_complex_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, const bool asterisk = false)
+
+       struct wordmap
+       {
+           int j;
+           ListAdapter<string>* adapters;
+       };
+        
+       wordmap parse_complex_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, const bool asterisk = false)
        {
           lexr::token temp_t;
           bool needsWord=false;
-          int asterisk_flag = 0;
-          stringstream word;
-          ListAdapter< ListAdapter<std::string> > wordlist;
+          int asterisk_flag = 0, err_flag=0, mapsz=0;
           ListAdapter<std::string> tmplist;
+          wordmap wmap;
           
           for( ;; )
           {
@@ -862,15 +872,13 @@
                   
                   needsWord = true;
                   dotfirst = false;
-                  tmplist.add(word.str());
-                  word.str("");
               }
               else if(temp_t.type == temp_t.e_symbol)
               {
                  if(asterisk_flag==5)
                    asterisk_flag++;
-                   
-                 word << temp_t.value;
+                
+                 tmplist.add(temp_t.value);
                  needsWord = false;
               }
               else if(temp_t.value == ":")
@@ -893,11 +901,9 @@
                     cglobals.out << "Expected ';' immediatley after '*'.";
                     error(cglobals.lex);
                  }
-                
-                 tmplist.add(word.str());  
-                 wordlist.add( tmplist );
-                 tmplist.clear();
-                 word.str("");
+        
+                 mapsz++;
+                 tmplist.add( "::" );
               }
               else if(temp_t.value == breaker)
               {
@@ -912,18 +918,14 @@
                     cglobals.out << "Expected ';' immediatley after '*'.";
                     error(cglobals.lex);
                  }
-                 if(word.str() != "")
-                   tmplist.add(word.str());
                  
-                 wordlist.add( tmplist );
-                 tmplist.clear(); 
-                 word.str("");
+                mapsz++;
                 break;
               }
               else if(temp_t.value == "*" & asterisk)
               {
                  asterisk_flag = 5;
-                 word << "*";
+                 tmplist.add("*");
               }
               else if(temp_t.type == temp_t.e_eof)
               {
@@ -935,11 +937,58 @@
                  needsWord = true;
                  cglobals.out << "Unexpected symbol '" << temp_t.value << "', expecting '.' or ';'.";
                  error(cglobals.lex);
+                 err_flag++;
+                 if(err_flag==2) break;
               }
           }
-          return wordlist;
+          
+          wmap.j = mapsz;
+          wmap.adapters = new ListAdapter<string>[wmap.j];
+          int mpos = 0;
+          for(int i = 0; i < tmplist.size(); i++)
+          {
+             if(tmplist.valueAt(i) == "::")
+             { mpos++; }
+             else wmap.adapters[mpos].add(tmplist.valueAt(i));
+          }
+          
+          return wmap;
        }
        
+       long parse_wordmap(wordmap map, int objtype)
+       {
+          /* for(int i = 0; i < map.j; i++)
+		   {
+			   if(!((i+1) < map.j))
+			   {
+			       string classparent;
+			       if(cglobals.classdepth == 0)
+			         classparent = "<null>";
+			       else if(cglobals.classdepth == 1)
+			         classparent = cglobals.classParent.name;
+			       else classparent = cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).name;
+			       
+			       if(map.adapters[i].size() == 1)
+			       {
+			           if(objtype == typedef_string || objtype == typedef_byte || objtype == typedef_char
+			             || objtype == typedef_double || objtype == typedef_float || objtype == typedef_int
+			             || objtype == typedef_long || objtype == typedef_short)
+			             return objecthelper::address(map.adapters[i].valueAt(0), objtype, "<null>", 
+                                     parentclass, false);
+			       }
+			   }
+			   else
+			   {
+			       _namespace parent;
+			       stringstream ss;
+    			   for(int i2 = 0; i2 < map.adapters[i].size(); i2++)
+    			   {
+    				   ss << map.adapters[i].valueAt(i2);
+    			   } 
+    			   // [process namespace nemes later]
+			   }
+		   } */ 
+       }
        
        void parse_access_specifier(lexr::parser_helper& lex, object_attrib &atribs, lexr::token &temp_t)
        {
@@ -1403,34 +1452,99 @@
                        error(cglobals.lex);
                    }
                }
-               else if(temp_t.value == "call")
+               else if(temp_t.value == "hlt" || temp_t.value == "end" || temp_t.value == "nop" 
+                   || temp_t.value == "no" || temp_t.value == "endno")
                {
+                   
+               }     
+               else if(temp_t.value == "iconst" || temp_t.value == "cconst" || temp_t.value == "fconst" || temp_t.value == "dconst"
+                     || temp_t.value == "sconst" || temp_t.value == "lconst" || temp_t.value == "bconst")
+               {
+                   string type = temp_t.value;
+                   cglobals.ignorestrays = true;
 				   temp_t = getNextToken(lex);
-				   if(temp_t.value != "%")
+                   cglobals.ignorestrays = false;
+				   if(temp_t.value != "@")
 				   {
 					   if(!intro)
 					   {
 						   intro = true;
 						   cout << "Assembler messages:\n";
 					   }
-					   cglobals.out << "Expected '%' prefix before symbol '" << temp_t.value << "'.";
+					   cglobals.out << "Expected '@' prefix before symbol '" << temp_t.value << "'.";
+					   error(cglobals.lex);
+				   }
+				   else temp_t = getNextToken(lex);  // possibly some other prefix?
+				   
+				   if(temp_t.type != temp_t.e_symbol)
+				   {
+				       if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected unqulafied symbol before symbol '" << temp_t.value << "'.";
 					   error(cglobals.lex);
 				   }
 				   
-				   else if(temp_t.type != temp_t.e_symbol) temp_t = getNextToken(lex);  // possibly some other prefix?
-				   lex.lexer().token_sz1--;
-				   ListAdapter< ListAdapter<std::string> > functionname;
-				   functionname = parse_complex_dot_notation(lex, false, "%");
-				    
-				   cout << " functionname size " << functionname.size() << endl;
-				   for(int i = 0; i < functionname.size(); i++)
+				   string varname = temp_t.value, classparent;
+			       if(cglobals.classdepth == 0)
+			         classparent = "<null>";
+			       else if(cglobals.classdepth == 1)
+			         classparent = cglobals.classParent.name;
+			       else classparent = cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).name;
+				   
+				   if(reserved(varname))
 				   {
-					   cout << "word set " << i << endl << endl;
-					   for(int i2 = 0; i2 < functionname.valueAt(i).size(); i2++)
+				       if(!intro)
 					   {
-						   cout << "word " << i2 << " value " << functionname.valueAt(i).valueAt(i2) << endl;
-					   } 
-				   }  
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Symbol '" << varname << "' cannot be named after a builtin symbol.";
+					   error(cglobals.lex);
+				   }
+				   
+				   if(!objecthelper::create(varname, _asm_strttot(type), false, false, access_public, 
+                        cglobals.package, "<null>", classparent))
+                   {
+                       if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Symbol '" << varname << "' has already been declared.\nPreviously declared here:\n\t"
+					                  << objecthelper::getobjinfo(varname, _asm_strttot(type), "<null>", classparent);
+					   error(cglobals.lex);
+                   }
+                   
+                   cglobals.ignorestrays = true;
+                   temp_t = getNextToken(lex);
+                   cglobals.ignorestrays = false;
+                   if(temp_t.value != "#")
+				   {
+				       if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected '#' prefix before symbol '" << temp_t.value << "'.";
+					   error(cglobals.lex);
+				   }
+				   else temp_t = getNextToken(lex);
+				   
+				   if(temp_t.type != temp_t.e_number)
+				   {
+				       if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected numeric literal before symbol '" << temp_t.value << "'.";
+					   error(cglobals.lex);
+				   }
+				   level3(ttop(_asm_strttot(type)), objecthelper::address(varname, _asm_strttot(type),
+				           "<null>", classparent), atof(temp_t.value.c_str()));
 			   }
                else {
                    if(!intro)
@@ -1895,6 +2009,45 @@
                    || symbol == "int" || symbol == "long" || symbol == "double"
                    || symbol == "float" || symbol == "string");
        }
+       
+       int _strttot(std::string symbol)
+       {
+            if(symbol == "char") return typedef_char;
+            if(symbol == "byte") return typedef_byte;
+            if(symbol == "short") return typedef_short;
+            if(symbol == "int") return typedef_int;
+            if(symbol == "long") return typedef_long;
+            if(symbol == "double") return typedef_double;
+            if(symbol == "float") return typedef_float;
+            if(symbol == "string") return typedef_string;
+            else return -33;
+       }
+       
+       int _asm_strttot(std::string symbol)
+       {
+            if(symbol == "cconsst") return typedef_char;
+            if(symbol == "bconst") return typedef_byte;
+            if(symbol == "sconst") return typedef_short;
+            if(symbol == "iconst") return typedef_int;
+            if(symbol == "lconst") return typedef_long;
+            if(symbol == "dconst") return typedef_double;
+            if(symbol == "fconst") return typedef_float;
+            if(symbol == "str_const") return typedef_string;
+            else return -33;
+       }
+      
+       int ttop(int type)
+       {
+            if(type == typedef_char) return OP_CCONST;
+            if(type == typedef_byte) return OP_BCONST;
+            if(type == typedef_short) return OP_SCONST;
+            if(type == typedef_int) return OP_ICONST;
+            if(type == typedef_long) return OP_LCONST;
+            if(type == typedef_double) return OP_DCONST;
+            if(type == typedef_float) return OP_FCONST;
+            if(type == typedef_string) return OP_STRCONST;
+            else return -33;
+       }
       
        bool accessspecifier(std::string symbol)
        {
@@ -1946,29 +2099,30 @@ bool validate_package_file(string pkg, string file)
 
 void parse_cmplr_items(stringstream &out_buf)
  {
-     cres.size_t.byte1 = cplrfreelist2[0].c_items.size();
      for(unsigned long i =0; i<cplrfreelist2->c_items.size(); i++)
      {
          cplrfreelist1.add(cplrfreelist2->c_items.valueAt(i));
          unsigned long ins= cplrfreelist1.valueAt(0).item.byte1;
-         cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
+         cres.size_t.byte1++;
          
        //  cout << "ins " << ins << endl;
          if(ins == OP_MTHD){
+                cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 Method m= methods.valueAt(cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1);
                 
                 out_buf << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0;
                 out_buf << m.eadr.byte1 << (char) 0;
          }
-         else if(ins == OP_NODE) cres.size_t.byte1 -= 3;
+         else if(ins == OP_NODE) cres.size_t.byte1--;
          else if(ins == OP_COUT){
-             cres.size_t.byte1 +=cplrfreelist1.valueAt(0).str.size();
+             cres.size_t.byte1 +=cplrfreelist1.valueAt(0).str.size() + 1;
              out_buf << (char) cplr_string_instr << OP_COUT << (char) 0 << cplrfreelist1.valueAt(0).str << (char) 0;
          }
          else if(ins == OP_NOP || ins == OP_END || ins == OP_HLT || ins == OP_NO || ins == OP_ENDNO)
              out_buf << (char) cplr_instr <<  ins << (char) 0 ;
          else if( ins == OP_RETURN || ins == OP_CALL)
          {
+              cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
               Method m= methods.valueAt(cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1);
        //       cout << "returning " << m.eadr.byte1 << endl;
               out_buf << (char) cplr_instr << ins << (char) 0 << m.eadr.byte1 << (char) 0;
@@ -1976,6 +2130,7 @@ void parse_cmplr_items(stringstream &out_buf)
          else if(ins == OP_PUSH || ins == OP_POP || ins == OP_JMP || ins == OP_LBL || ins == OP_IF || ins == OP_INC || ins == OP_DEC
                  || ins == OP_KILL || ins == OP_DELETE || ins == OP_DELETE_ARRY){ // for instructions that access memory
     //           cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << endl;
+               cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0;
          }        
          else if(ins == OP_SCONST || ins == OP_BCONST || ins == OP_CCONST || ins == OP_RSHFT 
@@ -1983,6 +2138,7 @@ void parse_cmplr_items(stringstream &out_buf)
                    || ins == OP_JIT || ins == OP_ICONST || ins == OP_DCONST || ins == OP_FCONST 
                    || ins == OP_THROW)
          {
+                cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
                 << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0;   
        //         cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << endl;
@@ -1997,9 +2153,16 @@ void parse_cmplr_items(stringstream &out_buf)
                    || ins == OP_CSUB || ins == OP_CMULT || ins == OP_CDIV || ins == OP_IMOD
                    || ins == OP_CMOD || ins == OP_SMOD || ins == OP_OR || ins == OP_AND
                    || ins == OP_AT || ins == OP_ALOAD || ins == OP_ASTORE)
+         {
+                cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
                 << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0 << cplrfreelist1.valueAt(0).sub_item.valueAt(2).item.byte1 << (char) 0;
-                
+         }
+         else {
+             cglobals.out << "Unknown instruction (" << ins << ").";
+             error(cglobals.lex);
+             cres.size_t.byte1--;
+         }
                 
          cmplrfree( cplrfreelist1 );
      }
@@ -2012,6 +2175,7 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
      cglobals.namespacedepth = 0;
      cglobals.hasInit = false;
      cglobals.hasStarter = false;
+     cglobals.ignorestrays = false;
      cglobals.methodadr = 1;
      cglobals.objectadr = 50;
      

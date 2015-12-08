@@ -44,7 +44,7 @@
      bool infunc, inclass, innamespace;
      
      // Required compiler values
-     bool hasStarter, hasInit;
+     bool hasStarter, hasInit, ignorestrays;
      _namespace namespaceParent;
      Object classParent;
      int classdepth, namespacedepth;

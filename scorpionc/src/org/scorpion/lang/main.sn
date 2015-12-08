@@ -11,23 +11,18 @@ public class Starter
    public static def __init__(string[] args)
    {
       asm("
-          cout 'Hello, World!$n' 
-          call %namespace::class.foo%
+          cout 'Hello, World!$n' // re-process cout to output data like so cout 'Hello ' -> name -> 'from Scorpion!'
+          iconst @foo #5
+          hlt // process no arg commands 
           ");
    }
    
-   def foo(int i)
-   {
+   def foo(){
       asm("
-         cout 'called foo in class Starter$n'      
-         ");
+          cout 'Hello, World!$n' 
+          iconst @foo1 #5
+          ");
    }
 }
 
-class foo
-{
-   def foo()
-   {
-      
-   }
-}
+

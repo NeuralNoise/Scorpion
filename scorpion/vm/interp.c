@@ -332,7 +332,11 @@ void Protect(long k, long m)
     if(k>=m)
       alog.ALOGV("Attempting to close program unexpectingly.");
     else if(k>sMaxOpcodeLimit || k<0)
-      alog.ALOGV("Attempting to execute invalid instruction.");
+    {
+        stringstream ss;
+        ss << "Attempting to execute invalid instruction (" << k << ").";
+        alog.ALOGV(ss.str());
+    }
     
     segfault();
 }
@@ -346,11 +350,13 @@ void Scorpion_VMExecute(){
   
   unsigned long i, k=gSvm.vm.vStaticRegs[VREG_PC], m=gSvm.bytestream.size();
   exe:
-    if(k>=m||k>sMaxOpcodeLimit||k<0)
+    if(k>=m||k<0)
       Protect(k,m);
       
     i = gSvm.bytestream.valueAt(k++);
-    //cout << "i=" << i << endl;
+    
+    if(i>sMaxOpcodeLimit) Protect(i, m);
+   /// cout << "i=" << i << endl;
     if((gSvm.vm.flags[VFLAG_NO] == 1 && i != OP_ENDNO) || 
        (gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && !(i == OP_END || i == OP_IF))){ // do not run
         k+=GETARG_SIZE(i,k);

@@ -567,7 +567,7 @@ static int LastChar = ' ';
                   eof = false;
                   gSvm.image = "";
                  // cout << "img sz " << streamcount << " file sz " << gSvm.appheader.filesize.byte1 << endl;
-                  if(--streamcount != gSvm.appheader.filesize.byte1){
+                  if(streamcount != gSvm.appheader.filesize.byte1){
                       alog.setClass("XSO");
                       alog.ALOGV("Image size does not match specified length. Try recompiling your application.");
                       preexecute_err();
