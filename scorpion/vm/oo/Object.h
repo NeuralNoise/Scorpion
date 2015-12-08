@@ -278,7 +278,7 @@
    /* These are our special object types */    
    StringObject* strobj;
    
-   /* This is a special type of object, it siumply holds an array of nodes */
+   /* This is a special type of object, it simply holds an array of nodes */
    Object* nodeobj;
      
    /*

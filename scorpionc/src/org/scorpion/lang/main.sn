@@ -12,6 +12,22 @@ public class Starter
    {
       asm("
           cout 'Hello, World!$n' 
+          call %namespace::class.foo%
           ");
+   }
+   
+   def foo(int i)
+   {
+      asm("
+         cout 'called foo in class Starter$n'      
+         ");
+   }
+}
+
+class foo
+{
+   def foo()
+   {
+      
    }
 }

@@ -837,6 +837,110 @@
           return word.str();
        }
        
+        ListAdapter< ListAdapter<std::string> > parse_complex_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, const bool asterisk = false)
+       {
+          lexr::token temp_t;
+          bool needsWord=false;
+          int asterisk_flag = 0;
+          stringstream word;
+          ListAdapter< ListAdapter<std::string> > wordlist;
+          ListAdapter<std::string> tmplist;
+          
+          for( ;; )
+          {
+              temp_t = getNextToken(lex);
+              if(temp_t.value == ".")
+              {
+                 if(asterisk_flag==5)
+                   asterisk_flag++;
+                   
+                  if(needsWord && !dotfirst)
+                  {
+                     cglobals.out << "Expected symbol before '.'.";
+                     error(cglobals.lex);
+                  }
+                  
+                  needsWord = true;
+                  dotfirst = false;
+                  tmplist.add(word.str());
+                  word.str("");
+              }
+              else if(temp_t.type == temp_t.e_symbol)
+              {
+                 if(asterisk_flag==5)
+                   asterisk_flag++;
+                   
+                 word << temp_t.value;
+                 needsWord = false;
+              }
+              else if(temp_t.value == ":")
+              {
+				 temp_t = getNextToken(lex);
+				 if(temp_t.value != ":")
+                 {
+					 cglobals.out << "Expected ':' symbol before '" << temp_t.value << "'.";
+                     error(cglobals.lex);
+				 }
+                 
+                 if(needsWord)
+                 {
+                    cglobals.out << "Expected symbol before '" << temp_t.value << "'.";
+                    error(cglobals.lex);
+                 }
+                 
+                 if(asterisk_flag > 5)
+                 {
+                    cglobals.out << "Expected ';' immediatley after '*'.";
+                    error(cglobals.lex);
+                 }
+                
+                 tmplist.add(word.str());  
+                 wordlist.add( tmplist );
+                 tmplist.clear();
+                 word.str("");
+              }
+              else if(temp_t.value == breaker)
+              {
+                 if(needsWord)
+                 {
+                    cglobals.out << "Expected symbol before '" << breaker << "'.";
+                    error(cglobals.lex);
+                 }
+                 
+                 if(asterisk_flag > 5)
+                 {
+                    cglobals.out << "Expected ';' immediatley after '*'.";
+                    error(cglobals.lex);
+                 }
+                 if(word.str() != "")
+                   tmplist.add(word.str());
+                 
+                 wordlist.add( tmplist );
+                 tmplist.clear(); 
+                 word.str("");
+                break;
+              }
+              else if(temp_t.value == "*" & asterisk)
+              {
+                 asterisk_flag = 5;
+                 word << "*";
+              }
+              else if(temp_t.type == temp_t.e_eof)
+              {
+                 cglobals.out << "Unexpected end of file.";
+                 error(cglobals.lex);
+                 cglobals.eof=1;
+              }
+              else {
+                 needsWord = true;
+                 cglobals.out << "Unexpected symbol '" << temp_t.value << "', expecting '.' or ';'.";
+                 error(cglobals.lex);
+              }
+          }
+          return wordlist;
+       }
+       
+       
        void parse_access_specifier(lexr::parser_helper& lex, object_attrib &atribs, lexr::token &temp_t)
        {
           temp_t = getNextToken(lex);
@@ -971,7 +1075,7 @@
        void parse_return_decliration(lexr::parser_helper& lex, long addr)
        {
            lexr::token temp_t;
-           bool plus, needStr;
+           bool plus=false, needStr=false;
            stringstream ss;
            for( ;; )
            {
@@ -1280,6 +1384,7 @@
            lex.init(_asm);
            lex.lexer().line_t = begin;
            
+           cout << "asm " << _asm << endl;           
            for( ;; )
            {
                temp_t = getNextToken(lex);
@@ -1298,9 +1403,41 @@
                        error(cglobals.lex);
                    }
                }
+               else if(temp_t.value == "call")
+               {
+				   temp_t = getNextToken(lex);
+				   if(temp_t.value != "%")
+				   {
+					   if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected '%' prefix before symbol '" << temp_t.value << "'.";
+					   error(cglobals.lex);
+				   }
+				   
+				   else if(temp_t.type != temp_t.e_symbol) temp_t = getNextToken(lex);  // possibly some other prefix?
+				   lex.lexer().token_sz1--;
+				   ListAdapter< ListAdapter<std::string> > functionname;
+				   functionname = parse_complex_dot_notation(lex, false, "%");
+				    
+				   cout << " functionname size " << functionname.size() << endl;
+				   for(int i = 0; i < functionname.size(); i++)
+				   {
+					   cout << "word set " << i << endl << endl;
+					   for(int i2 = 0; i2 < functionname.valueAt(i).size(); i2++)
+					   {
+						   cout << "word " << i2 << " value " << functionname.valueAt(i).valueAt(i2) << endl;
+					   } 
+				   }  
+			   }
                else {
                    if(!intro)
-                      cout << "Assembler messages:\n";
+                   {
+					   intro = true;
+                       cout << "Assembler messages:\n";
+				   }
                    cglobals.out << "Expected assembly instruction before '" << temp_t.value << "'.";
                    error(cglobals.lex);
                }
