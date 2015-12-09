@@ -298,7 +298,7 @@
             
           for(long i =0; i < objects.size(); i++)
           {
-             if(at(i).type == o.type && at(i)._namespace == o._namespace)
+             if(((o.type == typedef_unknown) ? true : (at(i).type == o.type)) && at(i)._namespace == o._namespace)
              {
                 if(at(i).name == o.name && at(i).parentclass == o.parentclass) 
                       return true;
@@ -334,7 +334,7 @@
             
           for(long i =0; i < objects.size(); i++)
           {
-             if(at(i).type == o.type && at(i)._namespace == o._namespace )
+             if(((o.type == typedef_unknown) ? true : (at(i).type == o.type)) && at(i)._namespace == o._namespace )
              {
                 if(at(i).name == o.name && at(i).parentclass == o.parentclass) 
                       return ((internal) ? i : at(i).eadr.byte1);
@@ -472,7 +472,7 @@
        long madr(Method &o, ListAdapter<Object> &args, bool internal)
        {
           if(!methods._init())
-            return 0;
+            return 1;
             
           for(long i =0; i < methods.size(); i++)
           {
@@ -483,7 +483,7 @@
              }
           }
           
-          return 0;
+          return 1;
        }
        
        string minfo(Method &o, ListAdapter<Object> &args)
@@ -775,6 +775,17 @@
        int _asm_strttot(std::string symbol);
        int _asm_strtop(string op);
        
+       string getParentClass()
+       {
+           string classparent;
+	       if(cglobals.classdepth == 0)
+	         classparent = "<null>";
+	       else if(cglobals.classdepth == 1)
+	         classparent = cglobals.classParent.name;
+	       else classparent = cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).name;
+		   return classparent;
+       }
+       
        std::string parse_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, const bool asterisk = false)
        {
           lexr::token temp_t;
@@ -850,8 +861,14 @@
            int j;
            ListAdapter<string>* adapters;
        };
+       
+       struct objmap
+       {
+           long adr;
+           int type;
+       };
         
-       wordmap parse_complex_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, const bool asterisk = false)
+       wordmap parse_complex_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, bool asterisk = false)
        {
           lexr::token temp_t;
           bool needsWord=false;
@@ -958,39 +975,42 @@
           return wmap;
        }
        
-       long parse_wordmap(wordmap map, int objtype)
+       objmap parse_wordmap(wordmap map, bool intro = true)
        {
-          /* for(int i = 0; i < map.j; i++)
-		   {
-			   if(!((i+1) < map.j))
-			   {
-			       string classparent;
-			       if(cglobals.classdepth == 0)
-			         classparent = "<null>";
-			       else if(cglobals.classdepth == 1)
-			         classparent = cglobals.classParent.name;
-			       else classparent = cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).name;
-			       
-			       if(map.adapters[i].size() == 1)
-			       {
-			           if(objtype == typedef_string || objtype == typedef_byte || objtype == typedef_char
-			             || objtype == typedef_double || objtype == typedef_float || objtype == typedef_int
-			             || objtype == typedef_long || objtype == typedef_short)
-			             return objecthelper::address(map.adapters[i].valueAt(0), objtype, "<null>", 
-                                     parentclass, false);
-			       }
-			   }
-			   else
-			   {
-			       _namespace parent;
-			       stringstream ss;
-    			   for(int i2 = 0; i2 < map.adapters[i].size(); i2++)
-    			   {
-    				   ss << map.adapters[i].valueAt(i2);
-    			   } 
-    			   // [process namespace nemes later]
-			   }
-		   } */ 
+           objmap omap;
+           stringstream symbol;
+           omap.adr = 0;
+           omap.type = typedef_unknown;
+                       
+           if(map.j == 0)
+               return omap;  
+           
+           if(map.j == 1)
+           {
+               if(map.adapters->size() == 1)
+               {
+                   symbol << map.adapters->valueAt(0);
+                   if(objecthelper::find(map.adapters->valueAt(0), typedef_unknown, "<null>", 
+                         getParentClass()))
+                   {
+                       omap.adr = objecthelper::address(map.adapters->valueAt(0), typedef_unknown, "<null>", 
+                                     getParentClass(), false);
+                       omap.type = objects.valueAt(objecthelper::address(map.adapters->valueAt(0), typedef_unknown, "<null>", 
+                                     getParentClass())).type;
+                   }
+                   else
+                   {
+                       if(!intro)
+        			   {
+        				   intro = true;
+        				   cout << "Assembler messages:\n";
+        			   }
+                       cglobals.out << "Cannot resolve symbol '" << symbol.str() << "'.";
+                       error(cglobals.lex);
+                   }
+               }
+           }
+		   return omap;
        }
        
        void parse_access_specifier(lexr::parser_helper& lex, object_attrib &atribs, lexr::token &temp_t)
@@ -1427,6 +1447,181 @@
              memoryhelper::helper::parse_double_decliration(lex, var);
        }
        
+       char parse_type_cast(lexr::parser_helper& lex, bool intro = true)
+       {
+           lexr::token temp_t;
+           temp_t = getNextToken(lex);
+           char type = 'v';
+           
+           if(temp_t.type == temp_t.e_symbol)
+           {
+               if(!_typedef(temp_t.value))
+               {
+                   if(!intro)
+				   {
+					   intro = true;
+					   cout << "Assembler messages:\n";
+				   }
+                   cglobals.out << "Expected qualified symbol before '" << temp_t.value << "'.";
+                   error(cglobals.lex);
+               }
+               
+               if(temp_t.value == "string")
+               {
+                   if(!intro)
+				   {
+					   intro = true;
+					   cout << "Assembler messages:\n";
+				   }
+                   cglobals.out << "Cannot apply explicit typecast of type `string`.";
+                   error(cglobals.lex);                    
+               }
+               else if(temp_t.value == "char")
+                   type = 'c';
+               else if(temp_t.value == "byte")
+                   type = 'B';
+               else if(temp_t.value == "int")
+                   type = 'i';
+               else if(temp_t.value == "short")
+                   type = 's';
+               else if(temp_t.value == "long")
+                   type = 'l';
+               else if(temp_t.value == "p")
+                   type = 'p';
+               else if(temp_t.value == "bool")
+                   type = 'b';
+               else if(temp_t.value == "float")
+                   type = 'f';
+               else if(temp_t.value == "double")
+                   type = 'd';
+           }
+           
+           temp_t = getNextToken(lex);
+           if(temp_t.value != ")")
+           {
+               if(!intro)
+			   {
+				   intro = true;
+				   cout << "Assembler messages:\n";
+			   }
+               cglobals.out << "Expected ')' before symbol '" << temp_t.value << "'.";
+               error(cglobals.lex);
+           }
+           
+           return type;
+       }
+       
+       void parse_cout_decliration(lexr::parser_helper& lex, bool intro)
+       {
+           lexr::token temp_t;
+           int bracket_stack = 1, errcount=0;
+           stringstream outstream;
+           outstream << "";
+           
+           for( ;; )
+           {
+               temp_t = getNextToken(lex);
+               
+               if(cglobals.eof)
+                 break;
+               if(temp_t.value == ")")
+               {
+                 bracket_stack--;
+                 if(bracket_stack<=0)
+                    break;
+               }
+               if(temp_t.value == "(")
+                 bracket_stack++;
+               else if(temp_t.type == temp_t.e_string)
+                 outstream << temp_t.value;
+               else if(temp_t.value == "<<")
+               {
+                   temp_t = getNextToken(lex);
+                   char cast = 'v';
+                   
+                   if(temp_t.type == temp_t.e_string){
+                      outstream << temp_t.value;
+                      continue;
+                   }
+                   else if(temp_t.type == temp_t.e_number)
+                   {
+                       outstream << atof(temp_t.value.c_str());
+                       continue;
+                   }
+                      
+                   if(temp_t.value == "(")
+                   {
+                       cast = parse_type_cast(lex, intro);
+                       temp_t = getNextToken(lex);
+                       
+                       if(temp_t.type == temp_t.e_number) // apply type cast to number
+                       {
+                           level3(OP_DCONST, var_dummy_data, atof(temp_t.value.c_str()));
+                           outstream << "$[" << cast << var_dummy_data << "|";
+                           cout << "cast " << cast << endl;
+                           continue;
+                       }
+                   }
+                   
+                   if(temp_t.value != "{")
+                   {
+                       if(!intro)
+    				   {
+    					   intro = true;
+    					   cout << "Assembler messages:\n";
+    				   }
+                       cglobals.out << "Expected '{' before symbol '" << temp_t.value << "'.";
+                       error(cglobals.lex);
+                       lex.lexer().token_sz1--;
+                   }
+                   
+                   objmap map = parse_wordmap(parse_complex_dot_notation(lex, false, "}"));
+                   outstream << "$[" << cast << map.adr << "|";
+               }
+               else if(temp_t.type == temp_t.e_symbol)
+               {
+                   if(!intro)
+				   {
+					   intro = true;
+					   cout << "Assembler messages:\n";
+				   }
+                   cglobals.out << "Expected '<<' prefix before symbol '" << temp_t.value << "'.";
+                   error(cglobals.lex);
+               }
+               else // could be another instruction?
+               {
+                   if(!intro)
+				   {
+					   intro = true;
+					   cout << "Assembler messages:\n";
+				   }
+                   cglobals.out << "Expected '<<', ')', '(', or string literal before symbol '" << temp_t.value << "'.";
+                   error(cglobals.lex);
+                   
+                   errcount++;
+                   if(errcount>1)
+                   {
+                       if(!(bracket_stack<=0))
+                       {
+                           if(!intro)
+        				   {
+        					   intro = true;
+        					   cout << "Assembler messages:\n";
+        				   }
+                           cglobals.out << "Expected ')' at end of cout instruction.";
+                           error(cglobals.lex);
+                       }
+                       
+                       lex.lexer().token_sz1-=2;
+                       break;
+                   }
+               }
+           }
+           
+          // cout << "outstream.str() " << outstream.str() << endl;
+           _cout(outstream.str());
+       }
+       
        long parse_asm_decliration(long begin, string _asm)
        {
            lexr::token temp_t;
@@ -1446,16 +1641,19 @@
                if(temp_t.value == "cout")
                {
                    temp_t = getNextToken(lex);
-                   if(temp_t.type == temp_t.e_string)
-                       _cout(temp_t.value);
+                   
+                   if(temp_t.value == "(")
+                      parse_cout_decliration(lex, intro);
+                   else if(temp_t.type == temp_t.e_string)
+                      _cout(temp_t.value);
                    else
                    {
                        if(!intro)
-					   {
-						   intro = true;
-						   cout << "Assembler messages:\n";
-					   }
-                       cglobals.out << "Expected string literal before '" << temp_t.value << "'.";
+    				   {
+    					   intro = true;
+    					   cout << "Assembler messages:\n";
+    				   }
+                       cglobals.out << "Expected '(' or string literal before symbol '" << temp_t.value << "'.";
                        error(cglobals.lex);
                    }
                }
@@ -1541,7 +1739,7 @@
 					   error(cglobals.lex);
 				   }
 				   level3(ttop(_asm_strttot(type)), objecthelper::address(varname, _asm_strttot(type),
-				           "<null>", classparent), atof(temp_t.value.c_str()));
+				           "<null>", classparent, false), atof(temp_t.value.c_str()));
 			   }
                else {
                    if(!intro)
@@ -1641,6 +1839,7 @@
        {
            cglobals.block_stack++;
            lexr::token temp_t;
+           
            while( cglobals.block_stack!=block_begin)
            {
                temp_t = getNextToken(lex);
@@ -1763,15 +1962,22 @@
                            }
                            
                            ListAdapter<Object> args;
+                           Object arg1;
                            memoryhelper::helper::parse_method_args(cglobals.lex, args);
                            
+                           args.add(arg1); 
+                           args.pushback(); // if we have no args
                            
                            string parentclass = "";
+                           bool firstmethod = false;
                            if(cglobals.classdepth == 0)
                               parentclass = "<null>";
                            else if(cglobals.classdepth == 1)
                               parentclass = cglobals.classParent.name;
                            else parentclass = cglobals.classParent.C[0].classObjects.valueAt(cglobals.classdepth-1).C[0].name;
+                           
+                           if(cglobals.methodadr == 0)
+                             firstmethod = true;
                            
                            if(!memoryhelper::methodhelper::create(functionname, atribs.isStatic, atribs.access, 
                                     cglobals.package, "<null>", parentclass, args))
@@ -1782,7 +1988,6 @@
                                error(cglobals.lex);    
                            }
                            
-                          Object arg1;
                           arg1.type = typedef_string;
                           arg1.isarray = true;
                          
@@ -1790,12 +1995,13 @@
                                                                          (functionname, "<null>", parentclass, args)).args;
                           initargs.add(arg1);
      
-                           if(!methodfound && functionname == "__init__" && memoryhelper::methodhelper::sameargs(initargs, functionargs)
+                           if(!methodfound && !cglobals.hasInit && functionname == "__init__" && memoryhelper::methodhelper::sameargs(initargs, functionargs)
                               && parentclass == "Starter")
                            {
                                long adr = memoryhelper::methodhelper::address("__init__", "<null>", parentclass, functionargs);
                                Method m = methods.valueAt(adr);
                                m.eadr.byte1 = 0;
+                            
                             
                                methods.replace(m, adr);
                                
@@ -1813,6 +2019,17 @@
                                
                                cglobals.hasInit = true;
                            }
+                           else 
+                           {
+                               if(firstmethod)
+                               {
+                                   long adr = memoryhelper::methodhelper::address(functionname, "<null>", parentclass, args);
+                                   Method m = methods.valueAt(adr);
+                                   
+                                   m.eadr.byte1++;
+                                   methods.replace(m, adr);
+                               }
+                           }
                            
                            if(atribs.isConst)
                            {
@@ -1829,7 +2046,8 @@
                            }
                           
                           long madr = memoryhelper::methodhelper::address
-                                         (functionname, "<null>", parentclass, functionargs);
+                                         (functionname, "<null>", parentclass, args);
+                                         
                           level2(OP_MTHD, madr); 
                           memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack, madr);
                           
@@ -2177,6 +2395,9 @@ void parse_cmplr_items(stringstream &out_buf)
                 
                 out_buf << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0;
                 out_buf << m.eadr.byte1 << (char) 0;
+                
+               // cout << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0 << " `";
+               // cout << m.eadr.byte1 << (char) 0 << endl;
          }
          else if(ins == OP_NODE) cres.size_t.byte1--;
          else if(ins == OP_COUT){
@@ -2189,7 +2410,7 @@ void parse_cmplr_items(stringstream &out_buf)
          {
               cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
               Method m= methods.valueAt(cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1);
-       //       cout << "returning " << m.eadr.byte1 << endl;
+             // cout << "returning " << m.eadr.byte1 << endl;
               out_buf << (char) cplr_instr << ins << (char) 0 << m.eadr.byte1 << (char) 0;
          }
          else if(ins == OP_PUSH || ins == OP_POP || ins == OP_JMP || ins == OP_LBL || ins == OP_IF || ins == OP_INC || ins == OP_DEC
@@ -2234,7 +2455,7 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
      cglobals.hasInit = false;
      cglobals.hasStarter = false;
      cglobals.ignorestrays = false;
-     cglobals.methodadr = 1;
+     cglobals.methodadr = 0;
      cglobals.objectadr = 50;
      
      for(int i = 0; i < zip_archive.header.sourcecount.byte1; i++)

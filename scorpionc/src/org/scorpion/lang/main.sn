@@ -11,15 +11,17 @@ public class Starter
    public static def __init__(string[] args)
    {
       asm("
-          cout 'Hello, World!$n' // re-process cout to output data like so cout 'Hello ' -> name -> 'from Scorpion!'
+          iconst @x #5
+          cout ('Hello, World!$n' << (byte) {x} << ' ' << 67 << (char) 66 << '$n') 
           iconst @foo #5
-          hlt // process no arg commands 
+          //hlt 
+          
           ");
    }
    
    def foo(){
       asm("
-          cout 'Hello, World!$n' 
+          cout 'Hello, Worldddd!$n' 
           iconst @foo1 #5
           ");
    }

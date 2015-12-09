@@ -137,7 +137,7 @@ void printf_obj_content(long addr, char form)
   else if(form == 'p')
     printf("%#x", (unsigned int) addr);
   else if(form == 'c' || gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
-    cout << (schar) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
+    cout << (char) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
   else if(form == 'b' || gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
     cout << (((sbool) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]) == 1) ? "true" : "false");
   else if(form == 'f' || gSvm.env->getBitmap().objs[addr].instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
@@ -150,6 +150,7 @@ void printf_obj_content(long addr, char form)
 
 void _cout_(string output)
 {
+   // cout << "outputting " << output << endl;
   for(long i = 0; i < output.size(); i++){
     if(output.at(i) != '$'){
       cout << output.at(i);
@@ -204,7 +205,7 @@ void _cout_(string output)
                       
                       long addr = atoi(ss.str().c_str());
                       printf_obj_content(addr, form);
-                      continue;
+                      break;
                     }
                 }
                 continue;
@@ -262,7 +263,7 @@ void Scorpion_VMExecute(){
     i = gSvm.bytestream.valueAt(k++);
     
     if(i>sMaxOpcodeLimit) Protect(i, m);
-   /// cout << "i=" << i << endl;
+    //cout << "i=" << i << endl;
     if((gSvm.vm.flags[VFLAG_NO] == 1 && i != OP_ENDNO) || 
        (gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && !(i == OP_END || i == OP_IF))){ // do not run
         k+=GETARG_SIZE(i,k);

@@ -22,7 +22,7 @@ class ListAdapter {
         }
         void clear()
         {
-            if(!init||size_t==0||values==nullptr) return;
+            if(!init||size_t==0) return;
             delete[] values;
             size_t=0;
             init=false;
