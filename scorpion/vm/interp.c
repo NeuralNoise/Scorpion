@@ -75,7 +75,7 @@ int instrSize(int i, unsigned long k)
          return 0;
      else if(i == OP_RETURN || i == OP_PUSH || i == OP_POP || i == OP_JMP || i == OP_CALL
        || i == OP_MTHD || i == OP_LBL || i == OP_IF || i == OP_INC || i == OP_DEC
-       || i == OP_KILL || i == OP_DELETE || i == OP_DELETE_ARRY) // push 7 or push *x
+       || i == OP_KILL || i == OP_DELETE) // push 7 or push *x
          return 1;
      else if(i == OP_ICONST || i == OP_DCONST || i == OP_FCONST || 
         i == OP_SCONST || i == OP_BCONST || i == OP_CCONST || i == OP_RSHFT 
@@ -85,15 +85,9 @@ int instrSize(int i, unsigned long k)
         || i == OP_DACONST || i == OP_IACONST || i == OP_FACONST || i == OP_CACONST 
         || i == OP_BACONST || i == OP_BYTE_ACONST || i == OP_SACONST || i == OP_LACONST) // mthd @9
          return 2;
-     else if(i == OP_ISEQ || i == OP_ISNEQ || i == OP_ISLT || i == OP_ISNLT || i == OP_ISLE || i == OP_ISNLE
-       || i == OP_ISGT || i == OP_ISNGT || i == OP_ISGE || i == OP_ISNGE || i == OP_IADD
-       || i == OP_ISUB || i == OP_IMULT || i == OP_IDIV || i == OP_SADD
-       || i == OP_SSUB || i == OP_SMULT || i == OP_SDIV || i == OP_DADD
-       || i == OP_DSUB || i == OP_DMULT || i == OP_DDIV || i == OP_FADD
-       || i == OP_FSUB || i == OP_FMULT || i == OP_FDIV || i == OP_CADD
-       || i == OP_CSUB || i == OP_CMULT || i == OP_CDIV || i == OP_IMOD
-       || i == OP_CMOD || i == OP_SMOD || i == OP_OR || i == OP_AND
-       || i == OP_AT || i == OP_ALOAD || i == OP_ASTORE) //
+     else if(i == OP_ISEQ || i == OP_ISLT || i == OP_ISLE || i == OP_ISGT 
+       || i == OP_ISGE || i == OP_ADD || i == OP_SUB || i == OP_MULT || i == OP_DIV || i == OP_MOD
+       || i == OP_OR || i == OP_AND || i == OP_AT || i == OP_ALOAD || i == OP_ASTORE) //
          return 3;
      else if(i == OP_COUT)
          return gSvm.bytestream.valueAt(k++);
@@ -107,39 +101,6 @@ int instrSize(int i, unsigned long k)
          instrSize(i,k);
 
 u4_d arguments; // our dedicated instruction arguments
-long compare(long instruction){
-     double a,b;
-     a = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2]);
-     b = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]);
-     
-     if(instruction == OP_ISLT)
-        return a < b;
-     if(instruction == OP_ISEQ)
-        return a == b;
-     if(instruction == OP_ISGE)
-        return a >= b;
-     if(instruction == OP_ISGT)
-        return a > b;
-     if(instruction == OP_ISLE)
-        return a <= b;
-     if(instruction == OP_ISNEQ)
-        return a != b;
-     if(instruction == OP_ISNGE)
-        return !(a >= b);
-     if(instruction == OP_ISNGT)
-        return !(a > b);
-     if(instruction == OP_ISNLE)
-        return !(a <= b);
-     if(instruction == OP_ISNLT)
-        return !(a < b);
-     if(instruction == OP_OR)
-        return ((bool) a || (bool) b);
-     if(instruction == OP_AND)
-        return ((bool) a && (bool) b);
-     else
-        return 0;
-}
-
 int _getch_() {
     int ch;
     struct termios t_old, t_new;
@@ -185,61 +146,6 @@ void printf_obj_content(long addr, char form)
     cout << std::setprecision(g_max_precision) << (double) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
   else
     cout << (double) svmGetGenericValue(gSvm.env->getBitmap().objs[addr]);
-}
-
-double math(long instruction){
-     double a,b;
-     a = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2]);
-     b = svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]);
-     
-     if(instruction == OP_IADD)
-        return (sint) (a + b);
-     if(instruction == OP_ISUB)
-        return (sint) (a - b);
-     if(instruction == OP_IDIV)
-        return (sint) (a / b);
-     if(instruction == OP_IMULT)
-        return (sint) (a * b);
-     if(instruction == OP_SADD)
-        return (sshort) (a + b);
-     if(instruction == OP_SSUB)
-        return (sint) (a - b);
-     if(instruction == OP_SDIV)
-        return (sshort) (a / b);
-     if(instruction == OP_SMULT)
-        return (sshort) (a * b);
-     if(instruction == OP_DADD)
-        return (sdouble) (a + b);
-     if(instruction == OP_DSUB)
-        return (sdouble) (a - b);
-     if(instruction == OP_DDIV)
-        return (sdouble) (a / b);
-     if(instruction == OP_DMULT)
-        return (sdouble) (a * b);
-     if(instruction == OP_FADD)
-        return (sfloat) (a + b);
-     if(instruction == OP_FSUB)
-        return (sfloat) (a - b);
-     if(instruction == OP_FDIV)
-        return (sfloat) (a / b);
-     if(instruction == OP_FMULT)
-        return (sfloat) (a * b);
-     if(instruction == OP_CADD)
-        return (schar) (a + b);
-     if(instruction == OP_CSUB)
-        return (schar) (a - b);
-     if(instruction == OP_CDIV)
-        return (schar) (a / b);
-     if(instruction == OP_CMULT)
-        return (schar) (a * b);
-     if(instruction == OP_IMOD)
-        return (sint) a % (long) b;
-     if(instruction == OP_SMOD)
-        return (sshort) a % (int) b;
-     if(instruction == OP_CMOD)
-        return (schar) a % (char) b;
-     else
-        return 21303029493;
 }
 
 void _cout_(string output)
@@ -477,16 +383,13 @@ void Scorpion_VMExecute(){
                }
           goto exe;
           case OP_MTHD: goto exe; // this instruction does nothing, it was executed during vm init
-          case OP_LBL: goto exe;  // this instruction does nothing, it was executed during vm init
-          default:
-             if(i == OP_DELETE || i == OP_DELETE_ARRY){
-                 if(!svmObjectIsAlive(gSvm.env->getBitmap().objs[(long) op_ags.byte1]))
+          case OP_LBL: goto exe;  // this instruction does nothing, it was executed during vm 
+          case OP_DELETE:
+               if(!svmObjectIsAlive(gSvm.env->getBitmap().objs[(long) op_ags.byte1]))
                          goto exe;
                          
-                   freeObj(gSvm.env->getBitmap().objs[(long) op_ags.byte1]); // arrays and generic objects can be freed the same way
-                   goto exe;
-             }
-          break;
+                 freeObj(gSvm.env->getBitmap().objs[(long) op_ags.byte1]); // arrays and generic objects can be freed the same way
+          goto exe;
        } 
        op_ags.byte2=gSvm.bytestream.valueAt(k++);
        
@@ -730,23 +633,48 @@ void Scorpion_VMExecute(){
           goto exe;
           case OP_ISLT:
              svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
-                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])<svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3])); goto exe;
-          break;
-          default:
-               if(i == OP_ISEQ || i == OP_ISNEQ || i == OP_ISLT || i == OP_ISNLT || i == OP_ISLE || i == OP_ISNLE
-                  || i == OP_ISGT || i == OP_ISNGT || i == OP_ISGE || i == OP_ISNGE || i == OP_OR || i == OP_AND)
-                  {
-                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], compare(i)); goto exe;
-                  }
-               else if(i == OP_IADD || i == OP_ISUB || i == OP_IMULT || i == OP_IDIV || i == OP_SADD
-                  || i == OP_SSUB || i == OP_SMULT || i == OP_SDIV || i == OP_DADD
-                  || i == OP_DSUB || i == OP_DMULT || i == OP_DDIV || i == OP_FADD
-                  || i == OP_FSUB || i == OP_FMULT || i == OP_FDIV || i == OP_CADD
-                  || i == OP_CSUB || i == OP_CMULT || i == OP_CDIV || i == OP_IMOD 
-                  || i == OP_SMOD || i == OP_CMOD){
-                     svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], math(i)); goto exe;
-                  }
-          break;
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])<svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
+          case OP_ISGT:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])>svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
+          case OP_ISLE:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])<=svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
+          case OP_ISGE:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])>=svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
+          case OP_OR:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  (bool) ((bool)svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])||(bool)svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3])));
+          goto exe;
+          case OP_AND:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  (bool) ((bool)svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])&&(bool)svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3])));
+          goto exe;
+          case OP_ADD:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])+svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
+          case OP_MULT:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])*svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
+          case OP_SUB:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])-svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
+          case OP_DIV:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])/svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
+          case OP_MOD:
+             svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
+                  (slong)svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])%(slong)svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+          goto exe;
        }
        goto exe;
 

@@ -469,7 +469,7 @@ static int LastChar = ' ';
      }
      else if(CurTok == OP_RETURN  || CurTok == OP_PUSH || CurTok == OP_POP || CurTok == OP_JMP || CurTok == OP_CALL
         || CurTok == OP_MTHD || CurTok == OP_LBL || CurTok == OP_IF || CurTok == OP_INC || CurTok == OP_DEC 
-        || CurTok == OP_KILL || CurTok == OP_DELETE || CurTok == OP_DELETE_ARRY){
+        || CurTok == OP_KILL || CurTok == OP_DELETE){
         double arg1 = atof(getheadertxt().c_str());
         setbyte(CurTok);
         setbyte(arg1);
@@ -500,15 +500,9 @@ static int LastChar = ' ';
         getNextToken();
         return;
      }
-     else if(CurTok == OP_IADD || CurTok == OP_ISEQ || CurTok == OP_ISNEQ
-       || CurTok == OP_ISLT || CurTok == OP_ISNLT || CurTok == OP_ISLE || CurTok == OP_ISNLE
-       || CurTok == OP_ISGT || CurTok == OP_ISNGT || CurTok == OP_ISGE || CurTok == OP_ISNGE
-       || CurTok == OP_ISUB || CurTok == OP_IMULT || CurTok == OP_IDIV || CurTok == OP_SADD
-       || CurTok == OP_SSUB || CurTok == OP_SMULT || CurTok == OP_SDIV || CurTok == OP_DADD
-       || CurTok == OP_DSUB || CurTok == OP_DMULT || CurTok == OP_DDIV || CurTok == OP_FADD
-       || CurTok == OP_FSUB || CurTok == OP_FMULT || CurTok == OP_FDIV || CurTok == OP_CADD
-       || CurTok == OP_CSUB || CurTok == OP_CMULT || CurTok == OP_CDIV || CurTok == OP_IMOD
-       || CurTok == OP_CMOD || CurTok == OP_SMOD || CurTok == OP_OR || CurTok == OP_AND
+     else if(CurTok == OP_ADD || CurTok == OP_ISEQ || CurTok == OP_ISLT || CurTok == OP_ISLE
+       || CurTok == OP_ISGT || CurTok == OP_ISGE || CurTok == OP_SUB || CurTok == OP_MULT 
+       || CurTok == OP_DIV || CurTok == OP_MOD || CurTok == OP_OR || CurTok == OP_AND
        || CurTok == OP_AT || CurTok == OP_ALOAD || CurTok == OP_ASTORE){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());

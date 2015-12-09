@@ -136,6 +136,8 @@
      else {
          cglobals.eof=1;
          lexr::token t;
+         t.value = "";
+         t.type = t.e_eof;
          return t;
      }
      
@@ -1438,6 +1440,7 @@
            for( ;; )
            {
                temp_t = getNextToken(lex);
+               
                if(cglobals.eof)
                  break;
                if(temp_t.value == "cout")
@@ -1448,7 +1451,10 @@
                    else
                    {
                        if(!intro)
-                         cout << "Assembler messages:\n";
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
                        cglobals.out << "Expected string literal before '" << temp_t.value << "'.";
                        error(cglobals.lex);
                    }
@@ -1456,7 +1462,7 @@
                else if(temp_t.value == "hlt" || temp_t.value == "end" || temp_t.value == "nop" 
                    || temp_t.value == "no" || temp_t.value == "endno")
                {
-                   level1();
+                   level1(_asm_strtop(temp_t.value));
                }     
                else if(temp_t.value == "iconst" || temp_t.value == "cconst" || temp_t.value == "fconst" || temp_t.value == "dconst"
                      || temp_t.value == "sconst" || temp_t.value == "lconst" || temp_t.value == "bconst")
@@ -1638,6 +1644,7 @@
            while( cglobals.block_stack!=block_begin)
            {
                temp_t = getNextToken(lex);
+               
                if(cglobals.eof)
                  break;
                if(temp_t.value == "}")
@@ -1703,6 +1710,7 @@
                    error(cglobals.lex);
                }
            }
+           
        }
        
        void parse_class_block(lexr::parser_helper& lex, int block_begin)
@@ -1712,6 +1720,7 @@
            while( cglobals.block_stack!=block_begin)
            {
                temp_t = getNextToken(lex);
+               
                if(cglobals.eof)
                  break;
                if(temp_t.value == "}")
@@ -1819,17 +1828,14 @@
                                error(cglobals.lex);
                            }
                           
-                          initargs.clear();
-                          level2(OP_MTHD, memoryhelper::methodhelper::address(functionname, "<null>", parentclass, 
-                                 functionargs)); 
-                          memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack, memoryhelper::methodhelper::address
-                                         (functionname, "<null>", parentclass, functionargs));
+                          long madr = memoryhelper::methodhelper::address
+                                         (functionname, "<null>", parentclass, functionargs);
+                          level2(OP_MTHD, madr); 
+                          memoryhelper::helper::parse_method_block(cglobals.lex, cglobals.block_stack, madr);
                           
                           level3(OP_ICONST, var_return, 0); 
                           level2(OP_PUSH, var_return); 
-                          level2(OP_RETURN, memoryhelper::methodhelper::address(functionname, "<null>", parentclass, 
-                                 functionargs)); 
-                          functionargs.clear();
+                          level2(OP_RETURN, madr); 
                        }
                    }
                    else {
@@ -2024,6 +2030,7 @@
             if(symbol == "dconst") return typedef_double;
             if(symbol == "fconst") return typedef_float;
             if(symbol == "str_const") return typedef_string;
+            if(symbol == "byte_const") return typedef_byte;
             else return -33;
        }
       
@@ -2042,22 +2049,68 @@
       
        int _asm_strtop(string op)
        {
-            if(op == "nop") return typedef_char;
-            if(op == "push") return typedef_byte;
-            if(op == "pop") return typedef_short;
-            if(op == "jmp") return typedef_int;
-            if(op == "mthd") return typedef_long;
-            if(op == "ret") return typedef_double;
-            if(op == "end") return typedef_float;
-            if(op == "call") return typedef_string;
-            if(op == "ieq") return typedef_string;
-            if(op == "ineq") return typedef_string;
-            if(op == "ilt") return typedef_string;
-            if(op == "ilnt") return typedef_string;
-            if(op == "ile") return typedef_string;
-            if(op == "inle") return typedef_string;
-            if(op == "igt") return typedef_string;
-            if(op == "string") return typedef_string;
+            if(op == "nop") return OP_NOP;
+            if(op == "push") return OP_PUSH;
+            if(op == "pop") return OP_POP;
+            if(op == "jmp") return OP_JMP;
+            if(op == "mthd") return OP_MTHD;
+            if(op == "ret") return OP_RETURN;
+            if(op == "end") return OP_END;
+            if(op == "call") return OP_CALL;
+            if(op == "ieq") return OP_ISEQ;
+            if(op == "ilt") return OP_ISLT;
+            if(op == "ile") return OP_ISLE;
+            if(op == "igt") return OP_ISGT;
+            if(op == "ige") return OP_ISGE;
+            if(op == "iconst") return OP_ICONST;
+            if(op == "bconst") return OP_BCONST;
+            if(op == "cconst") return OP_CCONST;
+            if(op == "fconst") return OP_FCONST;
+            if(op == "dconst") return OP_DCONST;
+            if(op == "sconst") return OP_SCONST;
+            if(op == "lconst") return OP_LCONST;
+            if(op == "byte_const") return OP_BYTE_CONST;
+            if(op == "str_const") return OP_STRCONST;
+            if(op == "add") return OP_ADD;
+            if(op == "sub") return OP_SUB;
+            if(op == "mult") return OP_MULT;
+            if(op == "div") return OP_DIV;
+            if(op == "mod") return OP_MOD;
+            if(op == "lsft") return OP_LSHFT;
+            if(op == "rsft") return OP_RSHFT;
+            if(op == "cin") return OP_CIN;
+            if(op == "cout") return OP_COUT;
+            if(op == "hlt") return OP_HLT;
+            if(op == "jif") return OP_JIF;
+            if(op == "jit") return OP_JIT;
+            if(op == "lbl") return OP_LBL;
+            if(op == "no") return OP_NO;
+            if(op == "endno") return OP_ENDNO;
+            if(op == "if") return OP_IF;
+            if(op == "or") return OP_OR;
+            if(op == "inc") return OP_INC;
+            if(op == "dec") return OP_DEC;
+            if(op == "and") return OP_AND;
+            if(op == "throw") return OP_THROW;
+            if(op == "at") return OP_AT;
+            if(op == "str_apnd") return OP_STR_APND;
+            if(op == "kill") return OP_KILL;
+            if(op == "delete") return OP_DELETE;
+            if(op == "aload") return OP_ALOAD;
+            if(op == "astore") return OP_ASTORE;
+            if(op == "assn") return OP_ASSN;
+            if(op == "i_aconst") return OP_IACONST;
+            if(op == "str_aconst") return OP_STR_ACONST;
+            if(op == "cast") return OP_CAST;
+            if(op == "byte_aconst") return OP_BYTE_ACONST;
+            if(op == "f_aconst") return OP_FACONST;
+            if(op == "d_aconst") return OP_DACONST;
+            if(op == "c_aconst") return OP_CACONST;
+            if(op == "b_aconst") return OP_BACONST;
+            if(op == "l_aconst") return OP_LACONST;
+            if(op == "s_aconst") return OP_SACONST;
+            if(op == "node") return OP_NODE;
+            if(op == "negate") return OP_NEG;
             else return -33;
        }
       
@@ -2117,7 +2170,7 @@ void parse_cmplr_items(stringstream &out_buf)
          unsigned long ins= cplrfreelist1.valueAt(0).item.byte1;
          cres.size_t.byte1++;
          
-       //  cout << "ins " << ins << endl;
+         //cout << "ins " << ins << endl;
          if(ins == OP_MTHD){
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 Method m= methods.valueAt(cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1);
@@ -2140,7 +2193,7 @@ void parse_cmplr_items(stringstream &out_buf)
               out_buf << (char) cplr_instr << ins << (char) 0 << m.eadr.byte1 << (char) 0;
          }
          else if(ins == OP_PUSH || ins == OP_POP || ins == OP_JMP || ins == OP_LBL || ins == OP_IF || ins == OP_INC || ins == OP_DEC
-                 || ins == OP_KILL || ins == OP_DELETE || ins == OP_DELETE_ARRY){ // for instructions that access memory
+                 || ins == OP_KILL || ins == OP_DELETE){ // for instructions that access memory
     //           cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << endl;
                cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0;
@@ -2155,16 +2208,9 @@ void parse_cmplr_items(stringstream &out_buf)
                 << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0;   
        //         cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << endl;
          }
-         else if(ins == OP_IADD || ins == OP_ISEQ || ins == OP_ISNEQ
-                   || ins == OP_ISLT || ins == OP_ISNLT || ins == OP_ISLE || ins == OP_ISNLE
-                   || ins == OP_ISGT || ins == OP_ISNGT || ins == OP_ISGE || ins == OP_ISNGE
-                   || ins == OP_ISUB || ins == OP_IMULT || ins == OP_IDIV || ins == OP_SADD
-                   || ins == OP_SSUB || ins == OP_SMULT || ins == OP_SDIV || ins == OP_DADD
-                   || ins == OP_DSUB || ins == OP_DMULT || ins == OP_DDIV || ins == OP_FADD
-                   || ins == OP_FSUB || ins == OP_FMULT || ins == OP_FDIV || ins == OP_CADD
-                   || ins == OP_CSUB || ins == OP_CMULT || ins == OP_CDIV || ins == OP_IMOD
-                   || ins == OP_CMOD || ins == OP_SMOD || ins == OP_OR || ins == OP_AND
-                   || ins == OP_AT || ins == OP_ALOAD || ins == OP_ASTORE)
+         else if(ins == OP_ADD || ins == OP_ISEQ || ins == OP_ISLT || ins == OP_ISLE || ins == OP_ISGT 
+                   || ins == OP_ISGE || ins == OP_SUB || ins == OP_MULT || ins == OP_DIV || ins == OP_MOD 
+                   || ins == OP_OR || ins == OP_AND || ins == OP_AT || ins == OP_ALOAD || ins == OP_ASTORE)
          {
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
@@ -2345,10 +2391,11 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
                            cglobals.classParent = objects.valueAt(memoryhelper::objecthelper::address
                                                        (classname, typedef_class, "<null>", "<null>"));
                           
+                          
                           memoryhelper::helper::parse_class_block(cglobals.lex, cglobals.block_stack);
-                           
                           memoryhelper::queuehelper::classhelper::insert(cglobals.classParent.size_t.byte1, classname, 
                                       typedef_class, "<null>", "<null>");
+                                      
                           memoryhelper::queuehelper::classhelper::release();
                        }
                        else {
