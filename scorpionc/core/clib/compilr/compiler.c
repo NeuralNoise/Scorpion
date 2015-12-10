@@ -108,6 +108,12 @@
      cglobals.out.str("");
  }
  
+ void warning(lexr::parser_helper &lex)
+ {
+     cout << cglobals.file << ":" << lex.lexer().line_t << "  warning: " << cglobals.out.str() << endl;
+     cglobals.out.str("");
+ }
+ 
  lexr::token getNextToken(lexr::parser_helper &lexer){ 
      if(lexer.lexer().token_sz1<lexer.lexer().size()){
        
@@ -866,9 +872,10 @@
        {
            long adr;
            int type;
+           string symbol;
        };
         
-       wordmap parse_complex_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, bool asterisk = false)
+       wordmap parse_complex_dot_notation(lexr::parser_helper& lex, bool dotfirst, ListAdapter<std::string> breakers, bool asterisk = false)
        {
           lexr::token temp_t;
           bool needsWord=false;
@@ -879,6 +886,7 @@
           for( ;; )
           {
               temp_t = getNextToken(lex);
+              cout << "text " << temp_t.value << endl;
               if(temp_t.value == ".")
               {
                  if(asterisk_flag==5)
@@ -893,7 +901,7 @@
                   needsWord = true;
                   dotfirst = false;
               }
-              else if(temp_t.type == temp_t.e_symbol)
+              else if(temp_t.type == temp_t.e_symbol && (_asm_strtop(temp_t.value) == -33 && !reserved(temp_t.value)))
               {
                  if(asterisk_flag==5)
                    asterisk_flag++;
@@ -925,11 +933,11 @@
                  mapsz++;
                  tmplist.add( "::" );
               }
-              else if(temp_t.value == breaker)
+              else if(breakers.contains(temp_t.value))
               {
                  if(needsWord)
                  {
-                    cglobals.out << "Expected symbol before '" << breaker << "'.";
+                    cglobals.out << "Expected symbol before '" << temp_t.value << "'.";
                     error(cglobals.lex);
                  }
                  
@@ -952,8 +960,27 @@
                  cglobals.out << "Unexpected end of file.";
                  error(cglobals.lex);
                  cglobals.eof=1;
+                 break;
               }
               else {
+				 if(breakers.size() ==0)
+				 {
+					 if(needsWord)
+					 {
+						cglobals.out << "Expected symbol before '" << temp_t.value << "'.";
+						error(cglobals.lex);
+					 }
+					 
+					 if(asterisk_flag > 5)
+					 {
+						cglobals.out << "Expected ';' immediatley after '*'.";
+						error(cglobals.lex);
+					 }
+					 
+					mapsz++;
+					lex.lexer().token_sz1--;
+					break;
+			     }
                  needsWord = true;
                  cglobals.out << "Unexpected symbol '" << temp_t.value << "', expecting '.' or ';'.";
                  error(cglobals.lex);
@@ -979,11 +1006,12 @@
        {
            objmap omap;
            stringstream symbol;
-           omap.adr = 0;
+           omap.adr = -1;
            omap.type = typedef_unknown;
-                       
-           if(map.j == 0)
-               return omap;  
+           ListAdapter<Object> empty_args;
+           Object o;
+           empty_args.add(o);
+           empty_args.pushback();
            
            if(map.j == 1)
            {
@@ -998,6 +1026,13 @@
                        omap.type = objects.valueAt(objecthelper::address(map.adapters->valueAt(0), typedef_unknown, "<null>", 
                                      getParentClass())).type;
                    }
+                   else if(methodhelper::find(map.adapters->valueAt(0), "<null>", 
+                         getParentClass(), empty_args))
+                   {
+                       omap.adr = methodhelper::address(map.adapters->valueAt(0), "<null>", 
+                                     getParentClass(), empty_args, false);
+                       omap.type = typedef_function;
+                   }
                    else
                    {
                        if(!intro)
@@ -1010,6 +1045,8 @@
                    }
                }
            }
+           
+           omap.symbol = symbol.str();
 		   return omap;
        }
        
@@ -1558,24 +1595,39 @@
                        {
                            level3(OP_DCONST, var_dummy_data, atof(temp_t.value.c_str()));
                            outstream << "$[" << cast << var_dummy_data << "|";
-                           cout << "cast " << cast << endl;
                            continue;
                        }
+                       else lex.lexer().token_sz1--;
                    }
+
+				   ListAdapter<std::string> breakers;
+				   breakers.add("");
+				   breakers.pushback();
+                   objmap map = parse_wordmap(parse_complex_dot_notation(lex, false, breakers));
                    
-                   if(temp_t.value != "{")
+                   if(map.adr == -1)
                    {
-                       if(!intro)
-    				   {
-    					   intro = true;
-    					   cout << "Assembler messages:\n";
-    				   }
-                       cglobals.out << "Expected '{' before symbol '" << temp_t.value << "'.";
-                       error(cglobals.lex);
-                       lex.lexer().token_sz1--;
-                   }
-                   
-                   objmap map = parse_wordmap(parse_complex_dot_notation(lex, false, "}"));
+					   if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected qualified symbol before '" << temp_t.value << "'.";
+					   error(cglobals.lex);   
+			       }
+			       else 
+			       {
+					  if(map.type == typedef_function)
+					  {
+						   if(!intro)
+						   {
+							   intro = true;
+							   cout << "Assembler messages:\n";
+						   }
+						   cglobals.out << "Cannot explicitly output function '" << map.symbol << "'.";
+						   error(cglobals.lex);
+					  }  
+				   }
                    outstream << "$[" << cast << map.adr << "|";
                }
                else if(temp_t.type == temp_t.e_symbol)
@@ -1663,7 +1715,7 @@
                    level1(_asm_strtop(temp_t.value));
                }     
                else if(temp_t.value == "iconst" || temp_t.value == "cconst" || temp_t.value == "fconst" || temp_t.value == "dconst"
-                     || temp_t.value == "sconst" || temp_t.value == "lconst" || temp_t.value == "bconst")
+                     || temp_t.value == "sconst" || temp_t.value == "lconst" || temp_t.value == "bconst" || temp_t.value == "byte_const")
                {
                    string type = temp_t.value;
                    cglobals.ignorestrays = true;
@@ -1716,30 +1768,134 @@
                    cglobals.ignorestrays = true;
                    temp_t = getNextToken(lex);
                    cglobals.ignorestrays = false;
+                   bool charr = false;
+                   
                    if(temp_t.value != "#")
 				   {
-				       if(!intro)
+					   if(type == "cconst" && temp_t.type == temp_t.e_string)
+					   { charr = true; }
+					   else
 					   {
-						   intro = true;
-						   cout << "Assembler messages:\n";
+						  if(!intro)
+						   {
+							   intro = true;
+							   cout << "Assembler messages:\n";
+						   }
+						   cglobals.out << "Expected '#' prefix before symbol '" << temp_t.value << "'.";
+						   error(cglobals.lex); 
 					   }
-					   cglobals.out << "Expected '#' prefix before symbol '" << temp_t.value << "'.";
-					   error(cglobals.lex);
 				   }
 				   else temp_t = getNextToken(lex);
 				   
 				   if(temp_t.type != temp_t.e_number)
 				   {
-				       if(!intro)
+					   if(temp_t.type == temp_t.e_string && type == "cconst" && charr)
+					   {
+						   if(temp_t.value.size() == 0)
+						   {
+							    if(!intro)
+							    {
+								   intro = true;
+								   cout << "Assembler messages:\n";
+							    }
+							    cglobals.out << "Char literal is empty.";
+							    error(cglobals.lex);
+						   }
+						   if(temp_t.value.size() == 1)
+						   {
+						      stringstream ss;
+						      ss << (int) temp_t.value.at(0);
+						      temp_t.value = ss.str();
+						   }
+						   else if(temp_t.value.size() == 2)
+						   {
+							   char prefix = temp_t.value.at(0), tok = temp_t.value.at(1);
+							   if(prefix != '$')
+							   {
+								   if(!intro)
+								   {
+									   intro = true;
+									   cout << "Assembler messages:\n";
+								   }
+								   cglobals.out << "Expected '$' prefix before '" << prefix << "' in char literal.";
+								   error(cglobals.lex);
+							   }
+							   
+							   if(tok != 'n' && tok && tok != '$' && tok != 't'
+							      && tok != 'b' && tok != 'f' && tok != 'r' && tok != '"'
+							      && tok != '\'')
+							   {
+								   if(!intro)
+								   {
+									   intro = true;
+									   cout << "Assembler messages:\n";
+								   }
+								   cglobals.out << "Symbol '" << tok << "' in char literal is not an escape sequence.";
+								   warning(cglobals.lex);
+							   }
+							   stringstream ss;
+							   ss << (int) tok;
+							   temp_t.value = ss.str();
+						   }
+						   else
+						   {
+							   if(!intro)
+							   {
+								   intro = true;
+								   cout << "Assembler messages:\n";
+							   }
+							   cglobals.out << "Symbol '" << temp_t.value << "' is not a char literal.";
+							   error(cglobals.lex);
+						   }
+					   }
+					   else 
+					   {
+						   if(!intro)
+						   {
+							   intro = true;
+							   cout << "Assembler messages:\n";
+						   }
+						   cglobals.out << "Expected numeric literal before symbol '" << temp_t.value << "'.";
+						   error(cglobals.lex);
+					   }
+				   }
+				   level3(ttop(_asm_strttot(type)), objecthelper::address(varname, _asm_strttot(type),
+				           "<null>", classparent, false), atof(temp_t.value.c_str()));
+			   }
+               else if(temp_t.value == "push" || temp_t.value == "pop" || temp_t.value == "kill" || temp_t.value == "delete"
+                      || temp_t.value == "inc" || temp_t.value == "dec" || temp_t.value == "ret")
+               {
+				   ListAdapter<std::string> breakers;
+				   breakers.add("");
+				   breakers.pushback();
+                   objmap map = parse_wordmap(parse_complex_dot_notation(lex, false, breakers));
+                   
+                   if(map.adr == -1)
+                   {
+					   if(!intro)
 					   {
 						   intro = true;
 						   cout << "Assembler messages:\n";
 					   }
-					   cglobals.out << "Expected numeric literal before symbol '" << temp_t.value << "'.";
-					   error(cglobals.lex);
+					   cglobals.out << "Expected qualified symbol before '" << temp_t.value << "'.";
+					   error(cglobals.lex);   
+			       }
+			       
+			       if(temp_t.value != "ret")
+			       {
+					  if(map.type == typedef_function)
+					  {
+						   if(!intro)
+						   {
+							   intro = true;
+							   cout << "Assembler messages:\n";
+						   }
+						   cglobals.out << "Cannot explicitly output function '" << map.symbol << "'.";
+						   error(cglobals.lex);
+					  }   
 				   }
-				   level3(ttop(_asm_strttot(type)), objecthelper::address(varname, _asm_strttot(type),
-				           "<null>", classparent, false), atof(temp_t.value.c_str()));
+			       
+			       level2(_asm_strtop(temp_t.value), map.adr);
 			   }
                else {
                    if(!intro)
@@ -2203,7 +2359,7 @@
            }
        }
        
-       bool reserved(std::string symbol)
+       bool  reserved(std::string symbol)
        {
           return (symbol == "def" || symbol == "class" || symbol == "native" 
             || symbol == "extern" || symbol == "if" || symbol == "do" || symbol == "while"
@@ -2329,7 +2485,7 @@
             if(op == "s_aconst") return OP_SACONST;
             if(op == "node") return OP_NODE;
             if(op == "negate") return OP_NEG;
-            else return -33;
+            return -33;
        }
       
        bool accessspecifier(std::string symbol)

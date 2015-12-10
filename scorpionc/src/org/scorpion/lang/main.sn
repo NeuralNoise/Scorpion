@@ -12,10 +12,15 @@ public class Starter
    {
       asm("
           iconst @x #5
-          cout ('Hello, World!$n' << (byte) {x} << ' ' << 67 << (char) 66 << '$n') 
-          iconst @foo #5
+          cout ('Hello, World!$n' << (byte) x << ' ' << 67 << (char) 66 << '$n') 
+          iconst @foo #6
+          cconst @c1 #8
+          cconst @a2 '$a'
           //hlt 
-          
+          push x
+          pop x
+          inc x
+          cout ('x is ' << x << '$n')
           ");
    }
    

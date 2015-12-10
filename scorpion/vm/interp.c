@@ -362,8 +362,8 @@ void Scorpion_VMExecute(){
                if(gSvm.vm.vStaticRegs[VREG_SP] < 0)
                    Exception("Failure to pull data from empty stack.", "StackUnderflowException");
                 
-               svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], 
-                      gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]--]);
+               gSvm.env->getBitmap().objs[(long) op_ags.byte1] =
+                      gSvm.env->getBitmap().objs[gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]--]];
           goto exe;
           case OP_KILL:
                {
