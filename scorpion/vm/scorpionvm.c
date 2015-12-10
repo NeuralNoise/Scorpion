@@ -355,7 +355,7 @@ int performSecuritySetup(){
 
 int vmStatus = 0;
 
-void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char** args, int ags_t)
+void Init_CreateScorpionVM(ScorpionVmState *vm, ScorpionEnv* env, XSO* f, const char** args, int ags_t)
 {
     /*
     * Upon Creation of a Scorpion Virtual Machine 
@@ -448,8 +448,9 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
      
      int status;
      gSvm.mtds = new (nothrow) Method[f->headerInf.method_size.byte1];
+     vm = new (nothrow) ScorpionVmState[1];
      
-     if(gSvm.mtds == nullptr)
+     if(gSvm.mtds == nullptr || vm == nullptr)
      {
          status = -1;
          goto err;
@@ -468,23 +469,15 @@ void Init_CreateScorpionVM(ScorpionVM vm, ScorpionEnv* env, XSO* f, const char**
       }
     
      gSvm.env = env;
-
-    vm.flags = new long[VM_FLAG_SIZE];
-    if(vm.setRegs(5) != 0 || vm.flags == nullptr){
-         alog.setClass("ScorpionVM");
-         alog.ALOGI("The Scorpion Virtual Machine was not created successfully.");
-        vmStatus = -1;
-        return;
-    }
     
     // we temporarilly do this to prevent a crash right before close
-    gSvm.vm = vm;
+    gSvm.vmstate = vm;
+    vm = NULL;
     
-    gSvm.vm.vStaticRegs[VREG_SP] = -1; // we start the stack ptr below the stack
-    gSvm.vm.flags[VFLAG_MTHDC] = 0;
-    gSvm.vm.flags[VFLAG_IFC] = 0;
-    gSvm.vm.flags[VFLAG_IF_IGNORE] = 0;
-    gSvm.vm.flags[VFLAG_NO] = 0;
+    gSvm.vmstate->sp = -1; // we start the stack ptr below the stack
+    gSvm.vmstate->methodcount = 0;
+    gSvm.vmstate->ifcount = 0;
+    gSvm.vmstate->status = vm_status_normal; // normal status
     
     performSecuritySetup();
     gSvm.appolicy.preparePolicy();
@@ -523,10 +516,10 @@ int Init_StartScorpionVM()
     *
     * Initally this is set to be printed (this can be shut off)
     */
-    gSvm.vm.vStaticRegs[VREG_EXC] = 1;   // TODO: Update Dev script to 'showExitVal(false)' option for disabling exit value
+    gSvm.vmstate->exc = 1;   // TODO: Update Dev script to 'showExitVal(false)' option for disabling exit value
    
     // TODO: push arguments on the stack to be processed by main method
-      if(0 >= gSvm.methodc)
+      if(0 == gSvm.methodc)
            Exception("coold not locate main method.", "MethodNotFoundException");
       
       stringstream main;
@@ -534,7 +527,7 @@ int Init_StartScorpionVM()
       Exception::trace.addproto(main.str(), gSvm.mtds[0].clazz, false);
       
       includep=false;
-      status = Scorpion_InvokeMain();
+      status = Scorpion_InvokeMain(gSvm.vmstate);
     
     if(status != 0){
         alog.ALOGD("failed to invoke main() method.");
@@ -542,7 +535,7 @@ int Init_StartScorpionVM()
     }
 
     // TODO: Set the program args in ArrayObject   
-    Scorpion_VMExecute();
+    Scorpion_VMExecute(gSvm.vmstate);
    return 0;
 }
 
@@ -555,7 +548,7 @@ void Init_ShutdownScorpionVM()
     * therfore we must allow the virtual machine to be forceably be shut down
     * 
     */
-     if (gSvm.vm.status != 0 || gSvm.ForceShutdown) {
+     if (gSvm.vmstate->status == vm_status_normal || gSvm.ForceShutdown) {
         /*
          * This allows join() and isAlive() on the main thread to work
          * correctly, and also provides uncaught exception handling.
@@ -565,12 +558,12 @@ void Init_ShutdownScorpionVM()
     //        result = 1;
      //   }
 
-    //    if ((*vm)->DestroyJavaVM(vm) != 0)
-    //        fprintf(stderr, "Warning: Dalvik VM did not shut down cleanly\n");
+        if (gSvm.vmstate->DestroyScorpionVM(gSvm.vmstate, 1) != 0)
+            fprintf(stderr, "Warning: Scorpion VM did not shut down cleanly\n");
     
       if(gSvm.env != nullptr){ // shut down all block table structures 
-         if(gSvm.vm.vStaticRegs != nullptr && (gSvm.vm.vStaticRegs[VREG_SP] >= 0)){
-             unsigned long address = gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]--]; // simple stack pop
+         if(gSvm.vmstate != NULL && (gSvm.vmstate->sp >= 0)){
+             unsigned long address = gSvm.env->getBitmap().stack->plong[gSvm.vmstate->sp--]; // simple stack pop
              if(isgeneric(__typedef(gSvm.env->getBitmap().objs[address])))
                 gSvm.exitval = (slong) svmGetGenericValue(gSvm.env->getBitmap().objs[address]);
          }
@@ -579,23 +572,25 @@ void Init_ShutdownScorpionVM()
         svmBitmapMemoryShutdown(gSvm.env->bitmap); 
       }
       
-      /*
-      * Here we shut down major Global variables
-      */
-      if(gSvm.bytestream.size() != 0){
-        gSvm.bytestream.clear();
-        gSvm.vm.status = 0;
-      }
-      
     }
     
-    if(!gSvm.ForceShutdown && !gSvm.ethrow && gSvm.vm.vStaticRegs[VREG_EXC] == 1){
+    if( gSvm.vmstate != NULL && gSvm.vmstate->status != 0 && !gSvm.ForceShutdown )
+    {
+        gSvm.vmstate->status = 0;
+        stringstream ss;
+        ss << "The Scorpion virtual machine is attempting to shutdown with abnormal status code (" << gSvm.vmstate->status << ").";
+        alog.ALOGV(ss.str());
+        segfault();
+    }
+    
+    if(!gSvm.ForceShutdown && !gSvm.ethrow && gSvm.vmstate->exc == 1){
              
       if(gSvm.exitval == 0)
         cout << "program exited with exit code: 0 (normal program termination)" << endl;
       else
         cout << "program exited with exit code: " << gSvm.exitval << endl;
     }
+    else gSvm.exitval=0;
     
     alog.ALOGV("--- VM is down, process exiting\n");
     exit(gSvm.exitval);

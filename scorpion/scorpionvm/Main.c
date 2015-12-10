@@ -95,7 +95,7 @@ SvmGlobals gSvm;
 * System log dest: /us/share/scorpion/vm/log/out.log
 */
 int main(int argc, const char **argv){
-    ScorpionVM vm;
+    ScorpionVmState *vmstate = NULL;
     ScorpionEnv* p_env = NULL;
     XSO* x = NULL;
     int optionCount, curOpt, i, argIdx;
@@ -173,7 +173,7 @@ int main(int argc, const char **argv){
     /*
      * Start VM.  The current thread becomes the main thread of the VM.
      */
-     Init_CreateScorpionVM(vm, p_env, x, argv, argc);
+     Init_CreateScorpionVM(vmstate, p_env, x, argv, argc);
 
 
     if(vmStatus != 0) { // have method return ScorpionEnv
@@ -181,7 +181,7 @@ int main(int argc, const char **argv){
         goto bail;
     }
 
-    gSvm.vm.status = 1; // Virtual machine has been created
+    gSvm.vmstate->status = vm_status_normal; // Virtual machine has been created
     x = NULL;
 
     /* We Skip creating the Main Thread */
@@ -200,7 +200,7 @@ int main(int argc, const char **argv){
     */
     bail:
         /*printf("Shutting down Scorpion VM\n");*/
-     if (gSvm.vm.status != 0) 
+     if (gSvm.vmstate->status != vm_status_normal) 
         Init_ShutdownScorpionVM();
     
       alog.ALOGV("--- VM is down, process exiting.");

@@ -585,6 +585,11 @@ namespace lexr
             ++s_itr_;
          }
 
+         if(*s_itr_ == '\n'){
+               t.set_line();
+               token_list_.push_back(t);
+         }
+
          if (!is_end(s_itr_))
          {
             s_itr_ += mode;

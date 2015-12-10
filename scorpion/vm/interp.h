@@ -38,6 +38,7 @@
 #define SCORPION_INTERPRETER
 
 #include "../clib/u1.h"
+#include "scorpionvm.h"
 #include <string>
 using namespace std;
 
@@ -47,7 +48,7 @@ using namespace std;
 *
 * This function will simply just set up the main metho to be executed
 */
-int Scorpion_InvokeMain();
+int Scorpion_InvokeMain(ScorpionVmState* vm);
 
 /*
 * Invoke a fuction based on its address
@@ -58,12 +59,12 @@ int Scorpion_InvokeMain();
 * If user attempts to call a fuction that dosent exist,
 * throw a MethodNotFoundException 
 */
-int Scorpion_InvokeMethod(long ptrValue);
+int Scorpion_InvokeMethod(long ptrValue, ScorpionVmState* vm);
 
 /*
 * This method speaks for itsself, this method represents 
 * the entimre runtime system for the Scorpion Virtual Machine.
 */
-void Scorpion_VMExecute();
+ void Scorpion_VMExecute(ScorpionVmState* vmstate);
 
 #endif // SCORPION_INTERPRETER

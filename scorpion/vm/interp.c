@@ -27,11 +27,12 @@ u4_d op_ags;
 
 void _cout_(string output);
 
-int Scorpion_InvokeMain(){
-    return Scorpion_InvokeMethod(svm_main);
+int Scorpion_InvokeMain(ScorpionVmState* vm){
+    return Scorpion_InvokeMethod(svm_main, vm);
 }
 
-int Scorpion_InvokeMethod(long ptrValue){
+int Scorpion_InvokeMethod(long ptrValue, ScorpionVmState* vm){
+    
     if(ptrValue >= gSvm.methodc){
        stringstream ss;
        ss << "pointer to method: " << ptrValue << " is out of allocated method range.";
@@ -48,8 +49,8 @@ int Scorpion_InvokeMethod(long ptrValue){
     else
       includep = true;
     
-    gSvm.mtds[ptrValue].ref.byte1 = gSvm.vm.vStaticRegs[VREG_PC];
-    gSvm.vm.vStaticRegs[VREG_PC] = jmpLocation(gSvm.mtds[ptrValue]);
+    gSvm.mtds[ptrValue].ref.byte1 = vm->k;
+    vm->k = jmpLocation(gSvm.mtds[ptrValue]);
     
      return 0;
 }
@@ -59,18 +60,20 @@ void return_main() // this is simple lol
    Init_ShutdownScorpionVM();
 }
  
-void return_method(long ptrValue){
+void return_method(long ptrValue, ScorpionVmState* vm){
     if(ptrValue >= gSvm.methodc){
        stringstream ss;
        ss << "pointer to method: " << ptrValue << " is out of allocated method range.";
        Exception(ss.str(), "MethodNotFoundException");
     }
     
-    gSvm.vm.vStaticRegs[VREG_PC] = returnLocation(gSvm.mtds[ptrValue]);
+    
+    vm->k = returnLocation(gSvm.mtds[ptrValue]);
 }
 
-int instrSize(int i, unsigned long k)
+int instrSize(ScorpionVmState* vm)
 {
+    unsigned long i = vm->k;
     if(i == OP_NOP || i == OP_END || i == OP_HLT || i == OP_NO || i == OP_ENDNO)
          return 0;
      else if(i == OP_RETURN || i == OP_PUSH || i == OP_POP || i == OP_JMP || i == OP_CALL
@@ -90,15 +93,15 @@ int instrSize(int i, unsigned long k)
        || i == OP_OR || i == OP_AND || i == OP_AT || i == OP_ALOAD || i == OP_ASTORE) //
          return 3;
      else if(i == OP_COUT)
-         return gSvm.bytestream.valueAt(k++);
+         return vm->bytestream.valueAt(vm->k++);
      else if(i == OP_STRCONST){ // string 13 'Hello, World!'
-         k++;
-         return gSvm.bytestream.valueAt(k++);
+         vm->k++;
+         return vm->bytestream.valueAt(vm->k++);
      }
 }
 
-#define GETARG_SIZE(i,k)\
-         instrSize(i,k);
+#define GETARG_SIZE(vmstate)\
+         instrSize(vmstate);
 
 u4_d arguments; // our dedicated instruction arguments
 int _getch_() {
@@ -223,25 +226,25 @@ void _cout_(string output)
   }
 }
 
-string getStr(unsigned long &k, unsigned long m, long len)
+string getStr(ScorpionVmState* vm, long len)
 {
      char c;
      stringstream ss;
      for(int i = 0; i < len; i++){
-         c = (char) gSvm.bytestream.valueAt(k++);
+         c = (char) vm->bytestream.valueAt(vm->k++);
          ss << "" << c;
      }
      return ss.str();
 }
 
-void Protect(long k, long m)
+void Protect(ScorpionVmState* vm)
 {
-    if(k>=m)
+    if(vm->k>=vm->m)
       alog.ALOGV("Attempting to close program unexpectingly.");
-    else if(k>sMaxOpcodeLimit || k<0)
+    else if(vm->k>sMaxOpcodeLimit || vm->k<0)
     {
         stringstream ss;
-        ss << "Attempting to execute invalid instruction (" << k << ").";
+        ss << "Attempting to execute invalid instruction (" << vm->k << ").";
         alog.ALOGV(ss.str());
     }
     
@@ -252,21 +255,21 @@ void Protect(long k, long m)
 // TODO: Finish implementing the rest of the instructions
 // TODO: Have interpreter utilize Scorpion primitive types during data transfer
 // TODO: implement GC check in instruction checkGC(gSvm.env->bitmap);      
-void Scorpion_VMExecute(){
+void Scorpion_VMExecute(ScorpionVmState* vmstate){
   alog.ALOGD("running application.");
-  
-  unsigned long i, k=gSvm.vm.vStaticRegs[VREG_PC], m=gSvm.bytestream.size();
-  exe:
-    if(k>=m||k<0)
-      Protect(k,m);
-      
-    i = gSvm.bytestream.valueAt(k++);
+  vmstate->methodcount = 0;
     
-    if(i>sMaxOpcodeLimit) Protect(i, m);
-    //cout << "i=" << i << endl;
-    if((gSvm.vm.flags[VFLAG_NO] == 1 && i != OP_ENDNO) || 
-       (gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && !(i == OP_END || i == OP_IF))){ // do not run
-        k+=GETARG_SIZE(i,k);
+  exe:
+    if(vmstate->k>=vmstate->m||vmstate->k<0)
+      Protect(vmstate);
+      
+    vmstate->i = vmstate->bytestream.valueAt(vmstate->k++);
+    
+    if(vmstate->i>sMaxOpcodeLimit) Protect(vmstate);
+   // cout << "i=" << vmstate->i << endl;
+    if((vmstate->status == vm_status_no_run && vmstate->i != OP_ENDNO) || 
+       (vmstate->status == vm_status_if_ignore && !(vmstate->i == OP_END || vmstate->i == OP_IF))){ // do not run
+        vmstate->k+=GETARG_SIZE(vmstate);
         goto exe;
     }
         
@@ -274,37 +277,42 @@ void Scorpion_VMExecute(){
    // if(gSvm.Debug)
       // do debug stuff
 
-       switch( i ) {
+       switch( vmstate->i ) {
           case OP_NOP: goto exe; // do nothing
           case OP_END: 
-              if(gSvm.vm.flags[VFLAG_IFC] > 0)
-                  gSvm.vm.flags[VFLAG_IFC]--;
+              if(vmstate->ifcount > 0)
+                  vmstate->ifcount--;
               
-              if(gSvm.vm.flags[VFLAG_IF_IGNORE] == 1 && (gSvm.vm.flags[VFLAG_IFC] == gSvm.vm.flags[VFLAG_IF_DEPTH])){
-                 gSvm.vm.flags[VFLAG_IF_IGNORE] = 0;
-                 gSvm.vm.flags[VFLAG_IF_DEPTH] = 0;
+              if(vmstate->status == vm_status_if_ignore && (vmstate->ifcount == vmstate->ifdepth)){
+                 vmstate->status = vm_status_normal;
+                 vmstate->ifdepth = 0;
               }
                  
           goto exe;
           case OP_NO:
-               gSvm.vm.flags[VFLAG_NO] = 1; goto exe;
+               vmstate->status = vm_status_no_run; goto exe;
           case OP_ENDNO:
-               gSvm.vm.flags[VFLAG_NO] = 0; goto exe;
+               vmstate->status = vm_status_normal; goto exe;
           case OP_HLT:
+               gSvm.vmstate = vmstate;
                Init_ShutdownScorpionVM();
+               goto exe;
        }
-       op_ags.byte1=gSvm.bytestream.valueAt(k++);
+       op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
     
-       switch( i ) {
+       switch( vmstate->i ) {
           case OP_RETURN:
-               --gSvm.vm.flags[VFLAG_MTHDC];
-               if(((long) op_ags.byte1 == 0) && (gSvm.vm.flags[VFLAG_MTHDC] <= 0))
+               --vmstate->methodcount;
+               if(((long) op_ags.byte1 == 0) && (vmstate->methodcount <= 0))
+               {
+                  gSvm.vmstate = vmstate;
                   return_main();
+               }
                else
-                 return_method((long) op_ags.byte1);
+                 return_method((long) op_ags.byte1, vmstate);
           goto exe;
           case OP_COUT: // output data to the console;
-              _cout_(getStr(k,m,op_ags.byte1));
+              _cout_(getStr(vmstate, op_ags.byte1));
           goto exe;
           case OP_INC:
                svmIncGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
@@ -338,32 +346,32 @@ void Scorpion_VMExecute(){
                *
                * we only set the VFLAG_IF_DEPTH flag if VFLAG_IF_IGNORE evaluates to false.
                */
-                if((gSvm.vm.flags[VFLAG_IF_IGNORE] == 0) && 
+                if((vmstate->status == vm_status_normal) && 
                  (svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]) == 0))
-                       gSvm.vm.flags[VFLAG_IF_IGNORE] = 1;
+                       vmstate->status = vm_status_if_ignore;
                        
-               if(gSvm.vm.flags[VFLAG_IF_IGNORE] == 1)
-                  gSvm.vm.flags[VFLAG_IF_DEPTH] = gSvm.vm.flags[VFLAG_IFC];
+               if(vmstate->status == vm_status_if_ignore)
+                  vmstate->ifdepth = vmstate->ifcount;
                   
-               gSvm.vm.flags[VFLAG_IFC]++;
+               vmstate->ifcount++;
                
           goto exe;
           case OP_PUSH:
             {
                long stacksz = gSvm.env->getBitmap().stack->length;
       
-               if(++gSvm.vm.vStaticRegs[VREG_SP] >= stacksz) 
+               if(++vmstate->sp >= stacksz) 
                  Exception("The stack has overflowed with too much data.", "StackOverfowlException");
-               //cout << "push @" << gSvm.vm.vStaticRegs[VREG_SP] << " ->" << (long) op_ags.byte1 << endl;
-               gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]] = (long) op_ags.byte1;
+               //cout << "push @" << vmstate->sp << " ->" << (long) op_ags.byte1 << endl;
+               gSvm.env->getBitmap().stack->plong[vmstate->sp] = (long) op_ags.byte1;
             }
           goto exe;
           case OP_POP:
-               if(gSvm.vm.vStaticRegs[VREG_SP] < 0)
+               if(vmstate->sp < 0)
                    Exception("Failure to pull data from empty stack.", "StackUnderflowException");
                 
                gSvm.env->getBitmap().objs[(long) op_ags.byte1] =
-                      gSvm.env->getBitmap().objs[gSvm.env->getBitmap().stack->plong[gSvm.vm.vStaticRegs[VREG_SP]--]];
+                      gSvm.env->getBitmap().objs[gSvm.env->getBitmap().stack->plong[vmstate->sp--]];
           goto exe;
           case OP_KILL:
                {
@@ -375,12 +383,12 @@ void Scorpion_VMExecute(){
                }
           goto exe;
           case OP_JMP:
-               k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
+               vmstate->k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
           goto exe;
           case OP_CALL:
                {
-                 gSvm.vm.flags[VFLAG_MTHDC]++;
-                 Scorpion_InvokeMethod((long) op_ags.byte1);
+                 vmstate->methodcount++;
+                 Scorpion_InvokeMethod((long) op_ags.byte1, vmstate);
                }
           goto exe;
           case OP_MTHD: goto exe; // this instruction does nothing, it was executed during vm init
@@ -392,9 +400,9 @@ void Scorpion_VMExecute(){
                  freeObj(gSvm.env->getBitmap().objs[(long) op_ags.byte1]); // arrays and generic objects can be freed the same way
           goto exe;
        } 
-       op_ags.byte2=gSvm.bytestream.valueAt(k++);
+       op_ags.byte2=vmstate->bytestream.valueAt(vmstate->k++);
        
-       switch( i ) {
+       switch( vmstate->i ) {
           case OP_ICONST:
                {
                     //cout << "iconst @" << (long) op_ags.byte1 << " ->" << (long) op_ags.byte2 << endl;
@@ -402,7 +410,7 @@ void Scorpion_VMExecute(){
                     sz.byte1 = 1;
                     SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) op_ags.byte1], TYPEDEF_GENERIC_INT, sz);
                     gSvm.env->getBitmap().objs[(long) op_ags.byte1].obj->pint[default_loc] = (sint) op_ags.byte2;
-                     //cout << "i is " << k << endl;
+                     //cout << "i is " << vmstate->k << endl;
                }
           goto exe;
           case OP_STRCONST:
@@ -410,7 +418,7 @@ void Scorpion_VMExecute(){
                  u1 sz;
                  sz.byte1 = 1;
                  SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) op_ags.byte1], TYPEDEF_STRING, sz);
-                 assign(gSvm.env->getBitmap().objs[(long) op_ags.byte1], getStr(k,m,op_ags.byte2));
+                 assign(gSvm.env->getBitmap().objs[(long) op_ags.byte1], getStr(vmstate,op_ags.byte2));
                }
           goto exe;
           case OP_DCONST:
@@ -544,11 +552,11 @@ void Scorpion_VMExecute(){
           goto exe;
           case OP_JIT:
                if((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2]) == 1)
-                  k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
+                  vmstate->k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
           goto exe;
           case OP_JIF:
                if((bool) svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2]) == 0)
-                  k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
+                  vmstate->k =  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1]);
           goto exe;
           case OP_RSHFT:
                {
@@ -588,9 +596,9 @@ void Scorpion_VMExecute(){
                  gSvm.env->getBitmap().objs[(long) op_ags.byte1] = gSvm.env->getBitmap().objs[(long) op_ags.byte2];
           goto exe;
        }
-       op_ags.byte3=gSvm.bytestream.valueAt(k++);
+       op_ags.byte3=vmstate->bytestream.valueAt(vmstate->k++);
     
-       switch( i ) {
+       switch( vmstate->i ) {
           case OP_AT:
                {
                    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1], 

@@ -15,6 +15,7 @@ class FileStream {
         static bool endswith(string ext, string end);
         static int out(const char *file, string data);
         static bool empty(const char *file);
+        static bool txtempty(string data);
 };
 
 

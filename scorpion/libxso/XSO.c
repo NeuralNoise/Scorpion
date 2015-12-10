@@ -338,7 +338,7 @@ static int LastChar = ' ';
      }
     
      streamcount++;
-     gSvm.bytestream.add(byte);
+     gSvm.vmstate->bytestream.add(byte);
  }
  
  void svmInitMethod(long pos, string name, long jmp_adr){

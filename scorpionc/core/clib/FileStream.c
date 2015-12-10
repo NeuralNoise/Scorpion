@@ -36,6 +36,17 @@ bool FileStream::empty(const char *file)
     return true;
 }
 
+bool FileStream::txtempty(string data)
+{
+    for(long i = 0; i < data.size(); i++)
+    {
+        if(!is_whitespace(data.at(i)))
+          return false;
+    }
+    
+    return true;
+}
+
 int FileStream::out(const char *file, string data)
 {
     try {

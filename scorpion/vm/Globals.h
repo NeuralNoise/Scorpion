@@ -68,11 +68,10 @@ class SecurityManager;
   
    int envptr;    // the pointer to which environment we are on
    ScorpionEnv* env;
-   ScorpionVM vm;  // Our dear virtual machine
+   ScorpionVmState *vmstate;  // the main virtual machine state
   
   
    string image; // our full executable image
-   ListAdapter<double> bytestream; // holds the image bytes to be processed
    
    Method* mtds;  // our shared method array
    long methodc;

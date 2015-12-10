@@ -59,6 +59,7 @@ Exception::Exception(string message, string clause){
      Exception::trace.addproto("vm.internal.err.Exception", "Exception", 1);
      
      gSvm.ethrow = true;
+     gSvm.ForceShutdown = true;
      stringstream ss, ss1;
      ss << "FATAL EXCEPTION: main\n" << "ScorpionRuntimeException caused by " << clause << ": " << message << endl << "" << trace.getStackTrace();
      alog.ALOGE(ss.str());
@@ -75,6 +76,7 @@ Exception::Exception(string message, string clause){
 
 void segfault(){
     Exception::trace.addproto("vm.internal.err.SegFault", "Exception", 1);
+    gSvm.ForceShutdown = true;
     gSvm.ethrow = true; // no need to print program status code
     
     cout << "Segmentation Fault." << endl;

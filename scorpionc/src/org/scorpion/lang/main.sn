@@ -7,29 +7,42 @@ package org.scorpion.lang;
    
 public class Starter
 {
-   
+
+   def foobar(int a, int b){
+      asm("
+          cout 'Hello from foo$n'
+          iconst @a #0
+          iconst @b #0
+          
+          pop a
+          pop b
+          ");
+      return 6;
+   }
+
    public static def __init__(string[] args)
    {
-      asm("
+        asm("
           iconst @x #5
           cout ('Hello, World!$n' << (byte) x << ' ' << 67 << (char) 66 << '$n') 
           iconst @foo #6
           cconst @c1 #8
-          cconst @a2 '$a'
+          node Starter
           //hlt 
           push x
+          push foo
+          call foobar[int,int]
+          cout ('x is ' << x << '$n') 
           pop x
-          inc x
-          cout ('x is ' << x << '$n')
+          
+          byte_const @b #12
+          push b
+          ret __init__[string[]] // return main
           ");
+       return 10;
    }
    
-   def foo(){
-      asm("
-          cout 'Hello, Worldddd!$n' 
-          iconst @foo1 #5
-          ");
-   }
+   
 }
 
 
