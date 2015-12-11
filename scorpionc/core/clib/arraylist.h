@@ -28,6 +28,12 @@ class ListAdapter {
             init=false;
         }
         bool _init() { return init; }
+        void _init_()
+        {
+		   if(init) return;
+		   init = false;	
+           size_t = 0;
+	    }
         void add(T value)
         {
             if(!init)

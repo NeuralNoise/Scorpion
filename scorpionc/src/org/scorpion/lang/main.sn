@@ -10,7 +10,7 @@ public class Starter
 
    def foobar(int a, int b){
       asm("
-          cout 'Hello from foo$n'
+          cout 'Hello from foobar$n'
           iconst @a #0
           iconst @b #0
           
@@ -23,17 +23,28 @@ public class Starter
    public static def __init__(string[] args)
    {
         asm("
-          iconst @x #5
+          .local
+             lconst @x #0
+             lconst @max #1000000
+             
+          .global
+             iconst @foo #6
+             bconst @go #1
+          
+           .label @exe
+              ilt go, x, max
+              inc x
+              jit exe, go
+ 
           cout ('Hello, World!$n' << (byte) x << ' ' << 67 << (char) 66 << '$n') 
-          iconst @foo #6
-          cconst @c1 #8
-          node Starter
           //hlt 
           push x
           push foo
           call foobar[int,int]
           cout ('x is ' << x << '$n') 
           pop x
+          
+          
           
           byte_const @b #12
           push b

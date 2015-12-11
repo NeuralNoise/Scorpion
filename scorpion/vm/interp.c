@@ -1,3 +1,39 @@
+/*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Portions of the code surrounded by "// Begin Dalvik code" and
+ * "// END Delvik code" are copyrighted and licensed separately, as
+ * follows:
+ *
+ * Copyright (C) 2014 The Android Open Source Project
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. The ASF licenses this file to You
+ * under the Apache License, Version 2.0 (the "License"); you may not use 
+ * this file except in compliance with the License.  You may obtain a copy
+ * of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 #include "../clib/u1.h"
 #include "../clib/u4.h"
 #include "interp.h"
@@ -258,7 +294,8 @@ void Protect(ScorpionVmState* vm)
 void Scorpion_VMExecute(ScorpionVmState* vmstate){
   alog.ALOGD("running application.");
   vmstate->methodcount = 0;
-    
+  vmstate->m = vmstate->bytestream.size();
+  
   exe:
     if(vmstate->k>=vmstate->m||vmstate->k<0)
       Protect(vmstate);
@@ -266,7 +303,7 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
     vmstate->i = vmstate->bytestream.valueAt(vmstate->k++);
     
     if(vmstate->i>sMaxOpcodeLimit) Protect(vmstate);
-   // cout << "i=" << vmstate->i << endl;
+    //cout << "i=" << vmstate->i << endl;
     if((vmstate->status == vm_status_no_run && vmstate->i != OP_ENDNO) || 
        (vmstate->status == vm_status_if_ignore && !(vmstate->i == OP_END || vmstate->i == OP_IF))){ // do not run
         vmstate->k+=GETARG_SIZE(vmstate);
@@ -642,7 +679,8 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
           goto exe;
           case OP_ISLT:
              svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],
-                  svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])<svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3]));
+                  (bool) (svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte2])
+                              < svmGetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte3])));
           goto exe;
           case OP_ISGT:
              svmSetGenericValue(gSvm.env->getBitmap().objs[(long) op_ags.byte1],

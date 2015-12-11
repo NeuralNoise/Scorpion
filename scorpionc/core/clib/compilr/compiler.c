@@ -30,6 +30,7 @@
  #include "../../Archive.h"
  #include "../binary.h"
  #include "../arraylist.h"
+ #include "../random.h"
  #include "core.h"
  #include "../filestream.h"
  #include "lexr/lexr.h"
@@ -1864,7 +1865,7 @@
 			         classparent = cglobals.classParent.name;
 			       else classparent = cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).name;
 				   
-				   if(reserved(varname))
+				   if(reserved(varname) || _asm_strtop(varname) != -33)
 				   {
 				       if(!intro)
 					   {
@@ -1977,7 +1978,7 @@
 				           "<null>", classparent, false), atof(temp_t.value.c_str()));
 			   }
                else if(temp_t.value == "push" || temp_t.value == "pop" || temp_t.value == "kill" || temp_t.value == "delete"
-                      || temp_t.value == "inc" || temp_t.value == "dec")
+                      || temp_t.value == "inc" || temp_t.value == "dec" || temp_t.value == "if" || temp_t.value == "jmp")
                {
 				   ListAdapter<std::string> breakers;
 				   ListAdapter <Object> args;
@@ -1999,20 +2000,6 @@
 					   cglobals.out << "Expected qualified symbol after '" << temp_t.value << "'.";
 					   error(lex);   
 			       }
-			       
-			       if(temp_t.value != "ret")
-			       {
-					  if(map.type == typedef_function)
-					  {
-						   if(!intro)
-						   {
-							   intro = true;
-							   cout << "Assembler messages:\n";
-						   }
-						   cglobals.out << "Cannot utilize function '" << map.symbol << "' with instruction '" << temp_t.value << "'.";
-						   error(lex);
-					  }   
-				   }
 			       
 			       level2(_asm_strtop(temp_t.value), map.adr);
 			   }
@@ -2070,6 +2057,209 @@
 				  }
 				  
 			      level2(_asm_strtop(op), map.adr);
+			   }
+               else if(temp_t.value == ".")
+               {
+                  temp_t = getNextToken(lex);
+                  if(temp_t.value == "local" || temp_t.value == "global")
+                  {
+					  if(((temp_t.value == "local") ? cglobals.local : !cglobals.local))
+					  {
+						   if(!intro)
+						   {
+							   intro = true;
+							   cout << "Assembler messages:\n";
+						   }
+						   cglobals.out << "Assembler flag `" << temp_t.value << "` has already been set.";
+						   warning(lex);
+					  }
+					 cglobals.local = ((temp_t.value == "local") ? true : false);
+				  }
+				  else if(temp_t.value == "label")
+				  {
+					   string type = temp_t.value;
+					   cglobals.ignorestrays = true;
+					   temp_t = getNextToken(lex);
+					   cglobals.ignorestrays = false;
+					   if(temp_t.value != "@")
+					   {
+						   if(!intro)
+						   {
+							   intro = true;
+							   cout << "Assembler messages:\n";
+						   }
+						   cglobals.out << "Expected '@' prefix before symbol '" << temp_t.value << "'.";
+						   error(lex);
+					   }
+					   else temp_t = getNextToken(lex);  // possibly some other prefix?
+					   
+					   if(temp_t.type != temp_t.e_symbol)
+					   {
+						   if(!intro)
+						   {
+							   intro = true;
+							   cout << "Assembler messages:\n";
+						   }
+						   cglobals.out << "Expected unqulafied symbol before symbol '" << temp_t.value << "'.";
+						   error(lex);
+					   }
+					   
+					   string varname = temp_t.value, classparent;
+					   if(cglobals.classdepth == 0)
+						 classparent = "<null>";
+					   else if(cglobals.classdepth == 1)
+						 classparent = cglobals.classParent.name;
+					   else classparent = cglobals.classParent.C->classObjects.valueAt( cglobals.classdepth-1 ).name;
+					   
+					   if(reserved(varname) || _asm_strtop(varname) != -33)
+					   {
+						   if(!intro)
+						   {
+							   intro = true;
+							   cout << "Assembler messages:\n";
+						   }
+						   cglobals.out << "Symbol '" << varname << "' cannot be named after a builtin symbol.";
+						   error(lex);
+					   }
+					   
+					   if(!objecthelper::create(varname, typedef_label, false, false, access_public, 
+							cglobals.package, "<null>", classparent))
+				       {
+                           cglobals.out << "Symbol '" << varname << "' has already been declared.\nPreviously declared here:\n\t" 
+                                           << memoryhelper::objecthelper::getobjinfo(varname, typedef_label, "<null>", classparent);
+                           error(cglobals.lex);
+					   }
+                     level2(OP_LBL, objecthelper::address(varname, typedef_label, "<null>", 
+                              classparent, false));
+				  }				      
+			   }
+               else if(temp_t.value == "jit" || temp_t.value == "jif")
+               {
+				   string op = temp_t.value;
+				   long obj1,obj2;
+				   ListAdapter<std::string> breakers;
+				   ListAdapter <Object> args;
+				   args._init_();
+				   breakers._init_();
+				   
+                   objmap map = parse_wordmap(lex, parse_complex_dot_notation(lex, false, breakers, true), args, intro);
+                   obj1=map.adr;
+                   
+                   if(map.adr == -1)
+                   {
+					   if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected qualified symbol after '" << temp_t.value << "'.";
+					   error(lex);   
+			       }
+			       
+			       temp_t = getNextToken(lex);
+			       if(temp_t.value != ",")
+			       {
+					    if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected ',' before symbol '" << temp_t.value << "'.";
+					   error(lex);   
+				   }
+			       
+			       objmap map2 = parse_wordmap(lex, parse_complex_dot_notation(lex, false, breakers, true), args, intro);
+                   obj2=map2.adr;
+                   
+                   if(map2.adr == -1)
+                   {
+					   if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected qualified symbol after '" << op << "'.";
+					   error(lex);   
+			       }
+			       
+			       level3(_asm_strtop(op), obj1, obj2);
+			   }
+               else if(temp_t.value == "ilt")
+               {
+				   string op = temp_t.value;
+				   long obj1,obj2,obj3;
+				   ListAdapter<std::string> breakers;
+				   ListAdapter <Object> args;
+				   args._init_();
+				   breakers._init_();
+				   
+                   objmap map = parse_wordmap(lex, parse_complex_dot_notation(lex, false, breakers, true), args, intro);
+                   obj1=map.adr;
+                   
+                   if(map.adr == -1)
+                   {
+					   if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected qualified symbol after '" << temp_t.value << "'.";
+					   error(lex);   
+			       }
+			       
+			       temp_t = getNextToken(lex);
+			       if(temp_t.value != ",")
+			       {
+					    if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected ',' before symbol '" << temp_t.value << "'.";
+					   error(lex);   
+				   }
+			       
+			       objmap map2 = parse_wordmap(lex, parse_complex_dot_notation(lex, false, breakers, true), args, intro);
+                   obj2=map2.adr;
+                   
+                   if(map2.adr == -1)
+                   {
+					   if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected qualified symbol after '" << op << "'.";
+					   error(lex);   
+			       }
+			       
+			       temp_t = getNextToken(lex);
+			       if(temp_t.value != ",")
+			       {
+					    if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected ',' before symbol '" << temp_t.value << "'.";
+					   error(lex);   
+				   }
+			       
+			       objmap map3 = parse_wordmap(lex, parse_complex_dot_notation(lex, false, breakers, true), args, intro);
+                   obj3=map3.adr;
+                   
+                   if(map3.adr == -1)
+                   {
+					   if(!intro)
+					   {
+						   intro = true;
+						   cout << "Assembler messages:\n";
+					   }
+					   cglobals.out << "Expected qualified symbol after '" << op << "'.";
+					   error(lex);   
+			       }
+			       
+			       level4(_asm_strtop(op), obj1, obj2, obj3);
 			   }
                else {
                    if(!intro)
@@ -2638,7 +2828,7 @@
             if(op == "hlt") return OP_HLT;
             if(op == "jif") return OP_JIF;
             if(op == "jit") return OP_JIT;
-            if(op == "lbl") return OP_LBL;
+            if(op == "label") return OP_LBL;
             if(op == "no") return OP_NO;
             if(op == "endno") return OP_ENDNO;
             if(op == "if") return OP_IF;
@@ -2719,16 +2909,16 @@ bool validate_package_file(string pkg, string file)
 
 void parse_cmplr_items(stringstream &out_buf)
  {
-     int i = 0;
+     int i2 = 0;
      for(unsigned long i =0; i<cplrfreelist2->c_items.size(); i++)
      {
          cplrfreelist1.add(cplrfreelist2->c_items.valueAt(i));
          unsigned long ins= cplrfreelist1.valueAt(0).item.byte1;
          cres.size_t.byte1++;
          
-         if(--i <= 0)
+         if(--i2 <= 0)
          {
-            i = rand_n(250); 
+            i2 = rand_n(250); 
             out_buf<<endl;
          }
          
@@ -2766,7 +2956,7 @@ void parse_cmplr_items(stringstream &out_buf)
          else if(ins == OP_SCONST || ins == OP_BCONST || ins == OP_CCONST || ins == OP_RSHFT 
                    || ins == OP_LSHFT || ins == OP_CIN || ins == OP_JIF 
                    || ins == OP_JIT || ins == OP_ICONST || ins == OP_DCONST || ins == OP_FCONST 
-                   || ins == OP_THROW)
+                   || ins == OP_THROW || ins == OP_LCONST || ins == OP_BYTE_CONST)
          {
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0

@@ -542,13 +542,16 @@ int Init_StartScorpionVM()
 void Init_ShutdownScorpionVM()
 {
     Exception::trace.disablenative();
-    
+    bool shutdown = false, exit_proc = false;  
     /*
     * Upon startup, there are so many possible errors that could happen 
     * therfore we must allow the virtual machine to be forceably be shut down
     * 
     */
      if (gSvm.vmstate->status == vm_status_normal || gSvm.ForceShutdown) {
+		 shutdown = true;
+		 exit_proc = (bool) gSvm.vmstate->exc;
+		 
         /*
          * This allows join() and isAlive() on the main thread to work
          * correctly, and also provides uncaught exception handling.
@@ -557,7 +560,7 @@ void Init_ShutdownScorpionVM()
     //        fprintf(stderr, "Warning: unable to detach main thread\n");
     //        result = 1;
      //   }
-
+         
         if (gSvm.vmstate->DestroyScorpionVM(gSvm.vmstate, 1) != 0)
             fprintf(stderr, "Warning: Scorpion VM did not shut down cleanly\n");
     
@@ -574,16 +577,16 @@ void Init_ShutdownScorpionVM()
       
     }
     
-    if( gSvm.vmstate != NULL && gSvm.vmstate->status != 0 && !gSvm.ForceShutdown )
+    if( !shutdown && gSvm.vmstate != nullptr && !gSvm.ForceShutdown )
     {
-        gSvm.vmstate->status = 0;
         stringstream ss;
         ss << "The Scorpion virtual machine is attempting to shutdown with abnormal status code (" << gSvm.vmstate->status << ").";
         alog.ALOGV(ss.str());
+        gSvm.vmstate->status = 0;
         segfault();
     }
     
-    if(!gSvm.ForceShutdown && !gSvm.ethrow && gSvm.vmstate->exc == 1){
+    if(!gSvm.ForceShutdown && !gSvm.ethrow && exit_proc){
              
       if(gSvm.exitval == 0)
         cout << "program exited with exit code: 0 (normal program termination)" << endl;

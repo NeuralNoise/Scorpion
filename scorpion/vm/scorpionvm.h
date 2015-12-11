@@ -33,9 +33,11 @@
          ListAdapter<double> bytestream; // holds the image bytes to be processed
          int DestroyScorpionVM(ScorpionVmState* vmstates, int N)
          {
+			 if(vmstates == nullptr)
+			    return -1;
+			    
              if(N==1)
              {       
-                  vmstates->status = 0;
                   if(vmstates->bytestream.size() != 0)
                     vmstates->bytestream.clear();
                   

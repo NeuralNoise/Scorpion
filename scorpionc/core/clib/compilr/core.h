@@ -146,7 +146,8 @@
  #define typedef_class  0x0
  #define typedef_node   (-0x1)
  #define typedef_function (-0x2)
- #define typedef_unknown (-0x3)
+ #define typedef_label (-0x3)
+ #define typedef_unknown (-0x4)
  
  struct ClassObject;
  
