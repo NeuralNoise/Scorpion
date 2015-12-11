@@ -148,7 +148,7 @@ string getheadertxt()
 
 string getimage()
 {
-    Exception::trace.addproto("vm.internal.system.getimage", "XSO", 1);
+    Exception::trace.addproto("vm.internal.system.getimage", "XSO", 151, 1);
     stringstream ss;
     for(int i = soIdx; i < XSO_F.size(); i++){
             ss << XSO_F.at(i) << "";
@@ -168,7 +168,7 @@ string rmnln(string data){
 
  void XSO::process(string data)
  {
-     Exception::trace.addproto("vm.internal.system.process", "XSO", 1);
+     Exception::trace.addproto("vm.internal.system.process", "XSO", 171, 1);
      XSO_F = data;
      soIdx = 0;
      
@@ -467,7 +467,7 @@ static int LastChar = ' ';
          getNextToken();
          return;
      }
-     else if(CurTok == OP_RETURN  || CurTok == OP_PUSH || CurTok == OP_POP || CurTok == OP_JMP || CurTok == OP_CALL
+     else if(CurTok == OP_RETURN  || CurTok == OP_PUSH || CurTok == OP_POP || CurTok == OP_JMP 
         || CurTok == OP_MTHD || CurTok == OP_LBL || CurTok == OP_IF || CurTok == OP_INC || CurTok == OP_DEC 
         || CurTok == OP_KILL || CurTok == OP_DELETE){
         double arg1 = atof(getheadertxt().c_str());
@@ -485,7 +485,7 @@ static int LastChar = ' ';
         return;
      }
      else if(CurTok == OP_SCONST || CurTok == OP_BCONST || CurTok == OP_CCONST || CurTok == OP_RSHFT 
-       || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF 
+       || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF || CurTok == OP_CALL
        || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST 
        || CurTok == OP_THROW || CurTok == OP_STR_APND || CurTok == OP_ASSN
        || CurTok == OP_STR_ACONST || CurTok == OP_CAST || CurTok == OP_BYTE_CONST || CurTok == OP_LCONST
@@ -493,6 +493,16 @@ static int LastChar = ' ';
        || CurTok == OP_BACONST || CurTok == OP_BYTE_ACONST || CurTok == OP_SACONST || CurTok == OP_LACONST){
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
+        
+        if(CurTok == OP_SCONST || CurTok == OP_BCONST || CurTok == OP_CCONST
+            || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST
+            || CurTok == OP_BYTE_CONST || CurTok == OP_LCONST)
+          setbyte(OP_CONST);
+        else if(CurTok == OP_DACONST || CurTok == OP_IACONST || CurTok == OP_FACONST 
+            || CurTok == OP_CACONST || CurTok == OP_BACONST || CurTok == OP_BYTE_ACONST 
+            || CurTok == OP_SACONST || CurTok == OP_LACONST)  
+          setbyte(OP_ACONST);
+          
         setbyte(CurTok);
         setbyte(arg1);
         setbyte(arg2);
@@ -507,6 +517,12 @@ static int LastChar = ' ';
         double arg1 = atof(getheadertxt().c_str());
         double arg2 = atof(getheadertxt().c_str());
         double arg3 = atof(getheadertxt().c_str());
+        
+        if(CurTok == OP_ISEQ || CurTok == OP_ISLT || CurTok == OP_ISLE
+           || CurTok == OP_ISGT || CurTok == OP_ISGE || CurTok == OP_OR 
+           || CurTok == OP_AND)
+          setbyte(OP_CMP);
+        
         setbyte(CurTok);
         setbyte(arg1);
         setbyte(arg2);
@@ -521,7 +537,7 @@ static int LastChar = ' ';
  
  void XSO::preprocess(string data) // very simple image preprocessor
  {
-     Exception::trace.addproto("vm.internal.system.preprocess", "XSO", 1);
+     Exception::trace.addproto("vm.internal.system.preprocess", "XSO", 540, 1);
      
      alog.setClass("XSO");
      alog.ALOGI("preprocessing XSO image.");

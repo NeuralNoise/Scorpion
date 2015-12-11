@@ -56,7 +56,7 @@ class TraceBack {
       void disablenative(){
          shownative = false;
       }
-      void addproto(string proto, string klass, int native);
+      void addproto(string proto, string klass, long line, int native);
       void dumprotos();
       void printStackTrace();
       string getStackTrace();

@@ -51,7 +51,8 @@ string trace_classes[20];
 extern string getModuleName();
 string mod;
 
-void TraceBack::addproto(string proto, string klass, int native)
+
+void TraceBack::addproto(string proto, string klass, long line, int native)
 {
     if(native && shownative){
        stringstream s1;
@@ -59,7 +60,9 @@ void TraceBack::addproto(string proto, string klass, int native)
        proto = s1.str();
     }
     
-
+    
+    stringstream linenum;
+    linenum << klass << ":" << line;
     protos++;
     bool update = false;
     if(protos >= 19)
@@ -69,7 +72,7 @@ void TraceBack::addproto(string proto, string klass, int native)
         for(int i = 0; i < 18; i++){
             if( i + 1 >= 18){
                 trace_protos[i] = proto;
-                trace_classes[i] = klass;
+                trace_classes[i] = linenum.str();
                 protos = 18;
                 return;
             }
@@ -81,8 +84,7 @@ void TraceBack::addproto(string proto, string klass, int native)
     }
     else {
         trace_protos[protos - 1] = proto;
-        trace_protos[protos - 1] = proto;
-        trace_classes[protos - 1] = klass;
+        trace_classes[protos - 1] = linenum.str();
     }
 }
 

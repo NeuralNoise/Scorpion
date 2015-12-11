@@ -235,17 +235,17 @@ void svmSetGenericValue(Object &obj, double value){
       Exception("Object was not initalized.", "DeadObjectException");
    
     if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BYTE)
-       { obj.obj->pbyte[default_loc] = value; return; }
+       { obj.obj->pbyte[default_loc] = (sbyte) value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
-       { obj.obj->pshort[default_loc] = value; return; }
+       { obj.obj->pshort[default_loc] = (sshort) value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
-       { obj.obj->pint[default_loc] = value; return; }
+       { obj.obj->pint[default_loc] = (sint) value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
-       { obj.obj->plong[default_loc] = value; return; }
+       { obj.obj->plong[default_loc] = (slong) value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
-       { obj.obj->pfloat[default_loc] = value; return; }
+       { obj.obj->pfloat[default_loc] = (sfloat) value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
-       { obj.obj->pchar[default_loc] = value; return; }
+       { obj.obj->pchar[default_loc] = (schar) value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
        { obj.obj->pboolean[default_loc] = (bool) value; return; }
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
@@ -258,21 +258,21 @@ double svmGetGenericValue(Object &obj){
    
     
     if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BYTE)
-       return obj.obj->pbyte[default_loc];
+       return (double) obj.obj->pbyte[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_SHORT)
-       return obj.obj->pshort[default_loc];
+       return (double) obj.obj->pshort[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_INT)
-       return obj.obj->pint[default_loc];
+       return (double) obj.obj->pint[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_LONG)
-       return obj.obj->plong[default_loc];
+       return (double) obj.obj->plong[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_FLOAT)
-       return obj.obj->pfloat[default_loc];
+       return (double) obj.obj->pfloat[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
-       return obj.obj->pchar[default_loc];
+       return (double) obj.obj->pchar[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
-       return obj.obj->pboolean[default_loc];
+       return (double) obj.obj->pboolean[default_loc];
     else if(obj.instanceData.byte1 == TYPEDEF_GENERIC_DOUBLE)
-       return obj.obj->pdouble[default_loc];
+       return (double) obj.obj->pdouble[default_loc];
 }
 
 void svmIncGenericValue(Object &obj){

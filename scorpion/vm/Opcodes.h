@@ -38,7 +38,14 @@
 #define SCORPION_VM_OPCODES
 
 // The max numeric value of a VM opcode
-#define sMaxOpcodeLimit 62
+#define sMaxOpcodeLimit 65
+
+/*
+* vm instruction flags
+*/
+#define OP_CONST 63
+#define OP_ACONST 64
+#define OP_CMP 65
 
   enum Opcodes {
       OP_NOP = 0, 

@@ -51,6 +51,7 @@
     citem.size_t.byte1 = init.byte2;
     citem.item.byte1 = init.byte1;
     
+    citem.sub_item._init_();
     //citem->str = new string[1];
     for(int i = 0; i < init.byte2; i++)
     {

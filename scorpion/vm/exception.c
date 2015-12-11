@@ -56,7 +56,7 @@
 TraceBack Exception::trace;
 
 Exception::Exception(string message, string clause){
-     Exception::trace.addproto("vm.internal.err.Exception", "Exception", 1);
+     Exception::trace.addproto("vm.internal.err.Exception", "Exception", 59, 1);
      
      gSvm.ethrow = true;
      gSvm.ForceShutdown = true;
@@ -75,7 +75,7 @@ Exception::Exception(string message, string clause){
 }
 
 void segfault(){
-    Exception::trace.addproto("vm.internal.err.SegFault", "Exception", 1);
+    Exception::trace.addproto("vm.internal.err.SegFault", "Exception", 78, 1);
     gSvm.ForceShutdown = true;
     gSvm.ethrow = true; // no need to print program status code
     

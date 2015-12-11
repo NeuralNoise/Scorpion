@@ -118,7 +118,7 @@ int main(int argc, const char **argv){
      * plus the options to the program.
      */
     optionCount = argc - 1;
-    Exception::trace.addproto("vm.internal.system.main", "[ScorpionVirtualMachine]", 1);
+    Exception::trace.addproto("vm.internal.system.main", "[ScorpionVirtualMachine]", 121, 1);
 
     /*
      * First level Arg check.  Check if argumets arent faulty

@@ -17,7 +17,6 @@ public class Starter
           pop a
           pop b
           ");
-      return 6;
    }
 
    public static def __init__(string[] args)
@@ -38,16 +37,16 @@ public class Starter
  
           cout ('Hello, World!$n' << (byte) x << ' ' << 67 << (char) 66 << '$n') 
           //hlt 
-          push x
-          push foo
           call foobar[int,int]
-          cout ('x is ' << x << '$n') 
+         // cout ('x is ' << x << '$n$#') 
           pop x
+          delete x
           
           
-          
-          byte_const @b #12
+          lconst @b #12
+          cout ('b is ' << b << '$n')
           push b
+          cout 'returning main$n'
           ret __init__[string[]] // return main
           ");
        return 10;

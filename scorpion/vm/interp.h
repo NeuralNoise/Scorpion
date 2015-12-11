@@ -59,7 +59,7 @@ int Scorpion_InvokeMain(ScorpionVmState* vm);
 * If user attempts to call a fuction that dosent exist,
 * throw a MethodNotFoundException 
 */
-int Scorpion_InvokeMethod(long ptrValue, ScorpionVmState* vm);
+int Scorpion_InvokeMethod(long ptrValue, ScorpionVmState* vm, long line);
 
 /*
 * This method speaks for itsself, this method represents 

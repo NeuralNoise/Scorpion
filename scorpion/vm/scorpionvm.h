@@ -24,16 +24,16 @@
   class ScorpionVmState {
       
       public:
-         unsigned long k, i, m, 
-                  ifcount, ifdepth, 
-                  sp, exc;
-         long src, methodcount;
+         unsigned long k;
+         long i, m, src, methodcount, 
+                  sp, ifcount, ifdepth, 
+                  exc;
          bool initializing;
          int status;
          ListAdapter<double> bytestream; // holds the image bytes to be processed
          int DestroyScorpionVM(ScorpionVmState* vmstates, int N)
          {
-			 if(vmstates == nullptr)
+			 if(vmstates == nullptr || N==0)
 			    return -1;
 			    
              if(N==1)

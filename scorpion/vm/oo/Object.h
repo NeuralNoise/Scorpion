@@ -324,7 +324,6 @@
     * native
     */
     bool native;
-  
  };
 
   long jmpLocation(Method &m);

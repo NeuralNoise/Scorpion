@@ -466,8 +466,8 @@
             
           for(long i =0; i < methods.size(); i++)
           {
-             cout << " at(i).name == o.name >> " <<(at(i).name == o.name) << " at(i)._namespace == o._namespace >>" << 
-             (at(i)._namespace == o._namespace) << " pclass " << (at(i).parentclass == o.parentclass) << " " << (sameargs(at(i).args, args)) << endl;
+           // cout << " at(i).name == o.name >> " <<(at(i).name == o.name) << " at(i)._namespace == o._namespace >>" << 
+            // (at(i)._namespace == o._namespace) << " pclass " << (at(i).parentclass == o.parentclass) << " " << (sameargs(at(i).args, args)) << endl;
              if(at(i).name == o.name && at(i)._namespace == o._namespace)
              {
                 if(at(i).parentclass == o.parentclass && sameargs(at(i).args, args) ) 
@@ -538,7 +538,6 @@
              
            for(int i = 0; i < args1.size(); i++)
            {
-               cout << "type " << args1.valueAt(i).type << " array " << args1.valueAt(i).array() << endl;
                if((args1.valueAt(i).type != args2.valueAt(i).type) || 
                     (args1.valueAt(i).array() != args2.valueAt(i).array()))
                       return false;
@@ -2027,11 +2026,6 @@
 			      ListAdapter<Object> args;
 			      parse_asm_method_args(lex, args);
 			      
-			      for(int i = 0; i < args.size(); i++)
-			      {
-			          cout << "atype " << args.valueAt(i).type << endl;
-			      }
-			      
 			      map = parse_wordmap(lex, wmap, args, intro);
 			      
 			      if(map.adr == -1)
@@ -2055,8 +2049,10 @@
 					   cglobals.out << "Cannot explicitly call non-function symbol '" << map.symbol << "'.";
 					   error(lex);
 				  }
-				  
-			      level2(_asm_strtop(op), map.adr);
+				  if(op == "call")
+				    level3(OP_CALL, map.adr, lex.lexer().line_t);
+				  else
+			        level2(_asm_strtop(op), map.adr);
 			   }
                else if(temp_t.value == ".")
                {
@@ -2782,7 +2778,7 @@
        int ttop(int type)
        {
             if(type == typedef_char) return OP_CCONST;
-            if(type == typedef_byte) return OP_BCONST;
+            if(type == typedef_byte) return OP_BYTE_CONST;
             if(type == typedef_short) return OP_SCONST;
             if(type == typedef_int) return OP_ICONST;
             if(type == typedef_long) return OP_LCONST;
@@ -2922,6 +2918,15 @@ void parse_cmplr_items(stringstream &out_buf)
             out_buf<<endl;
          }
          
+         if(ins == OP_SCONST || ins == OP_BCONST || ins == OP_CCONST
+            || ins == OP_ICONST || ins == OP_DCONST || ins == OP_FCONST
+            || ins == OP_BYTE_CONST || ins == OP_LCONST ||ins == OP_DACONST 
+            || ins == OP_IACONST || ins == OP_FACONST || ins == OP_CACONST 
+            || ins == OP_BACONST || ins == OP_BYTE_ACONST || ins == OP_SACONST 
+            || ins == OP_LACONST || ins == OP_ISEQ || ins == OP_ISLT || ins == OP_ISLE
+            || ins == OP_ISGT || ins == OP_ISGE || ins == OP_OR || ins == OP_AND) 
+             cres.size_t.byte1++;  // for preprocessor
+         
          //cout << "ins " << ins << endl;
          if(ins == OP_MTHD){
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
@@ -2944,8 +2949,10 @@ void parse_cmplr_items(stringstream &out_buf)
          {
               cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
               Method m= methods.valueAt(cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1);
-              cout << "returning/calling " << m.eadr.byte1 << endl;
+             // cout << "returning/calling " << m.eadr.byte1 << endl;
               out_buf << (char) cplr_instr << ins << (char) 0 << m.eadr.byte1 << (char) 0;
+              if(ins == OP_CALL)
+                 out_buf << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0;
          }
          else if(ins == OP_PUSH || ins == OP_POP || ins == OP_JMP || ins == OP_LBL || ins == OP_IF || ins == OP_INC || ins == OP_DEC
                  || ins == OP_KILL || ins == OP_DELETE){ // for instructions that access memory

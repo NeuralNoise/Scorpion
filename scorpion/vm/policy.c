@@ -16,7 +16,7 @@
            return false;
        }
        void Policy::preparePolicy(){
-           Exception::trace.addproto("vm.internal.system.preparePolicyEnforcment", "Policy", 1);
+           Exception::trace.addproto("vm.internal.system.preparePolicyEnforcment", "Policy", 19, 1);
            psize = gSvm.appmanager.controller.getPermissionSize();
            policies = new string[psize];
            pcount = 0;
@@ -25,7 +25,7 @@
            if(gSvm.appolicy.policyRequested(policy))
               return;
               
-          Exception::trace.addproto("vm.internal.system.usingPolicy", "Policy", 1);
+          Exception::trace.addproto("vm.internal.system.usingPolicy", "Policy", 28, 1);
            
            Permission newPolicy;
            newPolicy.setPermission(policy);

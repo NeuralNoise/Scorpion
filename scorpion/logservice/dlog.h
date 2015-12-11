@@ -55,7 +55,7 @@ using namespace std;
    
    public:
      void setup(XSO x, int p){
-         Exception::trace.addproto("vm.internal.system.setupUsrLogService", "DLOG", 1);
+         Exception::trace.addproto("vm.internal.system.setupUsrLogService", "DLOG", 58, 1);
          file = x.headerInf.log_file;
          on = x.headerInf.logging.byte1;
          bufferthreshold = 126 *(1000); // 126kb

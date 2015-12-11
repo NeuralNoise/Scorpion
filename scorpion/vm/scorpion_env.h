@@ -75,7 +75,7 @@ using namespace std;
       public:      
         HeapBitmap bitmap;
         int InitEnvironmentSetup(string env_name, long minHeap, long maxHeap, long bitmap_sz, long stack){
-            Exception::trace.addproto("vm.internal.system.InitEnvironmentSetup", "ScorpionEnv", 1);
+            Exception::trace.addproto("vm.internal.system.InitEnvironmentSetup", "ScorpionEnv", 78, 1);
             setName(env_name);
             
             alog.setClass("ScorpionEnv");
@@ -97,19 +97,19 @@ using namespace std;
            return 0;
         }
         string getName(){
-          Exception::trace.addproto("vm.internal.system.getName", "ScorpionEnv", 1);
+          Exception::trace.addproto("vm.internal.system.getName", "ScorpionEnv", 100, 1);
           return name;
         }
         void setName(string n){
-          Exception::trace.addproto("vm.internal.system.setName", "ScorpionEnv", 1);
+          Exception::trace.addproto("vm.internal.system.setName", "ScorpionEnv", 104, 1);
           name = n;
         }
         long getMethodLimit(){
-          Exception::trace.addproto("vm.internal.system.getMethodLimit", "ScorpionEnv", 1);
+          Exception::trace.addproto("vm.internal.system.getMethodLimit", "ScorpionEnv", 108, 1);
           return methodLimit;
         }
         void setMethodLimit(long l){
-          Exception::trace.addproto("vm.internal.system.setMethodLimit", "ScorpionEnv", 1);
+          Exception::trace.addproto("vm.internal.system.setMethodLimit", "ScorpionEnv", 112, 1);
           methodLimit = l;
         }
         HeapBitmap getBitmap(){

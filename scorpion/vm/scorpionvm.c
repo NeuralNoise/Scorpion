@@ -145,7 +145,7 @@ void print_non_std_usage()
 
 void process_ags(int argc, const char** args)
 {
-      Exception::trace.addproto("vm.internal.system.process_ags", "ScorpionVM", 1);
+      Exception::trace.addproto("vm.internal.system.process_ags", "ScorpionVM", 148, 1);
       string data = "";
       for(int i = 1; i < argc; i++){
          data = args[i];
@@ -310,7 +310,7 @@ bool iscompatible(XSO x)
 
 void validateProtoSize(XSO f)
 {
-     Exception::trace.addproto("vm.internal.system.validateProtoSize", "ScorpionVM", 1); // add fake proto for debugging
+     Exception::trace.addproto("vm.internal.system.validateProtoSize", "ScorpionVM", 313, 1); // add fake proto for debugging
      if(f.headerInf.method_size.byte1 > PROTOTYPE_LIMIT)
           Exception("method size > PROTOTYPE_LIMIT (65538) ", "PrototypeSizeOverloadException");
      else if(f.headerInf.method_size.byte1 < 1)
@@ -319,7 +319,7 @@ void validateProtoSize(XSO f)
 
 void appIsCompatible(XSO f)
 {
-    Exception::trace.addproto("vm.internal.system.appIsCompatible", "ScorpionVM", 1);
+    Exception::trace.addproto("vm.internal.system.appIsCompatible", "ScorpionVM", 322, 1);
     if(!iscompatible(f)){
          alog.ALOGV("Error, the current application is not compatible with the current VM. Have you checked \"minumumDevVersion\" in your .dev build file?");
          stringstream ss;
@@ -330,7 +330,7 @@ void appIsCompatible(XSO f)
 }
 
 int performSecuritySetup(){
-    Exception::trace.addproto("vm.internal.system.setup", "SecurityManager", 1);
+    Exception::trace.addproto("vm.internal.system.setup", "SecurityManager", 333, 1);
        
     gSvm.appmanager.controller.setupAccesPermissions();
     gSvm.appmanager.setup();
@@ -368,7 +368,7 @@ void Init_CreateScorpionVM(ScorpionVmState *vm, ScorpionEnv* env, XSO* f, const 
     */
     gSvm.ForceShutdown = true;
         
-    Exception::trace.addproto("vm.internal.system.Init_CreateScorpionVM", "ScorpionVM", 1);
+    Exception::trace.addproto("vm.internal.system.Init_CreateScorpionVM", "ScorpionVM", 371, 1);
     env = new ScorpionEnv[SINGLE_ENVIRONMENT];
     gSvm.vmCount++;
     gSvm.envCount++;
@@ -391,11 +391,11 @@ void Init_CreateScorpionVM(ScorpionVmState *vm, ScorpionEnv* env, XSO* f, const 
        f = new XSO[1]; // we only need 1 XSO processor
 
        // add false method calls here (for application debugging purposes)
-       Exception::trace.addproto("vm.internal.system.isXSO", "ScorpionVM", 1);
+       Exception::trace.addproto("vm.internal.system.isXSO", "ScorpionVM", 394, 1);
        if(!FileStream::endswith(".xso", options.XSOF))
            Exception("Executable File must be a .xso file.", "InvalidExtensionException");
        else {
-          Exception::trace.addproto("vm.internal.system.xsoExists", "ScorpionVM", 1);
+          Exception::trace.addproto("vm.internal.system.xsoExists", "ScorpionVM", 398, 1);
           if(!FileStream::exists(options.XSOF.c_str())){
               stringstream ss;
               ss << "Executable file: " << options.XSOF << " does not exist!";
@@ -431,7 +431,7 @@ void Init_CreateScorpionVM(ScorpionVmState *vm, ScorpionEnv* env, XSO* f, const 
       alog.setClass("XSOImg");
       alog.ALOGD("Saving application permissions.");
       
-      Exception::trace.addproto("vm.internal.system.setPermissions", "XSOImg", 1);
+      Exception::trace.addproto("vm.internal.system.setPermissions", "XSOImg", 434, 1);
       setPermissions(f[0]);
       
       // setup application Logging service
@@ -507,7 +507,7 @@ void Init_CreateScorpionVM(ScorpionVmState *vm, ScorpionEnv* env, XSO* f, const 
 extern bool includep;
 int Init_StartScorpionVM()
 {
-   Exception::trace.addproto("vm.internal.system.Init_StartScorpionVM", "ScorpionVM", 1);
+   Exception::trace.addproto("vm.internal.system.Init_StartScorpionVM", "ScorpionVM", 510, 1);
    Exception::trace.enablenative();
    
    int status;
@@ -524,7 +524,7 @@ int Init_StartScorpionVM()
       
       stringstream main;
       main << gSvm.mtds[0].module << "." << gSvm.mtds[0].name << "<init>";
-      Exception::trace.addproto(main.str(), gSvm.mtds[0].clazz, false);
+      Exception::trace.addproto(main.str(), gSvm.mtds[0].clazz, -1, false);
       
       includep=false;
       status = Scorpion_InvokeMain(gSvm.vmstate);
