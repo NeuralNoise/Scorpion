@@ -51,6 +51,7 @@
  /* Generic array parsing stuff */
  double get(Object &obj, long pos);
  void set(Object &obj, long pos, double default_value);
+ void arrycpy(Object &obj, Object &obj2);
  
  long length(Object &obj);
  

@@ -80,7 +80,7 @@ int Scorpion_InvokeMethod(long ptrValue, ScorpionVmState* vm, long line){
         stringstream s;
         s << gSvm.mtds[ptrValue].module << "." << gSvm.mtds[ptrValue].name;
 
-        Exception::trace.addproto(s.str(), gSvm.mtds[ptrValue].name, line, gSvm.mtds[ptrValue].native);
+        Exception::trace.addproto(s.str(), gSvm.mtds[ptrValue].clazz, line, gSvm.mtds[ptrValue].native);
     } 
     else
       includep = true;
@@ -109,7 +109,7 @@ void return_method(long ptrValue, ScorpionVmState* vm){
 
 int instrSize(ScorpionVmState* vm)
 {
-    unsigned long i = vm->k;
+    unsigned long i = vm->i;
     if(i == OP_NOP || i == OP_END || i == OP_HLT || i == OP_NO || i == OP_ENDNO)
          return 0;
      else if(i == OP_RETURN || i == OP_PUSH || i == OP_POP || i == OP_JMP || i == OP_CALL
@@ -173,6 +173,7 @@ long GETTYPE(long i)
       return TYPEDEF_GENERIC_DOUBLE;
     else if(i == OP_BYTE_CONST) 
       return TYPEDEF_GENERIC_BYTE;
+    else return -1;
 }
 
 u4_d arguments; // our dedicated instruction arguments
@@ -306,6 +307,16 @@ void _cout_(string output)
 #define dispatchop(l,b)	case l: {b}  goto top;
 #define dispatchopnb(l,b) case l: {b}		/* nb = no break */
 
+void scorpionVmAssign(long o, long o2)
+{
+   if(isgeneric(__typedef(gSvm.env->bitmap.objs[o])) && isgeneric(__typedef(gSvm.env->bitmap.objs[o2])))
+      svmSetGenericValue(gSvm.env->bitmap.objs[o], svmGetGenericValue(gSvm.env->bitmap.objs[o2]));
+   else if(isgenericarray(__typedef(gSvm.env->bitmap.objs[o])) && isgenericarray(__typedef(gSvm.env->bitmap.objs[o2])))
+     arrycpy(gSvm.env->bitmap.objs[o], gSvm.env->bitmap.objs[o2]);
+   else
+     Exception("Cannot assign data to objects of different types.", "IllegalTypeException");
+}
+
 string getStr(ScorpionVmState* vm, long len)
 {
      char c;
@@ -321,10 +332,10 @@ void Protect(ScorpionVmState* vm)
 {
     if(vm->k>=vm->m)
       alog.ALOGV("Attempting to close program unexpectingly.");
-    else if(vm->k>sMaxOpcodeLimit || vm->k<0)
+    else if(vm->i>sMaxOpcodeLimit || vm->i<0)
     {
         stringstream ss;
-        ss << "Attempting to execute invalid instruction (" << vm->k << ").";
+        ss << "Attempting to execute invalid instruction (" << vm->i << ").";
         alog.ALOGV(ss.str());
     }
     
@@ -343,7 +354,7 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
     // main loop for Scorpion interpreter
   for(;;) {
     top:
-    if(vmstate->k>=vmstate->m||vmstate->k<0)
+    if(vmstate->k>=vmstate->m)
       Protect(vmstate);
       
     vmstate->i = vmstate->bytestream.valueAt(vmstate->k++);
@@ -360,7 +371,7 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
    // if(gSvm.Debug)
       // do debug stuff
 
-    vmdispatch(vmstate->i){
+    vmdispatch(vmstate->i){ 
        dispatchop(OP_NOP, 
        )
        dispatchop(OP_END,
@@ -450,9 +461,8 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
           if(vmstate->sp < 0)
               Exception("Failure to pull data from empty stack.", "StackUnderflowException");
           //  cout << "sp->" << vmstate->sp << endl;
-          //cout << "pop @" << vmstate->sp << " ->" << (long) op_ags.byte1 << endl;
-          gSvm.env->bitmap.objs[(long) op_ags.byte1] =
-                 gSvm.env->bitmap.objs[gSvm.env->bitmap.stack->plong[vmstate->sp--]];
+         // cout << "pop @" << vmstate->sp << " ->" << (long) op_ags.byte1 << endl;
+          scorpionVmAssign((long) op_ags.byte1, gSvm.env->bitmap.stack->plong[vmstate->sp--]);
        )
        dispatchop(OP_KILL,
            op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);

@@ -16,6 +16,7 @@ public class Starter
           
           pop a
           pop b
+          
           ");
    }
 
@@ -29,7 +30,7 @@ public class Starter
           .global
              iconst @foo #6
              bconst @go #1
-          
+           
            .label @exe
               ilt go, x, max
               inc x
@@ -37,15 +38,21 @@ public class Starter
  
           cout ('Hello, World!$n' << (byte) x << ' ' << 67 << (char) 66 << '$n') 
           //hlt 
+          push foo
+          push max
           call foobar[int,int]
-         // cout ('x is ' << x << '$n$#') 
           pop x
+          cout ('x is ' << x << '$n$#') 
           delete x
           
+          no
+          .mthd @foo[int]:
+             ret foo[int]
+          endno
           
-          lconst @b #12
+          lconst @b #12 
           cout ('b is ' << b << '$n')
-          push b
+          cout ('x address is ' << (*x) << ' and b address is ' << (p) b << '$n')
           cout 'returning main$n'
           ret __init__[string[]] // return main
           ");

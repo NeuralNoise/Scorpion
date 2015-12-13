@@ -112,6 +112,30 @@
      else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR)
        return obj.obj->arrayobj->pchar[pos];
  }
+
+ void arrycpy(Object &obj, Object &obj2)
+ {
+	 if(!svmObjectIsAlive(obj) || !svmObjectIsAlive(obj2))
+          segfault();
+          
+     if(__typedef(obj) != __typedef(obj2))
+        Exception("Cannot assign array objects of different types.", "IllegalTypeException");
+        
+     if(__typedef(obj) == TYPEDEF_GENERIC_BOOL)
+         obj.obj->arrayobj->pboolean = obj2.obj->arrayobj->pboolean;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_INT)
+       obj.obj->arrayobj->pint = obj2.obj->arrayobj->pint;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT)
+       obj.obj->arrayobj->pshort = obj2.obj->arrayobj->pshort;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE)
+       obj.obj->arrayobj->pbyte = obj2.obj->arrayobj->pbyte;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT)
+       obj.obj->arrayobj->pfloat = obj2.obj->arrayobj->pfloat;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE)
+       obj.obj->arrayobj->pdouble = obj2.obj->arrayobj->pdouble;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR)
+       obj.obj->arrayobj->pchar = obj2.obj->arrayobj->pchar;
+ }
  
  void set(Object &obj, long pos, double default_value){
      if(!svmObjectIsAlive(obj))

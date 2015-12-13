@@ -524,7 +524,7 @@ int Init_StartScorpionVM()
       
       stringstream main;
       main << gSvm.mtds[0].module << "." << gSvm.mtds[0].name << "<init>";
-      Exception::trace.addproto(main.str(), gSvm.mtds[0].clazz, -1, false);
+      Exception::trace.addproto(main.str(), gSvm.mtds[0].clazz, -1, false); // TODO: pull __init__ call line from image code using global variable 
       
       includep=false;
       status = Scorpion_InvokeMain(gSvm.vmstate);
@@ -542,7 +542,10 @@ int Init_StartScorpionVM()
 void Init_ShutdownScorpionVM()
 {
     Exception::trace.disablenative();
-    bool shutdown = false, exit_proc = false;  
+    bool shutdown = false, exit_proc = false;
+    ScorpionVmState vm; // save time on vm cleanup
+    vm.sp = gSvm.vmstate->sp;
+      
     /*
     * Upon startup, there are so many possible errors that could happen 
     * therfore we must allow the virtual machine to be forceably be shut down
@@ -561,12 +564,12 @@ void Init_ShutdownScorpionVM()
     //        result = 1;
      //   }
          
-        if (gSvm.vmstate->DestroyScorpionVM(gSvm.vmstate, 1) != 0)
+        if (gSvm.vmstate->DestroyScorpionVM(gSvm.vmstate, 1) != SVM_OK)
             fprintf(stderr, "Warning: Scorpion VM did not shut down cleanly\n");
     
       if(gSvm.env != nullptr){ // shut down all block table structures 
-         if(gSvm.vmstate != NULL && (gSvm.vmstate->sp >= 0)){
-             unsigned long address = gSvm.env->getBitmap().stack->plong[gSvm.vmstate->sp--]; // simple stack pop
+         if(vm.sp >= 0){
+             unsigned long address = gSvm.env->getBitmap().stack->plong[vm.sp--]; // simple stack pop
              if(isgeneric(__typedef(gSvm.env->getBitmap().objs[address])))
                 gSvm.exitval = (slong) svmGetGenericValue(gSvm.env->getBitmap().objs[address]);
          }

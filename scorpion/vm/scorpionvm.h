@@ -42,7 +42,7 @@
                     vmstates->bytestream.clear();
                   
                   free( vmstates );
-                  return 0;
+                  return SVM_OK;
              }
              
              return -1;
