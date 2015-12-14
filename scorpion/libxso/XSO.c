@@ -469,12 +469,12 @@ static int LastChar = ' ';
      }
      else if(CurTok == OP_RETURN  || CurTok == OP_PUSH || CurTok == OP_POP || CurTok == OP_JMP 
         || CurTok == OP_MTHD || CurTok == OP_LBL || CurTok == OP_IF || CurTok == OP_INC || CurTok == OP_DEC 
-        || CurTok == OP_KILL || CurTok == OP_DELETE){
+        || CurTok == OP_KILL || CurTok == OP_DELETE || CurTok == OP_NEG || CurTok == OP_CIN){
         double arg1 = atof(getheadertxt().c_str());
         setbyte(CurTok);
         setbyte(arg1);
         
-        if(CurTok == OP_LBL) {// pre assign label locations
+        if(CurTok == OP_LBL) {// preprocess label locations
             u1 sz;
             sz.byte1 = 1;
             SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arg1], TYPEDEF_GENERIC_LONG, sz);
@@ -485,7 +485,7 @@ static int LastChar = ' ';
         return;
      }
      else if(CurTok == OP_SCONST || CurTok == OP_BCONST || CurTok == OP_CCONST || CurTok == OP_RSHFT 
-       || CurTok == OP_LSHFT || CurTok == OP_CIN || CurTok == OP_JIF || CurTok == OP_CALL
+       || CurTok == OP_LSHFT || CurTok == OP_JIF || CurTok == OP_CALL
        || CurTok == OP_JIT || CurTok == OP_ICONST || CurTok == OP_DCONST || CurTok == OP_FCONST 
        || CurTok == OP_THROW || CurTok == OP_STR_APND || CurTok == OP_ASSN
        || CurTok == OP_STR_ACONST || CurTok == OP_CAST || CurTok == OP_BYTE_CONST || CurTok == OP_LCONST

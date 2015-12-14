@@ -8,18 +8,87 @@ package org.scorpion.lang;
 public class Starter
 {
 
+   def getName()
+   {
+      asm("
+          str_const @str ''
+          cout 'What is your name? '
+          
+          cconst @ch ' '
+          cconst @endl #10
+          bconst @_getch #1
+          
+          .label @getch
+            cin ch
+            cout ('' << ch)
+            ieq _getch, ch, endl
+            str_apnd str, ch
+            neg _getch
+            jit getch, _getch
+            
+            cout ('\nHello \{34}' << str << '\{0}\n')
+          ");
+   }
+   
    def foobar(int a, int b){
       asm("
-          cout 'Hello from foobar$n'
+          cout 'Hello from foobar\n'
           iconst @a #0
           iconst @b #0
+          iconst @shift #2
+          iconst @c #4
           
           pop a
           pop b
+          cout ('a is ' << a ' b is ' << b  << '\n')
+          
+          lsft a, shift
+          cout ('a shifted ' << shift << ' units left is ' << (double) a << '\n')
+          rsft a, shift
+          rsft a, shift
+          cout ('a shifted ' << shift << ' units right is ' << (double) a << '\n')
+          
+          iconst @a #10
+          iconst @b #5
+          
+          add c, a,b
+          cout ('a + b is ' << c << '\n')
+          
+          sub c, a,b
+          cout ('a - b is ' << c << '\n')
+          
+          mult c, a,b
+          cout ('a * b is ' << c << '\n')
+          
+          div c, a,b
+          cout ('a / b is ' << c << '\n')
+          
+          mod c, a,b
+          cout ('a % b is ' << c << '\n')
+          
+          ilt c, a,b
+          cout ('a < b is ' << c << '\n')
+          
+          igt c, a,b
+          cout ('a > b is ' << c << '\n')
+          
+          ile c, a,b
+          cout ('a <= b is ' << c << '\n')
+          
+          ige c, a,b
+          cout ('a >= b is ' << c << '\n')
+          
+          ieq c, a,b
+          cout ('a == b is ' << c << '\n')
+          
+          cout 'Type a letter: '
+          cin c
+          cout ('\nYou typed ' << (char) c << '\n')
+          
           
           ");
    }
-
+   
    public static def __init__(string[] args)
    {
         asm("
@@ -35,14 +104,16 @@ public class Starter
               ilt go, x, max
               inc x
               jit exe, go
- 
-          cout ('Hello, World!$n' << (byte) x << ' ' << 67 << (char) 66 << '$n') 
+          
+          cout ('Hello, World!\n' << (byte) x << ' ' << 67 << (char) 66 << '\n') 
           //hlt 
+          call getName[]
+          pop x
           push foo
           push max
           call foobar[int,int]
           pop x
-          cout ('x is ' << x << '$n$#') 
+          cout ('x is ' << x << '\n\#') 
           delete x
           
           no
@@ -50,10 +121,36 @@ public class Starter
              ret foo[int]
           endno
           
+          
+          no
+          .mthd @foo1[int]:
+             ret foo1[int]
+          endno
+          
+          
+          no
+          .mthd @foo2[int]:
+             ret foo2[int]
+          endno
+          
+          bconst @boolean #1
+          
+          if boolean
+             cout ('var boolean = ' << boolean << '\n')
+          end
+          
+          cout ('changing the console color to \{41}red\{0}\n')
+          
           lconst @b #12 
-          cout ('b is ' << b << '$n')
-          cout ('x address is ' << (*x) << ' and b address is ' << (p) b << '$n')
-          cout 'returning main$n'
+          cout ('b is ' << b << '\n')
+          cout ('x address is ' << (*x) << ' and b address is ' << (p) b << '\n')
+          cout 'returning main\n'
+          assn b, boolean
+          str_const @msg 'Test'
+          str_const @expn 'Exception'
+          at b, expn, boolean
+          cout ('expn @1 = ' << (char) b << '\n')
+          //throw msg, expn
           ret __init__[string[]] // return main
           ");
        return 10;

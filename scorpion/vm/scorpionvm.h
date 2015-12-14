@@ -4,6 +4,7 @@
  #include <string>
  #include "exception.h"
  #include "scorpion_env.h"
+ #include "../logservice/alog.h"
  #include "security.h"
  #include "../clib/arraylist.h"
 
@@ -36,16 +37,25 @@
 			 if(vmstates == nullptr || N==0)
 			    return -1;
 			    
+		     int shutdown_response = SVM_OK;
              if(N==1)
              {       
                   if(vmstates->bytestream.size() != 0)
                     vmstates->bytestream.clear();
                   
+                  if(vmstates->status != vm_status_normal)
+                  {
+					stringstream ss;
+					ss << "The Scorpion virtual machine is attempting to shutdown with abnormal status code (" << vmstates->status << ").";
+					alog.ALOGV(ss.str());
+					shutdown_response = -1;
+				  }
+                  
                   free( vmstates );
-                  return SVM_OK;
+                  return shutdown_response;
              }
              
-             return -1;
+             return shutdown_response;
          }
   };
   

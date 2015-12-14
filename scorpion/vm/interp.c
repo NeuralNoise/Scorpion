@@ -114,11 +114,11 @@ int instrSize(ScorpionVmState* vm)
          return 0;
      else if(i == OP_RETURN || i == OP_PUSH || i == OP_POP || i == OP_JMP || i == OP_CALL
        || i == OP_MTHD || i == OP_LBL || i == OP_IF || i == OP_INC || i == OP_DEC
-       || i == OP_KILL || i == OP_DELETE) // push 7 or push *x
+       || i == OP_KILL || i == OP_DELETE || i == OP_NEG || i == OP_CIN) // push 7 or push *x
          return 1;
      else if(i == OP_ICONST || i == OP_DCONST || i == OP_FCONST || 
         i == OP_SCONST || i == OP_BCONST || i == OP_CCONST || i == OP_RSHFT 
-        || i == OP_LSHFT || i == OP_CIN || i == OP_STR_APND || i == OP_ASSN 
+        || i == OP_LSHFT || i == OP_STR_APND || i == OP_ASSN 
         || i == OP_JIF || i == OP_JIT || i == OP_THROW
         || i == OP_STR_ACONST || i == OP_CAST || i == OP_BYTE_CONST || i == OP_LCONST
         || i == OP_DACONST || i == OP_IACONST || i == OP_FACONST || i == OP_CACONST 
@@ -139,8 +139,24 @@ int instrSize(ScorpionVmState* vm)
 #define GETARG_SIZE(vmstate)\
          instrSize(vmstate);
 
-bool scorpioncompare(long op, Object &o, Object &o2)
+bool scorpionVm_strcompare(long op, Object &o, Object &o2)
 {
+	if(op == OP_ISLT)
+       return (getstr(o)<getstr(o2));
+    else if(op == OP_ISGT)
+       return (getstr(o)>getstr(o2));   
+    else if(op == OP_ISGE)
+       return (getstr(o)>=getstr(o2));   
+    else if(op == OP_ISLE)
+       return (getstr(o)<=getstr(o2));   
+    else if(op == OP_ISEQ)
+       return (getstr(o)==getstr(o2)); 
+    else return false;	
+}
+
+bool scorpionVm_numcompare(long op, Object &o, Object &o2)
+{
+   
     if(op == OP_ISLT)
        return (svmGetGenericValue(o)<svmGetGenericValue(o2));
     else if(op == OP_ISGT)
@@ -153,6 +169,18 @@ bool scorpioncompare(long op, Object &o, Object &o2)
        return (svmGetGenericValue(o)||svmGetGenericValue(o2));   
     else if(op == OP_AND)
        return (svmGetGenericValue(o)&&svmGetGenericValue(o2));   
+    else if(op == OP_ISEQ)
+       return (svmGetGenericValue(o)==svmGetGenericValue(o2)); 	
+    else return false;
+}
+
+bool scorpioncompare(long op, Object &o, Object &o2)
+{
+	if(__typedef(o) == TYPEDEF_STRING && __typedef(o2) == TYPEDEF_STRING)
+	  return scorpionVm_strcompare(op, o, o2);
+	else if(isgeneric(__typedef(o)) && isgeneric(__typedef(o2)))
+	  return scorpionVm_numcompare(op, o, o2);
+	else return false;
 }
 
 long GETTYPE(long i)
@@ -187,7 +215,6 @@ int _getch_() {
     tcsetattr(STDIN_FILENO, TCSANOW, &t_new);
 
     ch = getchar();
-    cout << "\b \b" << std::flush;
     tcsetattr(STDIN_FILENO, TCSANOW, &t_old);
     return ch;
 }
@@ -204,14 +231,14 @@ void printf_obj_content(long addr, char form)
     cout << (sdouble) ((sint) svmGetGenericValue(gSvm.env->bitmap.objs[addr]));
   else if(form == 's')
     cout << (sdouble) ((sshort) svmGetGenericValue(gSvm.env->bitmap.objs[addr]));
-  else if(form == 'S')
-    _cout_(getstr(gSvm.env->bitmap.objs[addr]));
   else if(form == 'B')
     cout << (sdouble) ((sbyte) svmGetGenericValue(gSvm.env->bitmap.objs[addr]));
   else if(form == 'l')
     cout << (sdouble) ((slong) svmGetGenericValue(gSvm.env->bitmap.objs[addr]));
   else if(form == 'p')
     printf("%#x", (unsigned int) addr);
+  else if(form == 'S' || gSvm.env->bitmap.objs[addr].instanceData.byte1 == TYPEDEF_STRING)
+    _cout_(getstr(gSvm.env->bitmap.objs[addr]));
   else if(form == 'c' || gSvm.env->bitmap.objs[addr].instanceData.byte1 == TYPEDEF_GENERIC_CHAR)
     cout << (char) svmGetGenericValue(gSvm.env->bitmap.objs[addr]);
   else if(form == 'b' || gSvm.env->bitmap.objs[addr].instanceData.byte1 == TYPEDEF_GENERIC_BOOL)
@@ -228,13 +255,13 @@ void _cout_(string output)
 {
    // cout << "outputting " << output << endl;
   for(long i = 0; i < output.size(); i++){
-    if(output.at(i) != '$'){
+    if(output.at(i) != '\\'){
       cout << output.at(i);
       continue;
     }
     else {
        if(!((i + 1) < output.size())){
-          cout << (char) 244;
+          cout << (char) 131;
           return;
         }
         
@@ -242,8 +269,8 @@ void _cout_(string output)
        char bad_char=(131);  
        i++;
        switch ( output.at(i) ){
-           case '$':
-              cout << '$'; continue;
+           case '\\':
+              cout << '\\'; continue;
            case 'n':
               cout << endl; continue;
            case 'b':
@@ -254,10 +281,14 @@ void _cout_(string output)
               cout << '\f'; continue;
            case 'r':
               cout << '\r'; continue;
+           case 'v':
+              cout << '\v'; continue;
            case '"':
               cout << "\""; continue;
            case '\'':
               cout << "'"; continue;
+           case '#':
+              cout << std::flush; continue;
            case '[': // print variable data example:  $[v483|
               {
                 i++;
@@ -286,11 +317,42 @@ void _cout_(string output)
                 }
                 continue;
               }
-           case '#':
-              cout << std::flush; continue;
-           case '!': // TODO: change color
-              {
-                continue;
+           case '{':
+               {
+				    i++;
+					stringstream  ss, colorstream;
+					long color=0;
+					for(long i2 = i; i < output.size(); i++){
+						if(isdigit(output.at(i)))
+						  ss << output.at(i);
+						else{
+						  if(ss.str() == ""){
+							 cout << bad_char;
+							 continue;
+						  }
+						  else if(output.at(i) != '}')
+							 cout << bad_char;
+						  
+						  color = atoi(ss.str().c_str());
+						  break;
+						}
+					}
+					if(color == 0)
+					  cout << "\033[0m";
+					else
+					{
+					   if(color >=30 && color <=37)  {
+					     colorstream << "\033[1;" << color << "m";
+					     cout << colorstream.str();	
+					   }
+					   else if(color >=40 && color <=47)
+					   {
+						  color -=10;
+					      colorstream << "\033[0;" << color << "m";
+					      cout << colorstream.str();	
+					   }
+					}
+					continue;
               }
            default:
               cout << bad_char; continue;
@@ -311,6 +373,8 @@ void scorpionVmAssign(long o, long o2)
 {
    if(isgeneric(__typedef(gSvm.env->bitmap.objs[o])) && isgeneric(__typedef(gSvm.env->bitmap.objs[o2])))
       svmSetGenericValue(gSvm.env->bitmap.objs[o], svmGetGenericValue(gSvm.env->bitmap.objs[o2]));
+   else if(__typedef(gSvm.env->bitmap.objs[o]) == TYPEDEF_STRING && __typedef(gSvm.env->bitmap.objs[o2]) == TYPEDEF_STRING)
+      assign(gSvm.env->bitmap.objs[o], getstr(gSvm.env->bitmap.objs[o2]));
    else if(isgenericarray(__typedef(gSvm.env->bitmap.objs[o])) && isgenericarray(__typedef(gSvm.env->bitmap.objs[o2])))
      arrycpy(gSvm.env->bitmap.objs[o], gSvm.env->bitmap.objs[o2]);
    else
@@ -321,7 +385,7 @@ string getStr(ScorpionVmState* vm, long len)
 {
      char c;
      stringstream ss;
-     for(int i = 0; i < len; i++){
+     for(long i = 0; i < len; i++){
          c = (char) vm->bytestream.valueAt(vm->k++);
          ss << "" << c;
      }
@@ -359,7 +423,7 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
       
     vmstate->i = vmstate->bytestream.valueAt(vmstate->k++);
     
-    if(vmstate->i>sMaxOpcodeLimit) Protect(vmstate);
+    if(vmstate->i>sMaxOpcodeLimit||vmstate->i<0) Protect(vmstate);
     //cout << "i=" << vmstate->i << endl;
     if((vmstate->status == vm_status_no_run && vmstate->i != OP_ENDNO) || 
        (vmstate->status == vm_status_if_ignore && !(vmstate->i == OP_END || vmstate->i == OP_IF))){ // do not run
@@ -472,6 +536,11 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
                checkGC(gSvm.env->bitmap);
            }
        )
+       dispatchop(OP_NEG,
+           op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
+           svmSetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte1], 
+               !((bool) svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte1])));
+       )
        dispatchopnb(OP_JMP,
            vmstate->k =  svmGetGenericValue(gSvm.env->bitmap.objs[(long) vmstate->bytestream.valueAt(vmstate->k++)]);
            goto top;
@@ -483,8 +552,10 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
            Scorpion_InvokeMethod((long) op_ags.byte1, vmstate, (long) op_ags.byte2);
        )
        dispatchop(OP_MTHD,
+         vmstate->k++;
        )
        dispatchop(OP_LBL,
+         vmstate->k++;
        )
        dispatchop(OP_DELETE,
            op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
@@ -501,6 +572,8 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
            svmSetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte1], op_ags.byte2);
        )
        dispatchop(OP_STRCONST,
+           op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
+           op_ags.byte2=vmstate->bytestream.valueAt(vmstate->k++);
            u1 sz;
            sz.byte1 = 1;
            SVM_OBJECT_INIT(gSvm.env->bitmap.objs[(long) op_ags.byte1], TYPEDEF_STRING, sz);
@@ -565,29 +638,28 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
            getstr(gSvm.env->bitmap.objs[(long) vmstate->bytestream.valueAt(vmstate->k++)]));
        )
        dispatchop(OP_CIN,
+           svmSetGenericValue(gSvm.env->bitmap.objs[(long) vmstate->bytestream.valueAt(vmstate->k++)], _getch_());
+       )
+       dispatchop(OP_STR_APND,
            op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
            op_ags.byte2=vmstate->bytestream.valueAt(vmstate->k++);
            
-           int i;
-           if(op_ags.byte2 == 0){ // do not print char to screen
-             i = _getch_();
-           }
-           else
+           if(isgeneric(__typedef(gSvm.env->bitmap.objs[(long) op_ags.byte2])))
            {
-               i = _getch_();
-               cout <<(char)i;
-           }
-          
-           svmSetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte1], i);
-       )
-       dispatchop(OP_STR_APND,
-           concat(gSvm.env->bitmap.objs[(long) vmstate->bytestream.valueAt(vmstate->k++)], 
-              getstr(gSvm.env->bitmap.objs[(long) vmstate->bytestream.valueAt(vmstate->k++)]));
+			   stringstream ss;
+			   ss << (char) svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte2]);
+               concat(gSvm.env->bitmap.objs[(long) op_ags.byte1], ss.str());
+		   }
+		   else
+		   {
+             concat(gSvm.env->bitmap.objs[(long) op_ags.byte1], 
+                getstr(gSvm.env->bitmap.objs[(long) op_ags.byte2]));
+		   }
        )
        dispatchop(OP_ASSN,
            op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
            op_ags.byte2=vmstate->bytestream.valueAt(vmstate->k++);
-           gSvm.env->bitmap.objs[(long) op_ags.byte1] = gSvm.env->bitmap.objs[(long) op_ags.byte2];
+           scorpionVmAssign((long) op_ags.byte1, (long) op_ags.byte2);
        )
        dispatchop(OP_AT,
            op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
@@ -662,7 +734,7 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
            
             svmSetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte1],
                  svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte2])
-                    +svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte3]));
+                    -svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte3]));
        )
        dispatchop(OP_MULT,
            op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
@@ -671,7 +743,7 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
            
             svmSetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte1],
                  svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte2])
-                    +svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte3]));
+                    *svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte3]));
        )
        dispatchop(OP_DIV,
            op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);
@@ -680,7 +752,7 @@ void Scorpion_VMExecute(ScorpionVmState* vmstate){
            
             svmSetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte1],
                  svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte2])
-                    +svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte3]));
+                    /svmGetGenericValue(gSvm.env->bitmap.objs[(long) op_ags.byte3]));
        )
        dispatchop(OP_MOD,
            op_ags.byte1=vmstate->bytestream.valueAt(vmstate->k++);

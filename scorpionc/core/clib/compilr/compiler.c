@@ -300,6 +300,22 @@
             else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.add( new_cmplr_item(init, op_data, data) ); // add item to sub queue
        }
        
+       void _string(long address, string data)
+       {
+		   u2 init;
+           init.byte1=OP_STRCONST;
+           init.byte2=1;
+          
+           double* op_data = new double[1];
+           op_data[0] = address;
+          
+            if(cglobals.classdepth == 0)
+              cmplr_add_item( new_cmplr_item(init, op_data, data) ); 
+            else if(cglobals.classdepth == 1)
+              cglobals.classParent.C[0].iqueue.add( new_cmplr_item(init, op_data, data) ); // add item to main queue
+            else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.add( new_cmplr_item(init, op_data, data) ); 
+	   }
+       
     namespace objecthelper
     {
        Object at(long i)
@@ -515,10 +531,7 @@
        }
        
        bool sameargs(ListAdapter<Object> args1, ListAdapter<Object> args2)
-       {
-           if(!args1._init() || !args2._init())
-              return false;
-              
+       {    
            if(args1.size() != args2.size())
              return false;
              
@@ -567,20 +580,37 @@
            o.access = access;
            o.package = package;
            o.args = args;
-           o.eadr.byte1 = cglobals.methodadr++;
            o._namespace = _namespace;
            o.parentclass = parentclass;
            
            if(mcmp(o, args))
              return false;
            else {
+			   Object arg1;
+			   arg1.type = typedef_string;
+			   arg1.isarray = true;
+		 
+			   ListAdapter<Object> initargs;
+			   initargs.add(arg1);
+				// TODO: find a better way to address method ptrs	  
+			   if((cglobals.methodadr == 0 || cglobals.methodadr == 1) && 
+			        !(name == "__init__" && parentclass == "Starter" && sameargs(initargs, args)))
+                  o.eadr.byte1 = ++cglobals.methodadr;
+               else if(name == "__init__" && parentclass == "Starter" && sameargs(initargs, args))
+                  o.eadr.byte1 = 0;
+			   else
+			   {
+				   if(cglobals.methodadr == 2) cglobals.methodadr++;
+			       o.eadr.byte1 = cglobals.methodadr++;
+               } 
+                 
                methods.add(o);
                return true;
            }
        }
        
        long address(std::string name, std::string _namespace, std::string parentclass, 
-                 ListAdapter<Object> &args, const bool internal = true)
+                 ListAdapter<Object> &args, bool internal = true)
        {
            Method o;
            o.name = name;
@@ -1092,7 +1122,7 @@
                }
                else if(temp_t.type == temp_t.e_symbol){
                    plus = false;
-                   ss << "$[v" << temp_t.value << "|";
+                   ss << "\\[v" << temp_t.value << "|";
                    needStr = false;
                }
                else if(temp_t.value == "+"){
@@ -1165,6 +1195,8 @@
                    type = 'f';
                else if(temp_t.value == "double")
                    type = 'd';
+               else if(temp_t.value == "bool")
+                   type = 'b';
            }
            
            temp_t = getNextToken(lex);
@@ -1236,7 +1268,7 @@
 						   if(temp_t.type == temp_t.e_number) // apply type cast to number
 						   {
 							   level3(OP_DCONST, var_dummy_data, atof(temp_t.value.c_str()));
-							   outstream << "$[" << cast << var_dummy_data << "|";
+							   outstream << "\\[" << cast << var_dummy_data << "|";
 							   continue;
 						   }
 						   else lex.lexer().token_sz1--;
@@ -1266,7 +1298,7 @@
 						   error(lex);
 					  }  
 				   }
-                   outstream << "$[" << cast << map.adr << "|";
+                   outstream << "\\[" << cast << map.adr << "|";
                }
                else if(temp_t.type == temp_t.e_symbol)
                {
@@ -1418,7 +1450,8 @@
                    level1(_asm_strtop(temp_t.value));
                }     
                else if(temp_t.value == "iconst" || temp_t.value == "cconst" || temp_t.value == "fconst" || temp_t.value == "dconst"
-                     || temp_t.value == "sconst" || temp_t.value == "lconst" || temp_t.value == "bconst" || temp_t.value == "byte_const")
+                     || temp_t.value == "sconst" || temp_t.value == "lconst" || temp_t.value == "bconst" || temp_t.value == "byte_const"
+                     || temp_t.value == "str_const")
                {
                    string type = temp_t.value;
                    cglobals.ignorestrays = true;
@@ -1438,7 +1471,7 @@
 					   error(lex);
 				   }
 				   
-				   string varname = temp_t.value;
+				   string varname = temp_t.value,buf="";
 				   if(reserved(varname) || _asm_strtop(varname) != -33)
 				   {
 					   cglobals.out << "Symbol '" << varname << "' cannot be named after a builtin symbol.";
@@ -1451,12 +1484,14 @@
                    cglobals.ignorestrays = true;
                    temp_t = getNextToken(lex);
                    cglobals.ignorestrays = false;
-                   bool charr = false;
+                   bool charr = false, str = false;
                    
                    if(temp_t.value != "#")
 				   {
 					   if(type == "cconst" && temp_t.type == temp_t.e_string)
 					   { charr = true; }
+					   else if(type == "str_const" && temp_t.type == temp_t.e_string)
+					   { str = true; }
 					   else
 					   {
 						   cglobals.out << "Expected '#' prefix before symbol '" << temp_t.value << "'.";
@@ -1483,13 +1518,13 @@
 						   else if(temp_t.value.size() == 2)
 						   {
 							   char prefix = temp_t.value.at(0), tok = temp_t.value.at(1);
-							   if(prefix != '$')
+							   if(prefix != '\\')
 							   {
-								   cglobals.out << "Expected '$' prefix before '" << prefix << "' in char literal.";
+								   cglobals.out << "Expected '\\' prefix before '" << prefix << "' in char literal.";
 								   error(lex);
 							   }
 							   
-							   if(tok != 'n' && tok && tok != '$' && tok != 't'
+							   if(tok != 'n' && tok && tok != '\\' && tok != 't'
 							      && tok != 'b' && tok != 'f' && tok != 'r' && tok != '"'
 							      && tok != '\'')
 							   {
@@ -1506,18 +1541,30 @@
 							   error(lex);
 						   }
 					   }
+					   else if(temp_t.type == temp_t.e_string && type == "str_const" && str)
+						   buf = temp_t.value;
 					   else 
 					   {
-						   cglobals.out << "Expected numeric literal before symbol '" << temp_t.value << "'.";
+						   cglobals.out << "Expected " << ((type == "cconst" || type == "str_const") ? "string" : "numeric") 
+						          << " literal before symbol '" << temp_t.value << "'.";
 						   error(lex);
 					   }
 				   }
 				   
-				   level3(ttop(_asm_strttot(type)), objecthelper::address(varname, _asm_strttot(type),
-				           "<null>", memoryhelper::getparentclass(), false), atof(temp_t.value.c_str()));
+				   if(type == "str_const")
+				   {
+				      _string(objecthelper::address(varname, _asm_strttot(type),
+				           "<null>", memoryhelper::getparentclass(), false), buf);
+				   }
+				   else
+				   {
+				      level3(ttop(_asm_strttot(type)), objecthelper::address(varname, _asm_strttot(type),
+				             "<null>", memoryhelper::getparentclass(), false), atof(temp_t.value.c_str()));
+				   }
 			   }
                else if(temp_t.value == "push" || temp_t.value == "pop" || temp_t.value == "kill" || temp_t.value == "delete"
-                      || temp_t.value == "inc" || temp_t.value == "dec" || temp_t.value == "if" || temp_t.value == "jmp")
+                      || temp_t.value == "inc" || temp_t.value == "dec" || temp_t.value == "if" || temp_t.value == "jmp"
+                      || temp_t.value == "neg" || temp_t.value == "cin")
                {
 				   ListAdapter<std::string> breakers;
 				   ListAdapter <Object> args;
@@ -1650,13 +1697,9 @@
 					   }
 			      
 				       ListAdapter<Object> args;
-				       Object arg1;
 					   args._init_();
 					   parse_asm_method_args(lex, args);
-					   bool firstmethod = false, methodfound;
-					   
-					   if(cglobals.methodadr == 0)
-						 firstmethod = true;
+					   bool methodfound;
 					   
 					   //cout << "parentclass " << getparentclass() << endl;
 					   
@@ -1669,31 +1712,20 @@
 						   error(lex);    
 					   }
 					   
+				      Object arg1;
 					  arg1.type = typedef_string;
 					  arg1.isarray = true;
 					 
-					  ListAdapter<Object> initargs, functionargs = methods.valueAt(memoryhelper::methodhelper::address
-																	 (functionname, "<null>", getparentclass(), args)).args;
+					  ListAdapter<Object> initargs;
 					  initargs.add(arg1);
  
-					   if(!methodfound && !cglobals.hasInit && functionname == "__init__" && memoryhelper::methodhelper::sameargs(initargs, functionargs)
-						  && getparentclass() == "Starter")
+					   if(!methodfound && !cglobals.hasInit && functionname == "__init__" && 
+					      memoryhelper::methodhelper::sameargs(initargs, args) && getparentclass() == "Starter")
 					   {
 						   cglobals.out << "Entry point function:\n\t" 
 								<< memoryhelper::methodhelper::getmethodinfo(functionname, "<null>", getparentclass(), args)
 								  << "\nCannot be declared as a native Scorpion assembly function.";
 						   error(lex); 
-					   }
-					   else 
-					   {
-						   if(firstmethod)
-						   {
-							   long adr = memoryhelper::methodhelper::address(functionname, "<null>", getparentclass(), args);
-							   Method m = methods.valueAt(adr);
-							   
-							   m.eadr.byte1++;
-							   methods.replace(m, adr);
-						   }
 					   }
 					   
 					   temp_t = getNextToken(lex);
@@ -1708,7 +1740,8 @@
 					  level2(OP_MTHD, madr);  
 				  }
 			   }
-               else if(temp_t.value == "jit" || temp_t.value == "jif")
+               else if(temp_t.value == "jit" || temp_t.value == "jif" || temp_t.value == "lsft" || temp_t.value == "rsft"
+                      || temp_t.value == "str_apnd" || temp_t.value == "throw" || temp_t.value == "assn")
                {
 				   string op = temp_t.value;
 				   long obj1,obj2;
@@ -1744,7 +1777,10 @@
 			       
 			       level3(_asm_strtop(op), obj1, obj2);
 			   }
-               else if(temp_t.value == "ilt")
+               else if(temp_t.value == "ilt" || temp_t.value == "igt" || temp_t.value == "ile"
+                       || temp_t.value == "ige" || temp_t.value == "ieq" || temp_t.value == "ilt"
+                       || temp_t.value == "add" || temp_t.value == "sub" || temp_t.value == "mult"
+                       || temp_t.value == "div" || temp_t.value == "mod" || temp_t.value == "at")
                {
 				   string op = temp_t.value;
 				   long obj1,obj2,obj3;
@@ -1808,7 +1844,7 @@
        void parse_method_args(lexr::parser_helper& lex, ListAdapter<Object> &args)
        {
            lexr::token temp_t;
-           bool comma;
+           bool comma = false;
            
            for( ;; )
            {
@@ -2036,11 +2072,7 @@
                            args._init_();
                            Object arg1;
                            memoryhelper::helper::parse_method_args(lex, args);
-                        
-                           bool firstmethod = false;
-                           
-                           if(cglobals.methodadr == 0)
-                             firstmethod = true;
+
                            
                           // cout << "parentclass " << getparentclass() << endl;
                            
@@ -2055,20 +2087,14 @@
                            
                           arg1.type = typedef_string;
                           arg1.isarray = true;
-                         
-                          ListAdapter<Object> initargs, functionargs = methods.valueAt(memoryhelper::methodhelper::address
-                                                                         (functionname, "<null>", getparentclass(), args)).args;
+                         cout << "entry.\n";
+                          ListAdapter<Object> initargs;
                           initargs.add(arg1);
+                         cout << "entry.\n";
      
-                           if(!methodfound && !cglobals.hasInit && functionname == "__init__" && memoryhelper::methodhelper::sameargs(initargs, functionargs)
-                              && getparentclass() == "Starter")
+                           if(!methodfound && !cglobals.hasInit && functionname == "__init__" 
+                               && memoryhelper::methodhelper::sameargs(initargs, args) && getparentclass() == "Starter")
                            {
-                               long adr = memoryhelper::methodhelper::address("__init__", "<null>", getparentclass(), functionargs);
-                               Method m = methods.valueAt(adr);
-                               m.eadr.byte1 = 0;
-                            
-                            
-                               methods.replace(m, adr);
                                
                                if(!atribs.isStatic)
                                {
@@ -2084,23 +2110,12 @@
                                
                                cglobals.hasInit = true;
                            }
-                           else 
-                           {
-                               if(firstmethod)
-                               {
-                                   long adr = memoryhelper::methodhelper::address(functionname, "<null>", getparentclass(), args);
-                                   Method m = methods.valueAt(adr);
-                                   
-                                   m.eadr.byte1++;
-                                   methods.replace(m, adr);
-                               }
-                           }
                            
                            if(atribs.isConst)
                            {
                                cglobals.out << "Method '" << memoryhelper::atostr(atribs.access) << " " 
                                               << ((atribs.isStatic) ? "static " : "") << ((atribs.isConst) ? "const " : "") 
-                                                << "def " << functionname << "(" << memoryhelper::methodhelper::argstostr(functionargs) << ")' cannot be const.";
+                                                << "def " << functionname << "(" << memoryhelper::methodhelper::argstostr(args) << ")' cannot be const.";
                                error(lex);
                            }
                            
@@ -2202,7 +2217,7 @@
        {
            return (symbol == "char" || symbol == "byte" || symbol == "short"
                    || symbol == "int" || symbol == "long" || symbol == "double"
-                   || symbol == "float" || symbol == "string");
+                   || symbol == "float" || symbol == "string" || symbol == "bool");
        }
        
        int _strttot(std::string symbol)
@@ -2215,13 +2230,14 @@
             if(symbol == "double") return typedef_double;
             if(symbol == "float") return typedef_float;
             if(symbol == "string") return typedef_string;
+            if(symbol == "bool") return typedef_boolean;
             else return -33;
        }
        
        int _asm_strttot(std::string symbol)
        {
             if(symbol == "cconst") return typedef_char;
-            if(symbol == "bconst") return typedef_byte;
+            if(symbol == "bconst") return typedef_boolean;
             if(symbol == "sconst") return typedef_short;
             if(symbol == "iconst") return typedef_int;
             if(symbol == "lconst") return typedef_long;
@@ -2242,6 +2258,7 @@
             if(type == typedef_double) return OP_DCONST;
             if(type == typedef_float) return OP_FCONST;
             if(type == typedef_string) return OP_STRCONST;
+            if(type == typedef_boolean) return OP_BCONST;
             else return -33;
        }
       
@@ -2308,7 +2325,7 @@
             if(op == "l_aconst") return OP_LACONST;
             if(op == "s_aconst") return OP_SACONST;
             if(op == "node") return OP_NODE;
-            if(op == "negate") return OP_NEG;
+            if(op == "neg") return OP_NEG;
             return -33;
        }
       
@@ -2371,7 +2388,7 @@ void parse_cmplr_items(stringstream &out_buf)
          
          if(--i2 <= 0)
          {
-            i2 = rand_n(255); 
+            i2 = rand_n(127); 
             out_buf<<endl;
          }
          
@@ -2392,13 +2409,20 @@ void parse_cmplr_items(stringstream &out_buf)
                 out_buf << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0;
                 out_buf << m.eadr.byte1 << (char) 0;
                 
-              // cout << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0 << " `";
-              // cout << m.eadr.byte1 << (char) 0 << endl;
+               //cout << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0 << " `";
+               //cout << m.eadr.byte1 << (char) 0 << endl;
          }
          else if(ins == OP_NODE) cres.size_t.byte1--;
-         else if(ins == OP_COUT){
+         else if(ins == OP_COUT || ins == OP_STRCONST){
              cres.size_t.byte1 +=cplrfreelist1.valueAt(0).str.size() + 1;
-             out_buf << (char) cplr_string_instr << OP_COUT << (char) 0 << cplrfreelist1.valueAt(0).str << (char) 0;
+             out_buf << (char) cplr_string_instr << ins << (char) 0;
+             if(ins == OP_STRCONST)
+             {
+				 cres.size_t.byte1++;
+                 out_buf << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0;
+		     }
+               
+             out_buf << cplrfreelist1.valueAt(0).str << (char) 0;
          }
          else if(ins == OP_NOP || ins == OP_END || ins == OP_HLT || ins == OP_NO || ins == OP_ENDNO)
              out_buf << (char) cplr_instr <<  ins << (char) 0 ;
@@ -2412,15 +2436,15 @@ void parse_cmplr_items(stringstream &out_buf)
                  out_buf << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0;
          }
          else if(ins == OP_PUSH || ins == OP_POP || ins == OP_JMP || ins == OP_LBL || ins == OP_IF || ins == OP_INC || ins == OP_DEC
-                 || ins == OP_KILL || ins == OP_DELETE){ // for instructions that access memory
+                 || ins == OP_KILL || ins == OP_DELETE || ins == OP_NEG || ins == OP_CIN){ // for instructions that access memory
     //           cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << endl;
                cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0;
          }        
          else if(ins == OP_SCONST || ins == OP_BCONST || ins == OP_CCONST || ins == OP_RSHFT 
-                   || ins == OP_LSHFT || ins == OP_CIN || ins == OP_JIF 
-                   || ins == OP_JIT || ins == OP_ICONST || ins == OP_DCONST || ins == OP_FCONST 
-                   || ins == OP_THROW || ins == OP_LCONST || ins == OP_BYTE_CONST)
+                   || ins == OP_LSHFT || ins == OP_JIF || ins == OP_JIT || ins == OP_ICONST 
+                   || ins == OP_DCONST || ins == OP_FCONST || ins == OP_THROW || ins == OP_LCONST 
+                   || ins == OP_BYTE_CONST || ins == OP_STR_APND || ins == OP_ASSN)
          {
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0

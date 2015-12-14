@@ -19,6 +19,7 @@ class ListAdapter {
      public:
         ListAdapter(){
             init=false;
+            size_t=0;
         }
         void clear()
         {

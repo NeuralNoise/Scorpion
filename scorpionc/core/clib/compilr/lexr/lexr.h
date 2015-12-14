@@ -814,7 +814,7 @@ namespace lexr
 
          while (!is_end(s_itr_))
          {
-            if (!escaped && ('$' == *s_itr_))
+            if (!escaped && ('\\' == *s_itr_))
             {
                escaped_found = true;
                escaped = true;
