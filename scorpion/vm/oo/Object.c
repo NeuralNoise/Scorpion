@@ -125,11 +125,10 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
   if(_typedef_ == TYPEDEF_STRING){
        obj.obj = new (nothrow) DataObject[1];
        obj.obj->strobj = new (nothrow) StringObject[1];
-       obj.obj->strobj->array = new (nothrow) ArrayObject[1];
        
-       if(obj.obj == nullptr || obj.obj->strobj == nullptr 
-          || obj.obj->strobj->array == nullptr)
+       if(obj.obj == nullptr || obj.obj->strobj == nullptr)
            init_err(obj, "String object could not be created.");
+       obj.obj->strobj->hash._init_();
      return;
   }
   if(isgenericarray(_typedef_)) {
@@ -204,12 +203,9 @@ void svmInitHeapObject(Object &obj, int _typedef_, u1 objsz_t, int gc_status){
        if(obj.obj->arrayobj->strobj == NULL)
            init_err(obj, "String array object could not be created.");
        
-       for(long i = 0; i < objsz_t.byte1; i++){ // initalize all strings
-          obj.obj->arrayobj->strobj[i].array = new (nothrow) ArrayObject[1];
-          
-          if(obj.obj->arrayobj->strobj[i].array == nullptr)
-            init_err(obj, "String array object could not be created.");
-       }
+       for(long i = 0; i < objsz_t.byte1; i++) // initalize all strings
+          obj.obj->arrayobj->strobj[i].hash._init_();
+
       return;
   }
 }

@@ -13,12 +13,16 @@ extern bool hasstring(string str, string *arry, int size);
 template <class T>
 class ListAdapter {
      T* values;
+     T* newValues;
       unsigned long size_t;
-      bool init;
+      bool init, pmode, err;
+      
     
      public:
         ListAdapter(){
             init=false;
+            err = false;
+            pmode = false;
             size_t=0;
         }
         void clear()
@@ -27,12 +31,17 @@ class ListAdapter {
             delete[] values;
             size_t=0;
             init=false;
+            err = false;
+            pmode = false;
         }
         bool _init() { return init; }
+        bool _err() { return err; }
         void _init_()
         {
 		   if(init) return;
 		   init = false;	
+           err = false;
+           pmode = false;
            size_t = 0;
 	    }
         void add(T value)
@@ -44,18 +53,20 @@ class ListAdapter {
                 init = true;
             }
             
+            
             size_t++;
-            T* newValues = new T[size_t];
+            newValues = new (nothrow) T[size_t];
             if(newValues == nullptr){
                 cout << "std: array_out_of_memory\n\tarray add[" << size_t << "]\n";
                 exit(1);
             }
             
-            for(long i = 0; i < size_t - 1; i++)
+            for(unsigned long i = 0; i < size_t - 1; i++)
             {
                 newValues[i] = values[i];
             }
             
+            delete[] values;
             newValues[size_t - 1] = value;
             values = &newValues[0];
         }
@@ -73,7 +84,7 @@ class ListAdapter {
             } 
            
             size_t++;
-            T* newValues = new T[size_t];
+            newValues = new T[size_t];
             if(newValues == nullptr){
                 cout << "std: array_out_of_memory\n\tarray insert[" << size_t << "]\n";
                 exit(1);
@@ -102,7 +113,7 @@ class ListAdapter {
              }
     
             size_t--;
-            T* newValues = new T[size_t];
+            newValues = new T[size_t];
             if(newValues == nullptr){
                 cout << "std: array_out_of_memory\n\tarray insert[" << size_t << "]\n";
                 exit(1);
@@ -117,7 +128,7 @@ class ListAdapter {
                 i2++;
             }
             
-            values = newValues;
+            values = &newValues[0];
         }      
         void pushback()
         {
@@ -125,7 +136,7 @@ class ListAdapter {
               return;
             else if((size_t - 1) < 0) return;
             
-            T* newValues = new T[size_t-1];
+            newValues = new T[size_t-1];
             if(newValues == nullptr){
                 cout << "std: array_out_of_memory\n\tarray pushback[" << size_t << "]\n";
                 exit(1);

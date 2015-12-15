@@ -315,6 +315,20 @@
               cglobals.classParent.C[0].iqueue.add( new_cmplr_item(init, op_data, data) ); // add item to main queue
             else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.add( new_cmplr_item(init, op_data, data) ); 
 	   }
+	   
+	   int getesc(int tok)
+	   {
+	       if(tok == 'n') return (int) '\n';
+	       else if(tok == 'v') return (int) '\v';
+	       else if(tok == '\\') return (int) '\\';
+	       else if(tok == 't') return (int) '\t';
+	       else if(tok == 'b') return (int) '\b';
+	       else if(tok == 'f') return (int) '\f';
+	       else if(tok == 'r') return (int) '\r';
+	       else if(tok == '"') return (int) '"';
+	       else if(tok == '\'') return (int) '\'';
+	       else return 0;
+	   }
        
     namespace objecthelper
     {
@@ -768,6 +782,7 @@
        int strtoaccess(std::string s);
        bool _typedef(std::string symbol);
        int ttop(int type);
+       int tatop(int type);
        int _strttot(std::string symbol);
        int _asm_strttot(std::string symbol);
        int _asm_strtop(string op);
@@ -1524,7 +1539,7 @@
 								   error(lex);
 							   }
 							   
-							   if(tok != 'n' && tok && tok != '\\' && tok != 't'
+							   if(tok != 'n' && tok != 'v' && tok != '\\' && tok != 't'
 							      && tok != 'b' && tok != 'f' && tok != 'r' && tok != '"'
 							      && tok != '\'')
 							   {
@@ -1532,7 +1547,7 @@
 								   warning(lex);
 							   }
 							   stringstream ss;
-							   ss << (int) tok; // TODO: convery the escape sequences to their respective char
+							   ss << getesc(tok);
 							   temp_t.value = ss.str();
 						   }
 						   else
@@ -1780,7 +1795,8 @@
                else if(temp_t.value == "ilt" || temp_t.value == "igt" || temp_t.value == "ile"
                        || temp_t.value == "ige" || temp_t.value == "ieq" || temp_t.value == "ilt"
                        || temp_t.value == "add" || temp_t.value == "sub" || temp_t.value == "mult"
-                       || temp_t.value == "div" || temp_t.value == "mod" || temp_t.value == "at")
+                       || temp_t.value == "div" || temp_t.value == "mod" || temp_t.value == "at"
+                       || temp_t.value == "aload" || temp_t.value == "astore")
                {
 				   string op = temp_t.value;
 				   long obj1,obj2,obj3;
@@ -1832,6 +1848,57 @@
 			       
 			       level4(_asm_strtop(op), obj1, obj2, obj3);
 			   }
+			   else if(temp_t.value == "i_aconst" || temp_t.value == "b_aconst" || temp_t.value == "f_aconst"
+			       || temp_t.value == "c_aconst" || temp_t.value == "s_aconst" || temp_t.value == "l_aconst"
+			       || temp_t.value == "byte_aconst" || temp_t.value == "str_aconst")
+			       {
+			           string type = temp_t.value;
+			           long obj1, obj2;
+                       cglobals.ignorestrays = true;
+    				   temp_t = getNextToken(lex);
+                       cglobals.ignorestrays = false;
+                       
+    				   if(temp_t.value != "@")
+    				   {
+    					   cglobals.out << "Expected '@' prefix before symbol '" << temp_t.value << "'.";
+    					   error(lex);
+    				   }
+    				   else temp_t = getNextToken(lex);  // possibly some other prefix?
+    				   
+    				   if(temp_t.type != temp_t.e_symbol)
+    				   {
+    					   cglobals.out << "Expected unqulafied symbol before symbol '" << temp_t.value << "'.";
+    					   error(lex);
+    				   }
+    				   
+    				   string varname = temp_t.value;
+    				   if(reserved(varname) || _asm_strtop(varname) != -33)
+    				   {
+    					   cglobals.out << "Symbol '" << varname << "' cannot be named after a builtin symbol.";
+    					   error(lex);
+    				   }
+    				   
+    				   objecthelper::create(varname, _asm_strttot(type), false, true, access_public, 
+                            cglobals.package, "<null>", getparentclass());
+    				   
+    				   ListAdapter<std::string> breakers;
+    				   ListAdapter<Object> args;
+    				   args._init_();
+    				   breakers._init_();
+    				   
+    				   objmap map1 = parse_wordmap(lex, parse_complex_dot_notation(lex, false, breakers, true), args);
+                       obj2=map1.adr;
+                       
+                       if(map1.adr == -1)
+                       {
+    					   cglobals.out << "Expected qualified symbol after '" << temp_t.value << "'.";
+    					   error(lex);   
+    			       }
+    				   obj1 = objecthelper::address(varname, _asm_strttot(type),
+    				           "<null>", memoryhelper::getparentclass(), false);
+    				   
+    				   level3(tatop(_asm_strttot(type)), obj1, obj2);
+			       }
                else {
                    cglobals.out << "Expected assembly instruction before '" << temp_t.value << "'.";
                    error(lex);
@@ -2236,15 +2303,15 @@
        
        int _asm_strttot(std::string symbol)
        {
-            if(symbol == "cconst") return typedef_char;
-            if(symbol == "bconst") return typedef_boolean;
-            if(symbol == "sconst") return typedef_short;
-            if(symbol == "iconst") return typedef_int;
-            if(symbol == "lconst") return typedef_long;
-            if(symbol == "dconst") return typedef_double;
-            if(symbol == "fconst") return typedef_float;
-            if(symbol == "str_const") return typedef_string;
-            if(symbol == "byte_const") return typedef_byte;
+            if(symbol == "cconst" || symbol == "c_aconst") return typedef_char;
+            if(symbol == "bconst" || symbol == "b_aconst") return typedef_boolean;
+            if(symbol == "sconst" || symbol == "s_aconst") return typedef_short;
+            if(symbol == "iconst" || symbol == "i_aconst") return typedef_int;
+            if(symbol == "lconst" || symbol == "l_aconst") return typedef_long;
+            if(symbol == "dconst" || symbol == "d_aconst") return typedef_double;
+            if(symbol == "fconst" || symbol == "f_aconst") return typedef_float;
+            if(symbol == "str_const" || symbol == "str") return typedef_string;
+            if(symbol == "byte_const" || symbol == "byte_aconst") return typedef_byte;
             else return -33;
        }
       
@@ -2259,6 +2326,20 @@
             if(type == typedef_float) return OP_FCONST;
             if(type == typedef_string) return OP_STRCONST;
             if(type == typedef_boolean) return OP_BCONST;
+            else return -33;
+       }
+       
+       int tatop(int type)
+       {
+            if(type == typedef_char) return OP_CACONST;
+            if(type == typedef_byte) return OP_BYTE_ACONST;
+            if(type == typedef_short) return OP_SACONST;
+            if(type == typedef_int) return OP_IACONST;
+            if(type == typedef_long) return OP_LACONST;
+            if(type == typedef_double) return OP_DACONST;
+            if(type == typedef_float) return OP_FACONST;
+            if(type == typedef_string) return OP_STR_ACONST;
+            if(type == typedef_boolean) return OP_BACONST;
             else return -33;
        }
       
@@ -2444,7 +2525,9 @@ void parse_cmplr_items(stringstream &out_buf)
          else if(ins == OP_SCONST || ins == OP_BCONST || ins == OP_CCONST || ins == OP_RSHFT 
                    || ins == OP_LSHFT || ins == OP_JIF || ins == OP_JIT || ins == OP_ICONST 
                    || ins == OP_DCONST || ins == OP_FCONST || ins == OP_THROW || ins == OP_LCONST 
-                   || ins == OP_BYTE_CONST || ins == OP_STR_APND || ins == OP_ASSN)
+                   || ins == OP_BYTE_CONST || ins == OP_STR_APND || ins == OP_ASSN || ins == OP_BYTE_ACONST
+                   || ins == OP_FACONST || ins == OP_DACONST || ins == OP_IACONST || ins == OP_LACONST
+                   || ins == OP_SACONST || ins == OP_BACONST || ins == OP_STR_ACONST || ins == OP_CACONST)
          {
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0

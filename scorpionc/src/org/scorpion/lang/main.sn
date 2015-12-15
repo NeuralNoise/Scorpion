@@ -15,15 +15,23 @@ public class Starter
           cout 'What is your name? '
           
           cconst @ch ' '
-          cconst @endl #10
+          cconst @endl '\n'
+          cconst @bksp #127
           bconst @_getch #1
-          
           .label @getch
             cin ch
             cout ('' << ch)
+            ieq _getch, ch, bksp
+            if _getch
+               cout '\b \b'
+               jmp getch
+            end
+            
             ieq _getch, ch, endl
-            str_apnd str, ch
             neg _getch
+            if _getch
+               str_apnd str, ch
+            end
             jit getch, _getch
             
             cout ('\nHello \{34}' << str << '\{0}\n')
@@ -100,10 +108,10 @@ public class Starter
              iconst @foo #6
              bconst @go #1
            
-           .label @exe
+           /*.label @exe
               ilt go, x, max
               inc x
-              jit exe, go
+              jit exe, go*/
           
           cout ('Hello, World!\n' << (byte) x << ' ' << 67 << (char) 66 << '\n') 
           //hlt 
@@ -134,6 +142,19 @@ public class Starter
           endno
           
           bconst @boolean #1
+          
+          byte_const @array_response #0
+          byte_const @store_var #77
+          iconst @array_pos #4
+          iconst @array_max_size #9
+          byte_aconst @byte_array array_max_size
+          
+          astore byte_array, store_var, array_pos // store data into array
+          
+          byte_const @arryval #2
+          aload array_response, byte_array, array_pos
+          
+          cout ('Array val @***' << (*array_response) << '*** is ' << array_response << '\n')
           
           if boolean
              cout ('var boolean = ' << boolean << '\n')

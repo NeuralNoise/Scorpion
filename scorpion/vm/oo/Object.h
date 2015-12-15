@@ -45,6 +45,7 @@
  #include "../../clib/u1.h"
  #include "../../clib/u2.h"
  #include "../alloc/HeapBitmap.h"
+ #include "../../clib/arraylist.h"
  #include "../alloc/gc.h"
  #include <string>
  #include <stdint.h>
@@ -261,13 +262,9 @@
  * the memory access time to similar or equal speeds.
  */
  struct StringObject {
-   
-    /** Returns this string's length in characters. */
-    unsigned int length;
 
-
-    /** Returns this string's char[] as an ArrayObject. */
-    ArrayObject* array;
+    /** Strings in scorpion are hash or `char` arrays. */
+    ListAdapter<schar> hash;
  };
  
  struct ArrayObject {

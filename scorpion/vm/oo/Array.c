@@ -47,43 +47,43 @@
  using namespace std;
  extern float btof(bool b);
   
- ArrayObject* tochararray(string data){
-     ArrayObject* obj = new (nothrow) ArrayObject[1];
-     
-     if(obj == nullptr)
-        return obj;
-    
-     obj->pchar = new (nothrow) schar[data.size()];
-     obj->length = data.size();    
-     
-     if(obj->pchar == nullptr)
-        return obj;
-     
-     if(obj->length > STR_LIMIT)
-        Exception("String greater than max limit.", "StringOverloadException");
+ ListAdapter<schar> tochararray(string data){
+     ListAdapter<schar> hashList;
+     hashList._init_();
+     hashList.enableprotected(); // Set hash list to protected mode for creation of large strings
        
-     for(int i = 0; i < data.size(); i++)
-       obj->pchar[i] = (int) data.at(i);
+     for(long i = 0; i < data.size(); i++)
+     {
+       hashList.add((schar) data.at(i));
+       if(hashList._err())
+        Exception("String could not be created.", "OutOfMemoryError");
+     }
        
-     return obj;
+     return hashList;
  }
  
- string fromchararray(ArrayObject &arrayobj){
+ string fromchararray(ListAdapter<schar> &hashList){
      stringstream ss;
      
-     for(int i = 0; i < arrayobj.length; i++)
-       ss << (char) arrayobj.pchar[i];
+     for(long i = 0; i < hashList.size(); i++)
+       ss << (char) hashList.valueAt(i);
        
      return ss.str();
  }
  
- ArrayObject* ostr_arraymesh(ArrayObject &arrayobj, ArrayObject &arrayobj2){
+ ListAdapter<schar> arryconcat(ListAdapter<schar> hashList1, ListAdapter<schar> hashList2){
+     hashList1.enableprotected(); // Set hash list to protected mode for creation of large strings
      
-     stringstream ss;
-     ss << fromchararray(arrayobj) << fromchararray(arrayobj2);
-     return tochararray(ss.str());
+     for(long i = 0; i < hashList2.size(); i++)
+     {
+        hashList1.add(hashList2.valueAt(i));
+         
+        if(hashList1._err())
+          Exception("String could not be created.", "OutOfMemoryError");
+     }
+     hashList2.clear();
+     return hashList1;
  }
- 
  
  // TODO: Check array typedef and assign and get accordingly.
  /* Generic array parsing stuff */
@@ -94,22 +94,22 @@
      if(pos >= obj.obj->arrayobj->length){
        stringstream ss;
        ss << "Index at(" << pos << ") is not within bounds. Array size[" << length(obj) << "].";
-       Exception(ss.str(), "ArrayIndexOutOfBoundsException");
+       Exception(ss.str(), "OutOfMemoryError");
      }
      
-     if(__typedef(obj) == TYPEDEF_GENERIC_BOOL)
+     if(__typedef(obj) == TYPEDEF_GENERIC_BOOL_ARRAY)
        return btof(obj.obj->arrayobj->pboolean[pos]);
-     else if(__typedef(obj) == TYPEDEF_GENERIC_INT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_INT_ARRAY)
        return obj.obj->arrayobj->pint[pos];
-     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT_ARRAY)
        return obj.obj->arrayobj->pshort[pos];
-     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE_ARRAY)
        return obj.obj->arrayobj->pbyte[pos];
-     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT_ARRAY)
        return obj.obj->arrayobj->pfloat[pos];
-     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE_ARRAY)
        return obj.obj->arrayobj->pdouble[pos];
-     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR_ARRAY)
        return obj.obj->arrayobj->pchar[pos];
  }
 
@@ -121,20 +121,22 @@
      if(__typedef(obj) != __typedef(obj2))
         Exception("Cannot assign array objects of different types.", "IllegalTypeException");
         
-     if(__typedef(obj) == TYPEDEF_GENERIC_BOOL)
+     if(__typedef(obj) == TYPEDEF_GENERIC_BOOL_ARRAY)
          obj.obj->arrayobj->pboolean = obj2.obj->arrayobj->pboolean;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_INT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_INT_ARRAY)
        obj.obj->arrayobj->pint = obj2.obj->arrayobj->pint;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT_ARRAY)
        obj.obj->arrayobj->pshort = obj2.obj->arrayobj->pshort;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE_ARRAY)
        obj.obj->arrayobj->pbyte = obj2.obj->arrayobj->pbyte;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT_ARRAY)
        obj.obj->arrayobj->pfloat = obj2.obj->arrayobj->pfloat;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE_ARRAY)
        obj.obj->arrayobj->pdouble = obj2.obj->arrayobj->pdouble;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR_ARRAY)
        obj.obj->arrayobj->pchar = obj2.obj->arrayobj->pchar;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_LONG_ARRAY)
+       obj.obj->arrayobj->plong = obj2.obj->arrayobj->plong;
  }
  
  void set(Object &obj, long pos, double default_value){
@@ -147,20 +149,22 @@
        Exception(ss.str(), "ArrayIndexOutOfBoundsException");
      }
       
-      if(__typedef(obj) == TYPEDEF_GENERIC_BOOL)
+      if(__typedef(obj) == TYPEDEF_GENERIC_BOOL_ARRAY)
          obj.obj->arrayobj->pboolean[pos] = (bool) default_value;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_INT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_INT_ARRAY)
        obj.obj->arrayobj->pint[pos] = default_value;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_SHORT_ARRAY)
        obj.obj->arrayobj->pshort[pos] = default_value;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_BYTE_ARRAY)
        obj.obj->arrayobj->pbyte[pos] = default_value;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_FLOAT_ARRAY)
        obj.obj->arrayobj->pfloat[pos] = default_value;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_DOUBLE_ARRAY)
        obj.obj->arrayobj->pdouble[pos] = default_value;
-     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR)
+     else if(__typedef(obj) == TYPEDEF_GENERIC_CHAR_ARRAY)
        obj.obj->arrayobj->pchar[pos] = default_value;
+     else if(__typedef(obj) == TYPEDEF_GENERIC_LONG_ARRAY)
+       obj.obj->arrayobj->plong[pos] = default_value;
  }
  
  

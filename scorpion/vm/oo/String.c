@@ -39,44 +39,34 @@
  #include "../exception.h"
  #include <sstream>
  #include <iostream>
+ #include <stdlib.h>
  #include <stdint.h>
  using namespace std;
  
  
  long str_location = 0;
  
- bool isnull(Object &obj){
-    
-    if(svmObjectHasInstance(obj, TYPEDEF_STRING))
-       return (obj.obj->strobj[0].array == nullptr || obj.obj->strobj[0].array == NULL);
-    else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY))
-       return (obj.obj->arrayobj->strobj[str_location].array == nullptr || 
-              obj.obj->arrayobj->strobj[str_location].array == NULL);
-    else
-       Exception("The requested object is not a string type.", "InvalidObjectException");
- }
- 
  unsigned int at(Object &obj, long pos){
      if(!svmObjectIsAlive(obj))
         Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING)){
-       if(pos >= obj.obj->strobj[0].array->length){
+       if(pos >= obj.obj->strobj->hash.size()){
         stringstream ss;
-        ss << "string::at(" << pos << ") >= string::length[" << obj.obj->strobj[0].array->length << "]";
+        ss << "string::at(" << pos << ") >= string::length[" << obj.obj->strobj->hash.size() << "]";
         Exception(ss.str(), "StringIndexOutOfBoundsException");
        }
         
-       return obj.obj->strobj[0].array->pchar[pos];
+       return obj.obj->strobj->hash.valueAt(pos);
      }
      else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)){
-       if(pos >= obj.obj->arrayobj->strobj[str_location].array->length){
+       if(pos >= obj.obj->arrayobj->strobj[str_location].hash.size()){
         stringstream ss;
-        ss << "string::at(" << pos << ") >= string::length[" << obj.obj->arrayobj->strobj[str_location].array->length << "]";
+        ss << "string::at(" << pos << ") >= string::length[" << obj.obj->arrayobj->strobj[str_location].hash.size() << "]";
         Exception(ss.str(), "StringIndexOutOfBoundsException");
        }
         
-       return obj.obj->arrayobj->strobj[str_location].array->pchar[pos];
+       return obj.obj->arrayobj->strobj[str_location].hash.valueAt(pos);
      }
      else
         Exception("The requested object is not a string type.", "InvalidObjectException");
@@ -86,18 +76,12 @@
      if(!svmObjectIsAlive(obj))
         Exception("String Object has not been created!", "DeadObjectException");
      
-     if(svmObjectHasInstance(obj, TYPEDEF_STRING)){
-       obj.obj->strobj[0].array = tochararray(data);
-       obj.obj->strobj[0].length = obj.obj->strobj[0].array->length;
-     }
-     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)) {
-       obj.obj->arrayobj->strobj[str_location].array = tochararray(data);
-       obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
-     }
+     if(svmObjectHasInstance(obj, TYPEDEF_STRING))
+       obj.obj->strobj->hash = tochararray(data);
+     else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY))
+       obj.obj->arrayobj->strobj[str_location].hash = tochararray(data);
      else 
-     
-     if(isnull(obj))
-      Exception("String Object failed to be reassigned.", "NullpointerException");
+        Exception("The requested object is not a string type.", "InvalidObjectException");
  }
  
  string getstr(Object &obj){
@@ -105,14 +89,14 @@
         Exception("String Object has not been created!", "DeadObjectException");
      
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
-       return fromchararray(obj.obj->strobj[0].array[0]);
+       return fromchararray(obj.obj->strobj->hash);
      else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)) {
-       if(str_location >= obj.obj->arrayobj->length){
+       if(str_location >= obj.obj->strobj->hash.size()){
            stringstream ss;
            ss << "Index " << str_location << " is not within bounds. Array size[" << length(obj) << "].";
            Exception(ss.str(), "ArrayIndexOutOfBoundsException");
        }
-       return fromchararray(obj.obj->strobj[str_location].array[0]);
+       return fromchararray(obj.obj->strobj[str_location].hash);
      }
      else
         Exception("The requested object is not a string type.", "InvalidObjectException");
@@ -123,35 +107,22 @@
         Exception("String Object has not been created!", "DeadObjectException");
         
      if(svmObjectHasInstance(obj, TYPEDEF_STRING))
-       return obj.obj->strobj[0].length;
+       return obj.obj->strobj->hash.size();
      else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY))
-       return obj.obj->arrayobj->strobj[str_location].length;
+       return obj.obj->arrayobj->strobj[str_location].hash.size();
      else
         Exception("The requested object is not a string type.", "InvalidObjectException");
  }
  
  void concat(Object &obj, string data){
-      
-     if(isnull(obj))
-        Exception("String Object is null!", "NullPointerException");
         
-     ArrayObject* aobj = tochararray(data);  
-     
-     if(svmObjectHasInstance(obj, TYPEDEF_STRING)){  
- 
-       obj.obj->strobj[default_loc].array = ostr_arraymesh(obj.obj->strobj[default_loc].array[default_loc], aobj[default_loc]);
-       obj.obj->strobj[default_loc].length = obj.obj->strobj[default_loc].array->length;
-     }
+     if(svmObjectHasInstance(obj, TYPEDEF_STRING))
+         obj.obj->strobj->hash = arryconcat(obj.obj->strobj->hash, tochararray(data));
      else if(svmObjectHasInstance(obj, TYPEDEF_STRING_ARRAY)) {
-       obj.obj->arrayobj->strobj[str_location].array = 
-          ostr_arraymesh(obj.obj->arrayobj->strobj[str_location].array[default_loc], aobj[default_loc]);
-       obj.obj->arrayobj->strobj[str_location].length = obj.obj->arrayobj->strobj[str_location].array->length;
+       arryconcat(obj.obj->arrayobj->strobj[str_location].hash, tochararray(data));
      }
      else
         Exception("The requested object is not a string type.", "InvalidObjectException");
-     
-     if(isnull(obj))
-      Exception("String Object failed to be reassigned.", "NullpointerException");
  }
  
  

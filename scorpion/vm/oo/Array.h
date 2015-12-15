@@ -39,14 +39,15 @@
  
  
  #include "Object.h"
+ #include "../../clib/arraylist.h"
  #include <string>
  
  using namespace std;
  
  /* String array parsing stuff */
- ArrayObject* tochararray(string data);
- string fromchararray(ArrayObject &arrayobj);
- ArrayObject* ostr_arraymesh(ArrayObject &arrayobj, ArrayObject &arrayobj2);
+ ListAdapter<schar> tochararray(string data);
+ string fromchararray(ListAdapter<schar> &hashList);
+ ListAdapter<schar> arryconcat(ListAdapter<schar> hashList1, ListAdapter<schar> hashList2);
  
  /* Generic array parsing stuff */
  double get(Object &obj, long pos);
