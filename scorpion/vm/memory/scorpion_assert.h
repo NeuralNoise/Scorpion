@@ -49,7 +49,7 @@
  
   #define nullptr ((void *)0)
   
- namespace ScorpionVM
+ namespace scorpionvm
  {
      void scorpion_assert(bool case_, std::string case_source)
      {

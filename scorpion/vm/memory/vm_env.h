@@ -49,7 +49,7 @@
  
   #define nullptr ((void *)0)
   
- namespace ScorpionVM
+ namespace scorpionvm
  {
      namespace memory
      {
@@ -60,7 +60,7 @@
                  
                  public:
                    const char* name;
-                   ScorpionVM::memory::ObjectContainer* m_heap;
+                   scorpionvm::memory::ObjectContainer* m_heap;
                    int64_t* m_stack;
                    
                    int alloc(uint64_t _alloc_base, uint64_t _alloc_max, uint64_t stack_t)
@@ -102,12 +102,12 @@
                    }
                    
                  private:
-                    ScorpionVM::memory::BlockAllocator
-                       <ScorpionVM::memory::ObjectContainer> base_allocator; // allocators for stack and heap
-                    ScorpionVM::memory::BlockAllocator<int64_t> base_allocator2;
+                    scorpionvm::memory::BlockAllocator
+                       <scorpionvm::memory::ObjectContainer> base_allocator; // allocators for stack and heap
+                    scorpionvm::memory::BlockAllocator<int64_t> base_allocator2;
              };
          } // end environments
      } // end memory
- } // end ScorpionVM
+ } // end scorpionvm
  
 #endif // SCORPION_MEMORY_ENVIRONMENT

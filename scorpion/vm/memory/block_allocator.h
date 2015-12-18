@@ -48,12 +48,12 @@
  
   #define nullptr ((void *)0)
   
- namespace ScorpionVM
+ namespace scorpionvm
  {
      namespace memory
      {
          template <class T>
-         class BlockAllocator : public ScorpionVM::memory::schema::AllocationScheme<T>
+         class BlockAllocator : public scorpionvm::memory::schema::AllocationScheme<T>
          {
               public:
                  BlockAllocator()
@@ -119,6 +119,6 @@
                 uint64_t m_total_size;
          };
      } // end memory
- } // end ScorpionVM
+ } // end scorpionvm
  
  #endif // SCORPION_BLOCK_ALLOCATOR

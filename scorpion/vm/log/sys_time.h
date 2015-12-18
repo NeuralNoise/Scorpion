@@ -34,34 +34,43 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GLOBALS
- #define SCORPION_GLOBALS
+ #ifndef SCORPION_SYSTEM_TIME
+ #define SCORPION_SYSTEM_TIME
  
  #include <string>
- #include <stdint.h>
- #include <signal.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include "../memory/allocation_scheme.h"
- #include "../memory/object_container.h"
- #include "../memory/block_allocator.h"
- #include "../io/signal_handler.h"
- #include "func_tracker.h"
- #include "../../clib/arraylist.h"
- 
+ #include <sstream>
+ #include <sys/time.h>
+
  using namespace std;
- using namespace scorpionvm::io::signal;
- using namespace scorpionvm;
  
  namespace scorpionvm
  {
-     struct Globals
+     namespace system_time
      {
-         sig_handler _sig_handler; /* We handle most OS signals */
-         function_tracker func_tracker;
-     };
- }
+         // Begin Dalvik code
+        /*
+         * Get the wall-clock date/time, in usec.
+         */
+         long getWallTimeInUsec()
+         {
+            struct timeval tv;
+            gettimeofday(&tv, NULL);
+            return  tv.tv_usec / 1000LL;
+         }
+         // END Delvik code
+
+         const string currtime(){
+            time_t     now = time(0);
+            struct tm  tstruct;
+            char       buf[90];
+            tstruct = *localtime(&now);
+            // Time used for logging
+            strftime(buf, sizeof(buf), "%Y-%m-%d--%X", &tstruct);
+            stringstream ss;
+            ss << buf << "." << getWallTimeInUsec();
+            return ss.str();
+         }
+     } // end time
+ } // end ScorpionVM
  
- #endif // SCORPION_GLOBALS
+ #endif // SCORPION_SYSTEM_TIME

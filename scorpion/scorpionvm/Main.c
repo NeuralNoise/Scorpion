@@ -50,6 +50,9 @@
  
  #include "../vm/memory/vm_env.h"
  #include "../vm/internal/globals.h"
+ #include "../vm/log/log.h"
+ #include "../vm/internal/vm.h"
+ #include "../libxso/xso_reader.h"
  
  using namespace std;
  
@@ -76,12 +79,16 @@ void printusage()
 
 #define nullptr ((void *)0)
 
-//ALog alog;
-
-using namespace ScorpionVM::memory::environment;
-using namespace ScorpionVM;
+using namespace scorpionvm::memory::environment;
+using namespace scorpionvm;
+using namespace scorpionvm::vm;
+using namespace scorpionvm::log::log_service::debug;
+using namespace scorpionvm::xsoreader;
 
 Globals g_Svm;
+Log usr_log;
+Log ldebug;
+
 /*
 * Parse arguments.  Most of it just gets passed through to the VM.
 *
@@ -92,9 +99,9 @@ Globals g_Svm;
 * System log dest: /us/share/scorpion/vm/log/out.log
 */
 int main(int argc, const char **argv){
-   // ScorpionVmState *vmstate = NULL;
-   //   scorpion_env* p_env = NULL;
-  //  XSO* x = NULL;
+    ScorpionVM *vmstate = NULL;
+    scorpion_env* p_env = NULL;
+    xso_reader* reader = NULL;
     int optionCount, curOpt, i, argIdx;
     int needExtra = 0, result = 0;
     int status;
@@ -166,16 +173,21 @@ int main(int argc, const char **argv){
         goto bail;
     }
 
-    if(g_Svm._sig_handler.register_handler() != ScorpionVM::io::signal::SIG_REGRISTRATION_SUCCESS)
+    if(g_Svm._sig_handler.register_handler() != scorpionvm::io::signal::SIG_REGRISTRATION_SUCCESS)
     {
-        printf("error: Could not register signal handler.\n");
+        printf("error: Could not register signal handler. (SIG_REGRISTRATION_FAILURE)\n");
         goto bail;
     }
 
     /*
      * Start VM.  The current thread becomes the main thread of the VM.
      */
-    // Init_CreateScorpionVM(vmstate, p_env, x, argv, argc);
+     if((result = Init_CreateScorpionVM(vmstate, p_env, reader, argv, argc)) != 0)
+     {
+        if(result == 1) // only print this for standard errors
+          fprintf(stderr, "Scorpion VM init failed (check log file)\n");
+        goto bail;
+     }
 
 
    /* if(vmStatus != 0) { // have method return ScorpionEnv

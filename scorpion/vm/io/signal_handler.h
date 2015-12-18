@@ -50,7 +50,7 @@
  
   #define nullptr ((void *)0)
   
- namespace ScorpionVM
+ namespace scorpionvm
  {
      namespace io
      {
@@ -105,7 +105,7 @@
                          /* --------- Arithmetic and execution signals --------- */
 
                          sig_values.add(SIGFPE);
-                         sig_values.add(SIGKILL);
+                        //  sig_values.add(SIGKILL);
                          sig_values.add(SIGSEGV);
                          sig_values.add(SIGBUS);
 
@@ -133,7 +133,8 @@
                          sig_values.add(SIGIO);
                          sig_values.add(SIGURG);
                      }
-                   
+                     
+                     // TODO: process all IO signals
                      static void _sig_handler(int signo, siginfo_t *sinfo, void *context /* unused */)
                      {
                          cout << "sig raised " << signo << endl;

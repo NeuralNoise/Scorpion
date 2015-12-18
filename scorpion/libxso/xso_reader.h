@@ -34,34 +34,63 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GLOBALS
- #define SCORPION_GLOBALS
+ #ifndef SCORPION_XSO_READER
+ #define SCORPION_XSO_READER
  
  #include <string>
  #include <stdint.h>
- #include <signal.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include "../memory/allocation_scheme.h"
- #include "../memory/object_container.h"
- #include "../memory/block_allocator.h"
- #include "../io/signal_handler.h"
- #include "func_tracker.h"
- #include "../../clib/arraylist.h"
+ #include "xso.h"
  
  using namespace std;
- using namespace scorpionvm::io::signal;
- using namespace scorpionvm;
+ using namespace scorpionvm::_xso;
  
  namespace scorpionvm
  {
-     struct Globals
+     namespace xsoreader
      {
-         sig_handler _sig_handler; /* We handle most OS signals */
-         function_tracker func_tracker;
-     };
- }
+         enum
+         {
+             eof=-0xfff
+         };
+         
+         class xso_reader
+         {
+             public:
+               xso_reader()
+               : i(0)
+               {
+               }
+               xso xso_file;
+               uint64_t i;
+               std::string stream;
+               
+               int read_char() // the safe way to reade from a file stream
+               {
+                   if(i>stream.size())
+                     return eof;
+                   return stream.at(i++);
+               }
+               
+               int read(std::string& byte_stream)
+               {
+                   stream = byte_stream;
+                   byte_stream="";
+                   
+                   if((xso_file.xso_header.magic.byte1 = read_char()) == 0xdf && (xso_file.xso_header.magic.byte2 = read_char()) == 0x4e
+                       && (xso_file.xso_header.magic.byte1 = read_char()) == 0xfa && (xso_file.xso_header.magic.byte2 = read_char()) == 0x2b)
+                   {
+                       cout << "success!";
+                   }
+                   else
+                     return 1;
+               }
+               
+               void print_data()
+               {
+                   
+               }
+         };
+     } // xso
+ } // end scorpionvm
  
- #endif // SCORPION_GLOBALS
+ #endif // SCORPION_XSO_FILE

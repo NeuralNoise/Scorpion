@@ -34,34 +34,52 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GLOBALS
- #define SCORPION_GLOBALS
+ #ifndef SCORPION_FUNCTION_TRACKER
+ #define SCORPION_FUNCTION_TRACKER
  
  #include <string>
- #include <stdint.h>
- #include <signal.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include "../memory/allocation_scheme.h"
- #include "../memory/object_container.h"
- #include "../memory/block_allocator.h"
- #include "../io/signal_handler.h"
- #include "func_tracker.h"
- #include "../../clib/arraylist.h"
- 
+ #include <sstream>
+ #include <sys/time.h>
+
  using namespace std;
- using namespace scorpionvm::io::signal;
- using namespace scorpionvm;
  
  namespace scorpionvm
  {
-     struct Globals
+     struct func
      {
-         sig_handler _sig_handler; /* We handle most OS signals */
-         function_tracker func_tracker;
+         std::string name, _class,
+                     package;
+         uint64_t line;
+         bool native_func;
      };
- }
+     
+     int max_func_size = 20;
+     
+     class function_tracker
+     {
+         public:
+            function_tracker()
+            {
+                function_list._init_();
+            }
+            void add_func(std::string name, std::string _class, std::string package, 
+                    uint64_t call_line, bool native)
+            {
+                func f;
+                f.name = name;
+                f._class = _class;
+                f.package = package;
+                f.line = call_line;
+                f.native_func = native;
+                
+                if(function_list.size() > max_func_size)
+                  function_list.remove(0); // remove first function
+                function_list.add(f);
+            }
+            
+         private:
+           ListAdapter<func> function_list;
+     };
+ } // end ScorpionVM
  
- #endif // SCORPION_GLOBALS
+ #endif // 

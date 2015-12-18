@@ -46,7 +46,7 @@
  
   #define nullptr ((void *)0)
   
- namespace ScorpionVM
+ namespace scorpionvm
  {
      namespace memory
      {
@@ -75,6 +75,6 @@
            
         } // end gc
      } // end memory
- } // end ScorpionVM
+ } // end scorpionvm
 
  #endif // SCORPION_GARBAGE_COLLECTOR

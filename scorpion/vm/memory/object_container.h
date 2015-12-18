@@ -49,7 +49,7 @@
  
   #define nullptr ((void *)0)
   
- namespace ScorpionVM
+ namespace scorpionvm
  {
      namespace memory
      {
@@ -60,12 +60,12 @@
                : init(false),
                  string_(false),
                  array(false),
-                 gc_(ScorpionVM::memory::gc::gc_idle),
+                 gc_(scorpionvm::memory::gc::gc_idle),
                  size_t(0)
                {
                }
                
-               ScorpionVM::memory::schema::ObjectSchema* valuetype;
+               scorpionvm::memory::schema::ObjectSchema* valuetype;
                const char* name; // for debugging objects
                
                uint64_t size_t;
@@ -79,15 +79,15 @@
                    if(string_)
                    {
                      set_size_t=0;
-                     ScorpionVM::memory::BlockAllocator
+                     scorpionvm::memory::BlockAllocator
                             <ListAdapter<schar> > schema_allocator;
                             
                      return schema_allocator.free(hash_set);
                    }
                    else
                    {
-                      ScorpionVM::memory::BlockAllocator
-                            <ScorpionVM::memory::schema::ObjectSchema> schema_allocator;
+                      scorpionvm::memory::BlockAllocator
+                            <scorpionvm::memory::schema::ObjectSchema> schema_allocator;
                      return schema_allocator.free(valuetype);
                    }
                }
@@ -98,21 +98,21 @@
                    if(array && (i<0||i>size_t)) return std::numeric_limits<double>::max();
                    switch( valuetype->type )
                    {
-                       case ScorpionVM::memory::schema::ObjectSchema::SBYTE: 
+                       case scorpionvm::memory::schema::ObjectSchema::SBYTE: 
                               return ((!array) ? valuetype->byte : valuetype[i].byte); break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SSHORT: 
+                       case scorpionvm::memory::schema::ObjectSchema::SSHORT: 
                               return ((!array) ? valuetype->short_ : valuetype[i].byte); break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SCHAR: 
+                       case scorpionvm::memory::schema::ObjectSchema::SCHAR: 
                               return ((!array) ? valuetype->char_ : valuetype[i].byte); break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SINT: 
+                       case scorpionvm::memory::schema::ObjectSchema::SINT: 
                               return ((!array) ? valuetype->int_ : valuetype[i].byte); break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SLONG: 
+                       case scorpionvm::memory::schema::ObjectSchema::SLONG: 
                               return ((!array) ? valuetype->long_ : valuetype[i].byte); break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SFLOAT: 
+                       case scorpionvm::memory::schema::ObjectSchema::SFLOAT: 
                               return ((!array) ? valuetype->float_ : valuetype[i].byte); break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SDOUBLE: 
+                       case scorpionvm::memory::schema::ObjectSchema::SDOUBLE: 
                               return ((!array) ? valuetype->double_ : valuetype[i].byte); break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SBOOL: 
+                       case scorpionvm::memory::schema::ObjectSchema::SBOOL: 
                               return ((!array) ? valuetype->boolean : valuetype[i].byte); break;
                    }
                }
@@ -123,35 +123,35 @@
                    if(array && (i<0||i>size_t)) return;
                    switch( valuetype->type )
                    {
-                       case ScorpionVM::memory::schema::ObjectSchema::SBYTE: 
+                       case scorpionvm::memory::schema::ObjectSchema::SBYTE: 
                                if(!array) valuetype->byte = data;
                                else valuetype[i].byte = data; 
                        break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SSHORT: 
+                       case scorpionvm::memory::schema::ObjectSchema::SSHORT: 
                                if(!array) valuetype->short_ =  data;
                                else valuetype[i].byte = data; 
                        break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SCHAR: 
+                       case scorpionvm::memory::schema::ObjectSchema::SCHAR: 
                                if(!array) valuetype->char_ = data;
                                else valuetype[i].byte = data; 
                        break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SINT: 
+                       case scorpionvm::memory::schema::ObjectSchema::SINT: 
                                if(!array) valuetype->int_ = data;
                                else valuetype[i].byte = data; 
                        break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SLONG: 
+                       case scorpionvm::memory::schema::ObjectSchema::SLONG: 
                                if(!array) valuetype->long_ = data;
                                else valuetype[i].byte = data; 
                        break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SFLOAT:  
+                       case scorpionvm::memory::schema::ObjectSchema::SFLOAT:  
                                if(!array) valuetype->float_ = data;
                                else valuetype[i].byte = data; 
                        break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SDOUBLE: 
+                       case scorpionvm::memory::schema::ObjectSchema::SDOUBLE: 
                                if(!array) valuetype->double_ = data;
                                else valuetype[i].byte = data; 
                        break;
-                       case ScorpionVM::memory::schema::ObjectSchema::SBOOL: 
+                       case scorpionvm::memory::schema::ObjectSchema::SBOOL: 
                                if(!array) valuetype->boolean = data;
                                else valuetype[i].byte = data; 
                        break;
@@ -224,7 +224,7 @@
                int string_schema_init(uint64_t i)
                {
                    if(!string_) return 1;
-                   ScorpionVM::memory::BlockAllocator
+                   scorpionvm::memory::BlockAllocator
                             <ListAdapter<schar> > schema_allocator;
                             
                    hash_set = schema_allocator.malloc(i,0);
@@ -249,20 +249,26 @@
                uint64_t set_size_t;
          };
          
-         struct MethodContainer
+         class MethodContainer
          {
-           string clazz, package, name;
-           
-           uint64_t jmp, ret;
-           
-           /*
-           * Wether or not this method is
-           * native
-           */
-           bool native;
+           public:
+             MethodContainer()
+             : clazz(""),
+               package(""),
+               name(""),
+               jmp(0),
+               ret(0),
+               native(false)
+             {
+             }
+             
+             string clazz, package, 
+                    name;
+             uint64_t jmp, ret;
+             bool native;
          };
      } // end memory
- } // end ScorpionVM
+ } // end scorpionvm
          
 #endif // SCORPION_OBJECT_CONTAINER
          

@@ -112,7 +112,7 @@
   */
   typedef bool sbool;
   
- namespace ScorpionVM
+ namespace scorpionvm
  {
      namespace memory
      {
@@ -145,7 +145,7 @@
              };
          } // end schemea
      } // end memory
- } // end ScorpionVM
+ } // end scorpionvm
  
  #endif // SCORPION_ALLOCATION_SCHEME
  

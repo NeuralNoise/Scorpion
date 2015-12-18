@@ -34,34 +34,51 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GLOBALS
- #define SCORPION_GLOBALS
+ #ifndef SCORPION_XSO_FILE
+ #define SCORPION_XSO_FILE
  
  #include <string>
  #include <stdint.h>
- #include <signal.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include "../memory/allocation_scheme.h"
- #include "../memory/object_container.h"
- #include "../memory/block_allocator.h"
- #include "../io/signal_handler.h"
- #include "func_tracker.h"
- #include "../../clib/arraylist.h"
+ #include "../clib/u1.h"
+ #include "../clib/u2.h"
+ #include "../clib/u4.h"
  
  using namespace std;
- using namespace scorpionvm::io::signal;
- using namespace scorpionvm;
  
  namespace scorpionvm
  {
-     struct Globals
+     namespace _xso
      {
-         sig_handler _sig_handler; /* We handle most OS signals */
-         function_tracker func_tracker;
-     };
- }
+         struct header {
+            u4            magic;
+            u2            minor_version;
+            u2            major_version;
+            u1            target_dev_vers;
+            u1            minimum_dev_vers;
+            string        version_number;
+            u1            debug;
+            u1            logging;
+            u1            log_precedence;
+            string        log_file;
+            string        application_id;
+            string        permissions;
+            u1            filesize;            // The full size of the image section in bytes
+            string        name;
+            u1            method_size;
+        };
+        
+        enum 
+        {
+            prototype_limit=(64 + 16 *(132 * 31)+2),
+            xso_max_buf_len=((64 * 1020 * 156) * 8)
+        };
+        
+        class xso
+        {
+            public:
+              header xso_header;
+        };
+     } // _xso
+ } // end scorpionvm
  
- #endif // SCORPION_GLOBALS
+ #endif // SCORPION_XSO_FILE
