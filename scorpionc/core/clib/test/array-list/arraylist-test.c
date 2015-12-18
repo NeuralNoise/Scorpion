@@ -29,7 +29,15 @@ int main()
     cout << "\n\n";
     
     numbers.insert(111, 0);
-    
     printinfo();
+    cout << "\n\n";
+    numbers.remove(numbers.size() - 1);
+    numbers.remove(1);
+    printinfo();
+    cout << "\n\n";
+    numbers.remove(0);
+    numbers.remove(1);
+    printinfo();
+    cout << "\ndone.\n\n";
     return 0;
 }

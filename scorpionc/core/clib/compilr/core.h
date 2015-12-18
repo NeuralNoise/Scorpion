@@ -149,6 +149,7 @@
  #define typedef_function (-0x3)
  #define typedef_label (-0x4)
  #define typedef_unknown (-0x5)
+ #define typedef_unused_object (-0x6)
  
  struct ClassObject;
  
@@ -157,7 +158,7 @@
      u1 size_t, eadr;
      
      bool isStatic, isarray, isConst;
-     int access;
+     int access, scopeLevel;
      
      std::string name, package;
      std::string _namespace;
@@ -192,7 +193,7 @@
      std::string _namespace;
      std::string parentclass;
      
-     bool isStatic;
+     bool isStatic, isnative;
      int access;
      
      ListAdapter<Object> args;

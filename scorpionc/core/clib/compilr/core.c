@@ -104,7 +104,7 @@
 /*-----------------------*/
  int cmplr_init()
  {
-     cplrfreelist2 = new cmplr_item_2[1];
+     cplrfreelist2 = new_cmplr_item2();
      init=true;
      return 0;
  }
@@ -115,7 +115,6 @@
  int cmplr_add_item( struct cmplr_item b2 )
  {
      cplrfreelist2->c_items.add(b2);
-     
      return 0;
  }
  

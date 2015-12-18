@@ -44,11 +44,14 @@
      bool infunc, inclass, innamespace;
      
      // Required compiler values
-     bool hasStarter, hasInit, ignorestrays, local;
+     bool hasStarter, hasInit, ignorestrays,
+          nativeReturnLock;
      _namespace namespaceParent;
      Object classParent;
+     string functioninfo;
      int classdepth, namespacedepth;
-     long objectadr, aoffset, methodadr;
+     long objectadr, aoffset, methodadr, infunction,
+          scopelevel;
      
  };
  

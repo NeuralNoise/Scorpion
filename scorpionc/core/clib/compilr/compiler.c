@@ -37,6 +37,7 @@
  #include <sstream>
  #include <string>
  #include <iostream>
+ #include <iomanip>
  
  using namespace std;
  
@@ -110,6 +111,11 @@
 		asmintro = true;
 		cout << "Assembler messages:\n";
 	 }
+     if(cglobals.infunction == 1)
+     {
+         cout << cglobals.file << ":  In function '" << cglobals.functioninfo << "':\n";
+         cglobals.infunction = 2; // were still in a function
+     }
      cout << cglobals.file << ":" << lex.lexer().line_t << "  error: " << cglobals.out.str() << endl;
      cglobals.success = 1;
      cglobals.out.str("");
@@ -351,7 +357,7 @@
           
           return false;
        }
-       
+     
        long oadr(Object &o, const bool internal = true)
        {
           if(!objects._init())
@@ -368,6 +374,23 @@
           }
           
           return 0;
+       }
+       
+       bool oreuse(Object &o)
+       {
+          if(!objects._init())
+            return false;
+            
+          for(long i = 0; i < objects.size(); i++)
+          {
+              if(at(i).type == typedef_unused_object)
+              {
+                  objects.replace(o, i);
+                  return true;
+              }
+          }
+            
+           return false;
        }
        
        string oinfo(Object &o)
@@ -429,9 +452,11 @@
            o.access = access;
            o.package = package;
            o._namespace = _namespace;
+           o.eadr.byte1 = cglobals.objectadr++;
            o.parentclass = parentclass;
            o.size_t.byte1 = 0;
-           o.eadr.byte1 = cglobals.objectadr++;
+           cout << "create " << name << " scopelvl " << ((cglobals.infunction == 0) ? -1 : cglobals.scopelevel) << endl;
+           o.scopeLevel = ((cglobals.infunction == 0) ? -1 : cglobals.scopelevel); // TODO: Add scope level processing instead of local -1 if not local
            
            if(type == typedef_class)
                o.C = new ClassObject[1];
@@ -439,7 +464,8 @@
            if(ocmp(o))
              return false;
            else {
-               objects.add(o);
+               if(!oreuse(o)) // reuse previously deleted objects in memory
+                 objects.add(o);
                return true;
            }
        }
@@ -471,6 +497,7 @@
     namespace methodhelper
     {
        string argstostr(ListAdapter<Object> &args);
+       string nativeargstostr(ListAdapter<Object> &args);
        bool sameargs(ListAdapter<Object> args1, ListAdapter<Object> args2);
        
        Method at(long i)
@@ -531,11 +558,43 @@
                     if(at(i).isStatic)
                        ss << "static ";
                     
-                   ss << "def ";   
+                   ss << ((at(i).isnative) ? "native " : "" ) << "def ";   
                     if(o.parentclass != "<null>")
                         ss << o.parentclass << ".";
                         
-                    ss << o.name << "(" << argstostr(args) << ") `function`"; 
+                    ss << o.name << "(" << ((at(i).isnative) ? nativeargstostr(args) : argstostr(args)) << ") `function`"; 
+                    return ss.str();
+                }
+             }
+          }
+          
+          return "<null>";
+       }
+       
+       string basic_minfo(Method &o, ListAdapter<Object> &args) // TODO: Process info for native functions
+       {
+          if(!methods._init())
+            return "<null>";
+        
+          stringstream ss;    
+          for(long i =0; i < methods.size(); i++)
+          {
+             if(at(i).name == o.name || at(i)._namespace == o._namespace)
+             {
+                if(at(i).parentclass == o.parentclass && sameargs(at(i).args, args) )
+                {
+                    if(o._namespace != "<null>")
+                        ss << o._namespace << "::";
+                    
+                    ss << atostr(at(i).access) << " ";
+                    if(at(i).isStatic)
+                       ss << "static ";
+                    
+                   ss << ((at(i).isnative) ? "native " : "" ) << "def ";   
+                    if(o.parentclass != "<null>")
+                        ss << o.parentclass << ".";
+                        
+                    ss << o.name << "("  << ((at(i).isnative) ? nativeargstostr(args) : argstostr(args)) << ")"; 
                     return ss.str();
                 }
              }
@@ -573,6 +632,21 @@
            return ss.str();
        }
        
+       string nativeargstostr(ListAdapter<Object> &args)
+       {
+           stringstream ss;
+           if(!args._init())
+             return ""; // A function can have no args
+             
+           for(int i = 0; i < args.size(); i++)
+           {
+               ss << ttostr(args.valueAt(i).type) << ((args.valueAt(i).array()) ? "[]" : "") 
+                    << args.valueAt(i).name << (((i + 1) < args.size()) ? "," : "");
+           }     
+             
+           return ss.str();
+       }
+       
        bool exists(Method &o, ListAdapter<Object> &args)
        { return mcmp(o, args); }
        
@@ -587,7 +661,7 @@
        }
        
        bool create(std::string name, bool isStatic, int access, std::string package, 
-                std::string _namespace, std::string parentclass, ListAdapter<Object> &args)
+                std::string _namespace, std::string parentclass, ListAdapter<Object> &args, bool isnative = false)
        {
            Method o;
            o.name = name;
@@ -596,6 +670,7 @@
            o.args = args;
            o._namespace = _namespace;
            o.parentclass = parentclass;
+           o.isnative = isnative;
            
            if(mcmp(o, args))
              return false;
@@ -774,6 +849,23 @@
        { return ncmp(o); }
     }
     
+    void run_gc() // kill all local variables for alloc
+    {
+       cout << "scope level " << cglobals.scopelevel << ":\n";
+       for(unsigned long i = 0; i < objects.size(); i++)
+       {
+           if(objects.valueAt(i).scopeLevel == cglobals.scopelevel 
+              && objects.valueAt(i).type != typedef_class)
+           {
+               level2(OP_KILL, objects.valueAt(i).eadr.byte1);
+               //cout << "kill " << objects.valueAt(i).name << endl;
+               Object objforalloc;
+               objforalloc.type = typedef_unused_object;
+               objects.replace(objforalloc, i); // Reuse old objects for alloc
+           }
+       }
+    }
+	   
     namespace helper
     {
        bool reserved(std::string symbol);    
@@ -786,6 +878,8 @@
        int _strttot(std::string symbol);
        int _asm_strttot(std::string symbol);
        int _asm_strtop(string op);
+       
+       
        
        std::string parse_dot_notation(lexr::parser_helper& lex, bool dotfirst, std::string breaker, bool asterisk = false)
        {
@@ -1137,7 +1231,7 @@
                }
                else if(temp_t.type == temp_t.e_symbol){
                    plus = false;
-                   ss << "\\[v" << temp_t.value << "|";
+                   ss << "\\[v" << temp_t.value << ";";
                    needStr = false;
                }
                else if(temp_t.value == "+"){
@@ -1181,7 +1275,7 @@
            
            if(temp_t.type == temp_t.e_symbol)
            {
-               if(!_typedef(temp_t.value) && temp_t.value != "p")
+               if(!_typedef(temp_t.value))
                {
                    cglobals.out << "Expected qualified symbol before '" << temp_t.value << "'.";
                    error(lex);
@@ -1202,16 +1296,12 @@
                    type = 's';
                else if(temp_t.value == "long")
                    type = 'l';
-               else if(temp_t.value == "p")
-                   type = 'p';
                else if(temp_t.value == "bool")
                    type = 'b';
                else if(temp_t.value == "float")
                    type = 'f';
                else if(temp_t.value == "double")
                    type = 'd';
-               else if(temp_t.value == "bool")
-                   type = 'b';
            }
            
            temp_t = getNextToken(lex);
@@ -1283,7 +1373,7 @@
 						   if(temp_t.type == temp_t.e_number) // apply type cast to number
 						   {
 							   level3(OP_DCONST, var_dummy_data, atof(temp_t.value.c_str()));
-							   outstream << "\\[" << cast << var_dummy_data << "|";
+							   outstream << "\\[" << cast << var_dummy_data << ";";
 							   continue;
 						   }
 						   else lex.lexer().token_sz1--;
@@ -1313,7 +1403,7 @@
 						   error(lex);
 					  }  
 				   }
-                   outstream << "\\[" << cast << map.adr << "|";
+                   outstream << "\\[" << cast << map.adr << ";";
                }
                else if(temp_t.type == temp_t.e_symbol)
                {
@@ -1333,8 +1423,6 @@
                            cglobals.out << "Expected ')' at end of cout instruction.";
                            error(lex);
                        }
-                       
-                       lex.lexer().token_sz1-=2;
                        break;
                    }
                }
@@ -1342,6 +1430,35 @@
            
           // cout << "outstream.str() " << outstream.str() << endl;
            _cout(outstream.str());
+       }
+       
+       int castvalue(lexr::parser_helper &lex, string cast)
+       {
+           int i = 0;
+           if(cast == "string")
+           {
+               cglobals.out << "Cannot apply explicit typecast of type `string`.";
+               error(lex);                    
+           }
+           else if(cast == "char")
+               return 1;
+           else if(cast == "byte")
+               return 2;
+           else if(cast == "int")
+               return 3;
+           else if(cast == "short")
+               return 4;
+           else if(cast == "long")
+               return 5;
+           else if(cast == "*")
+               return 6;
+           else if(cast == "bool")
+               return 7;
+           else if(cast == "float")
+               return 8;
+           else if(cast == "double")
+               return 9;
+           return i;
        }
        
        void parse_asm_method_args(lexr::parser_helper& lex, ListAdapter<Object> &args)
@@ -1623,6 +1740,12 @@
 					   error(lex);   
 			       }
 			       
+			      if(op == "ret" && !cglobals.nativeReturnLock) // this prevents from mis identifying wether or not you are in a function
+			      {
+			          cglobals.infunction--;
+			          cglobals.nativeReturnLock = true;
+			      }
+			       
 				  if(map.type != typedef_function && map.adr != -1)
 				  {
 					   cglobals.out << "Cannot explicitly " << ((op == "call") ? "call" : "return" ) << " non-function symbol '" << map.symbol << "'.";
@@ -1636,16 +1759,7 @@
                else if(temp_t.value == ".")
                {
                   temp_t = getNextToken(lex);
-                  if(temp_t.value == "local" || temp_t.value == "global")
-                  {
-					  if(((temp_t.value == "local") ? cglobals.local : !cglobals.local))
-					  {
-						   cglobals.out << "Assembler flag `" << temp_t.value << "` has already been set.";
-						   warning(lex);
-					  }
-					 cglobals.local = ((temp_t.value == "local") ? true : false);
-				  }
-				  else if(temp_t.value == "label")
+                  if(temp_t.value == "label")
 				  {
 					   string type = temp_t.value;
 					   cglobals.ignorestrays = true;
@@ -1680,11 +1794,18 @@
                            error(cglobals.lex);
 					   }
 					   
+					   if(cglobals.infunction == 0)
+			           {
+			               cglobals.out << "Label '" << varname << "' cannot created outside a function.";
+						   error(lex);
+			           }
+					   
                      level2(OP_LBL, objecthelper::address(varname, typedef_label, "<null>", 
                               memoryhelper::getparentclass(), false));
 				  }				      
 			      else if(temp_t.value == "mthd")
 			      {
+			           cglobals.nativeReturnLock = false;
                        cglobals.method_t++;
 					   string type = temp_t.value;
 					   cglobals.ignorestrays = true;
@@ -1719,7 +1840,7 @@
 					   //cout << "parentclass " << getparentclass() << endl;
 					   
 					   if(!memoryhelper::methodhelper::create(functionname, false, access_private, 
-								cglobals.package, "<null>", getparentclass(), args))
+								cglobals.package, "<null>", getparentclass(), args, true))
 					   {
 						   methodfound = true;
 						   cglobals.out << "Symbol of type `function` has already been declared.\nPreviously declared here:\n\t" 
@@ -1751,8 +1872,27 @@
 					  
 					  long madr = memoryhelper::methodhelper::address
 									 (functionname, "<null>", getparentclass(), args);
-									 
+					  
+					   if(cglobals.infunction != 0)
+			           {
+			               cglobals.out << "Native function '" 
+			                 << methodhelper::basic_minfo(methods.valueAt(madr), args) 
+			                   << "' cannot be nested inside of another function.";
+						   error(lex);
+			           }
+			           else
+			           {
+			               cglobals.infunction = 1;
+			               cglobals.functioninfo = methodhelper::basic_minfo(methods.valueAt(madr), args);
+			           }
+					  				 
+			          cglobals.infunction++;
 					  level2(OP_MTHD, madr);  
+				  }
+				  else 
+				  {
+				      cglobals.out << "Unknown special instruction '" << temp_t.value << "'.";
+					  error(lex); 
 				  }
 			   }
                else if(temp_t.value == "jit" || temp_t.value == "jif" || temp_t.value == "lsft" || temp_t.value == "rsft"
@@ -1796,7 +1936,7 @@
                        || temp_t.value == "ige" || temp_t.value == "ieq" || temp_t.value == "ilt"
                        || temp_t.value == "add" || temp_t.value == "sub" || temp_t.value == "mult"
                        || temp_t.value == "div" || temp_t.value == "mod" || temp_t.value == "at"
-                       || temp_t.value == "aload" || temp_t.value == "astore")
+                       || temp_t.value == "aload" || temp_t.value == "astore" || temp_t.value == "cast")
                {
 				   string op = temp_t.value;
 				   long obj1,obj2,obj3;
@@ -1836,6 +1976,35 @@
 					   cglobals.out << "Expected ',' before symbol '" << temp_t.value << "'.";
 					   error(lex);   
 				   }
+			       
+			       if(op == "cast") // process differently
+			       {
+			           temp_t = getNextToken(lex);
+			           if(temp_t.value != "[")
+    			       {
+    					   cglobals.out << "Expected '[' before symbol '" << temp_t.value << "'.";
+    					   error(lex);   
+    				   }
+    				   
+    				   string type = "int";
+			           temp_t = getNextToken(lex);
+			           if(temp_t.type != temp_t.e_symbol && temp_t.value != "*")
+			           {
+    					   cglobals.out << "Expected qualified symbol before '" << temp_t.value << "'.";
+    					   error(lex);   
+			           }
+			           else type = temp_t.value;
+			           
+			           temp_t = getNextToken(lex);
+			           if(temp_t.value != "]")
+    			       {
+    					   cglobals.out << "Expected ']' before symbol '" << temp_t.value << "'.";
+    					   error(lex);   
+    				   }
+    				   
+			           level4(OP_CAST, obj1, obj2, castvalue(lex, type));
+			           continue;
+			       }
 			       
 			       objmap map3 = parse_wordmap(lex, parse_complex_dot_notation(lex, false, breakers, true), args);
                    obj3=map3.adr;
@@ -1998,6 +2167,7 @@
        void parse_method_block(lexr::parser_helper& lex, int block_begin, long address)
        {
            cglobals.block_stack++;
+           cglobals.scopelevel++;
            lexr::token temp_t;
            
            while( cglobals.block_stack!=block_begin)
@@ -2011,9 +2181,16 @@
                   break;
 			   }
                if(temp_t.value == "}")
-                  cglobals.block_stack--;
+               {
+                   run_gc(); // kill all temp vars
+	               cglobals.scopelevel--;
+                   cglobals.block_stack--;
+               }
                else if(temp_t.value == "{")
-                  cglobals.block_stack++;
+               {
+                 cglobals.scopelevel++;
+                 cglobals.block_stack++;
+               }
                else if(reserved(temp_t.value))
                {
                    if(accessspecifier(temp_t.value))
@@ -2194,9 +2371,16 @@
                           
                           long madr = memoryhelper::methodhelper::address
                                          (functionname, "<null>", getparentclass(), args);
-                                         
+                          
+                          cglobals.infunction = 1;
+                          cglobals.scopelevel = 0;
+                          cglobals.functioninfo = methodhelper::basic_minfo(methods.valueAt(madr), args);
+                          
                           level2(OP_MTHD, madr); 
                           memoryhelper::helper::parse_method_block(lex, cglobals.block_stack, madr);
+                          
+                          cout<<"\n";
+			              cglobals.infunction = 0;
                           
                           level3(OP_ICONST, var_return, 0); 
                           level2(OP_PUSH, var_return); 
@@ -2458,9 +2642,11 @@ bool validate_package_file(string pkg, string file)
     return ss.str() == pkg;
 }
 
+short dbl_maxp = 16;
 void parse_cmplr_items(stringstream &out_buf)
  {
      int i2 = 0;
+     out_buf << std::setprecision(dbl_maxp);
      for(unsigned long i =0; i<cplrfreelist2->c_items.size(); i++)
      {
          cplrfreelist1.add(cplrfreelist2->c_items.valueAt(i));
@@ -2487,7 +2673,7 @@ void parse_cmplr_items(stringstream &out_buf)
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 Method m= methods.valueAt(cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1);
                 
-                out_buf << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0;
+                out_buf << (char) cplr_method << OP_MTHD << (char) 0 << ((m.isnative) ? "~" : "") << m.name << "&" << m.parentclass << "&" << m.package << (char) 0;
                 out_buf << m.eadr.byte1 << (char) 0;
                 
                //cout << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0 << " `";
@@ -2536,7 +2722,8 @@ void parse_cmplr_items(stringstream &out_buf)
          }
          else if(ins == OP_ADD || ins == OP_ISEQ || ins == OP_ISLT || ins == OP_ISLE || ins == OP_ISGT 
                    || ins == OP_ISGE || ins == OP_SUB || ins == OP_MULT || ins == OP_DIV || ins == OP_MOD 
-                   || ins == OP_OR || ins == OP_AND || ins == OP_AT || ins == OP_ALOAD || ins == OP_ASTORE)
+                   || ins == OP_OR || ins == OP_AND || ins == OP_AT || ins == OP_ALOAD || ins == OP_ASTORE
+                   || ins == OP_CAST)
          {
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
@@ -2560,8 +2747,11 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
      cglobals.hasInit = false;
      cglobals.hasStarter = false;
      cglobals.ignorestrays = false;
+	 cglobals.nativeReturnLock = false; // prevent function confusion
      cglobals.methodadr = 0;
      cglobals.objectadr = 50;
+     cglobals.scopelevel = 0;
+     cglobals.infunction = 0;
      
      for(int i = 0; i < zip_archive.header.sourcecount.byte1; i++)
      {

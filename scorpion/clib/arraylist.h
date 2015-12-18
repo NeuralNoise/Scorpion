@@ -28,12 +28,11 @@ class ListAdapter {
         }
         void clear()
         {
-            if(!init||size_t==0) return;
+            if(!init||size_t==0||err) return;
             delete[] values;
             size_t=0;
             init=false;
             err = false;
-            pmode = false;
         }
         bool _init() { return init; }
         bool _err() { return err; }
@@ -43,13 +42,15 @@ class ListAdapter {
         {
 		   if(init) return;
 		   init = false;	
+           err = false;
+           pmode = false;
            size_t = 0;
 	    }
         void add(T value)
         {
             if(!init)
             {
-                values = new T[1];
+                values = new (nothrow) T[1];
                 size_t = 0;
                 init = true;
             }
@@ -87,7 +88,7 @@ class ListAdapter {
             } 
            
             size_t++;
-            newValues = new T[size_t];
+            newValues = new (nothrow) T[size_t];
             if(newValues == nullptr){
                 if(pmode) { err = true; return; }
                 cout << "std: array_out_of_memory\n\tarray insert[" << size_t << "]\n";
@@ -113,36 +114,36 @@ class ListAdapter {
         {
              if(pos >= size_t || pos < 0 || !init){
                 if(pmode) { err = true; return; }
-                cout << "std: array_out_of_bounds\n\tarray insert[" << pos << "] >= size[" << size_t << "]\n";
+                cout << "std: array_out_of_bounds\n\tarray remove[" << pos << "] >= size[" << size_t << "]\n";
                 exit(1);
              }
     
             size_t--;
-            newValues = new T[size_t];
+            newValues = new (nothrow) T[size_t];
             if(newValues == nullptr){
                 if(pmode) { err = true; return; }
-                cout << "std: array_out_of_memory\n\tarray insert[" << size_t << "]\n";
+                cout << "std: array_out_of_memory\n\tarray remove[" << size_t << "]\n";
                 exit(1);
             }
             
-            int i2 = 0;
-            for(long i = 0; i < size_t-1; i++)
+            unsigned int i2 = 0;
+            for(long i = 0; i < size_t; i++)
             {
-                if(i == pos){}
-                else
-                  newValues[i2] = values[i];
-                i2++;
+                if(i == pos){ i2++; }
+                
+                  newValues[i] = values[i2++];
             }
             
+            delete[] values;
             values = &newValues[0];
-        }      
+        }
         void pushback()
         {
             if(!init)
               return;
             else if((size_t - 1) < 0) return;
             
-            newValues = new T[size_t-1];
+            newValues = new (nothrow) T[size_t-1];
             if(newValues == nullptr){
                 if(pmode) { err = true; return; }
                 cout << "std: array_out_of_memory\n\tarray pushback[" << size_t << "]\n";

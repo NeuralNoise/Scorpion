@@ -38,18 +38,22 @@
  * Command line invocation of the Scorpion VM
  */
  
+ #include "../vm/scorpionvm.h" 
+ #include "../vm/exception.h"
+ #include "../vm/scorpion_env.h"
+ #include "../logservice/alog.h"
+ #include "../logservice/filter.h"
+ #include "../vm/Globals.h"
  #include <sys/types.h>
  #include <sys/stat.h>
  #include <stdlib.h>
  #include <stdio.h>
  #include <string.h>
+ #include "../libxso/xso.h"
  #include <signal.h>
  #include <assert.h>
  #include <iostream>
  #include <sstream>
- 
- #include "../vm/memory/vm_env.h"
- #include "../vm/internal/globals.h"
  
  using namespace std;
  
@@ -76,12 +80,11 @@ void printusage()
 
 #define nullptr ((void *)0)
 
-//ALog alog;
+ALog alog;
+extern int vmStatus;
 
-using namespace ScorpionVM::memory::environment;
-using namespace ScorpionVM;
+SvmGlobals gSvm;
 
-Globals g_Svm;
 /*
 * Parse arguments.  Most of it just gets passed through to the VM.
 *
@@ -92,11 +95,12 @@ Globals g_Svm;
 * System log dest: /us/share/scorpion/vm/log/out.log
 */
 int main(int argc, const char **argv){
-   // ScorpionVmState *vmstate = NULL;
-   //   scorpion_env* p_env = NULL;
-  //  XSO* x = NULL;
+    ScorpionVmState *vmstate = NULL;
+    ScorpionEnv* p_env = NULL;
+    XSO* x = NULL;
     int optionCount, curOpt, i, argIdx;
-    int needExtra = 0, result = 0;
+    int needExtra = 0;
+    int result = 1;
     int status;
     std::string lastFlag;
     string problemFlag;
@@ -114,7 +118,7 @@ int main(int argc, const char **argv){
      * plus the options to the program.
      */
     optionCount = argc - 1;
-   // Exception::trace.addproto("vm.internal.system.main", "[ScorpionVirtualMachine]", 121, 1);
+    Exception::trace.addproto("vm.internal.system.main", "[ScorpionVirtualMachine]", 121, 1);
 
     /*
      * First level Arg check.  Check if argumets arent faulty
@@ -166,19 +170,13 @@ int main(int argc, const char **argv){
         goto bail;
     }
 
-    if(g_Svm._sig_handler.register_handler() != ScorpionVM::io::signal::SIG_REGRISTRATION_SUCCESS)
-    {
-        printf("error: Could not register signal handler.\n");
-        goto bail;
-    }
-
     /*
      * Start VM.  The current thread becomes the main thread of the VM.
      */
-    // Init_CreateScorpionVM(vmstate, p_env, x, argv, argc);
+     Init_CreateScorpionVM(vmstate, p_env, x, argv, argc);
 
 
-   /* if(vmStatus != 0) { // have method return ScorpionEnv
+    if(vmStatus != 0) { // have method return ScorpionEnv
         printf("error:  Failed to initalize the Scorpion VM.\nA fatal error has occured, shutting down.\n");
         goto bail;
     }
@@ -189,10 +187,11 @@ int main(int argc, const char **argv){
     /* We Skip creating the Main Thread */
 
     /* Start Virtual Machine */
-    //status = Init_StartScorpionVM();
+    status = Init_StartScorpionVM();
 
-    //if (status != 0)
-    //    alog.ALOGW("Failed to start the Scorpion Virtual Machine.");
+    if (status != 0)
+        alog.ALOGW("Failed to start the Scorpion Virtual Machine.");
+
 
 
     /*
@@ -201,11 +200,10 @@ int main(int argc, const char **argv){
     */
     bail:
         /*printf("Shutting down Scorpion VM\n");*/
-    // if (gSvm.vmstate->status != vm_status_normal) 
-    //    Init_ShutdownScorpionVM();
+     if (gSvm.vmstate->status != vm_status_normal) 
+        Init_ShutdownScorpionVM();
     
-    //  alog.ALOGV("--- VM is down, process exiting.");
-    cout << "done.\n";
+      alog.ALOGV("--- VM is down, process exiting.");
       return result;
 }
 
