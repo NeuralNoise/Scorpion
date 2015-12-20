@@ -51,25 +51,10 @@
         /*
          * Get the wall-clock date/time, in usec.
          */
-         long getWallTimeInUsec()
-         {
-            struct timeval tv;
-            gettimeofday(&tv, NULL);
-            return  tv.tv_usec / 1000LL;
-         }
+         long getWallTimeInUsec();
          // END Delvik code
 
-         const string currtime(){
-            time_t     now = time(0);
-            struct tm  tstruct;
-            char       buf[90];
-            tstruct = *localtime(&now);
-            // Time used for logging
-            strftime(buf, sizeof(buf), "%Y-%m-%d--%X", &tstruct);
-            stringstream ss;
-            ss << buf << "." << getWallTimeInUsec();
-            return ss.str();
-         }
+         const string currtime();
      } // end time
  } // end ScorpionVM
  

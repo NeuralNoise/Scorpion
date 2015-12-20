@@ -34,37 +34,50 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GARBAGE_COLLECTOR
- #define SCORPION_GARBAGE_COLLECTOR
+ #ifndef SCORPION_RUNTIME_EXCEPTION
+ #define SCORPION_RUNTIME_EXCEPTION
  
  #include <string>
  #include <stdint.h>
- #include "allocation_scheme.h"
- #include "../../clib/arraylist.h"
+ #include <signal.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
+ #include "../internal/vm.h"
  
  using namespace std;
+ using namespace scorpionvm;
+ using namespace scorpionvm::vm;
  
   #define nullptr ((void *)0)
-  
+
  namespace scorpionvm
  {
-     namespace memory
+     namespace io
      {
-        namespace gc
-        {
-           enum // gc states
-           {
-              gc_clean=0,
-              gc_idle=1,
-              gc_dirty=2
-           };
-           
-           void gc_invalidate_objects();
-           
-           void check_gc();
-           
-        } // end gc
-     } // end memory
- } // end scorpionvm
-
- #endif // SCORPION_GARBAGE_COLLECTOR
+         namespace runtime_exception
+         {
+             class Exception
+             {
+                 public:
+                   void error(string what)
+                   {
+                       what_arg=("Exception");
+                       what=(what);
+                   }
+                   void error(const char* _what_arg, string _what)
+                   {
+                     what_arg=(_what_arg);
+                     what=(_what);
+                   }
+                   const char* what_arg;
+                   std::string what;
+             };
+             
+             void runtime_error(Exception e, ScorpionVM* vm);
+         }
+     }
+ }
+ 
+ #endif // SCORPION_RUNTIME_EXCEPTION

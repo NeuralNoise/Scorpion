@@ -49,19 +49,33 @@
  #include "../memory/block_allocator.h"
  #include "../io/signal_handler.h"
  #include "func_tracker.h"
+ #include "vm.h"
+ #include "../memory/vm_env.h"
  #include "../../clib/arraylist.h"
  
  using namespace std;
- using namespace scorpionvm::io::signal;
  using namespace scorpionvm;
+ using namespace scorpionvm::vm;
+ using namespace scorpionvm::memory;
+ using namespace scorpionvm::io::signal;
+ using namespace scorpionvm::memory::environment;
  
  namespace scorpionvm
  {
      struct Globals
      {
          sig_handler _sig_handler; /* We handle most OS signals */
-         function_tracker func_tracker;
+         
+         ScorpionVM* vmstates;
+         scorpion_env* env;
+         
+         MethodContainer* native_methods;
+         
+         /* Global pointer to vm & environment */
+         uint64_t p_ptr;
      };
  }
+ 
+ extern Globals g_Svm;
  
  #endif // SCORPION_GLOBALS

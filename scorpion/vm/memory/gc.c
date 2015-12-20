@@ -34,37 +34,29 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GARBAGE_COLLECTOR
- #define SCORPION_GARBAGE_COLLECTOR
  
  #include <string>
  #include <stdint.h>
  #include "allocation_scheme.h"
  #include "../../clib/arraylist.h"
+ #include "gc.h"
  
  using namespace std;
+ using namespace scorpionvm::memory::gc;
  
   #define nullptr ((void *)0)
+  long default_gc_interval = 0xffae, tracker=0;
   
- namespace scorpionvm
- {
-     namespace memory
-     {
-        namespace gc
-        {
-           enum // gc states
-           {
-              gc_clean=0,
-              gc_idle=1,
-              gc_dirty=2
-           };
+  void scorpionvm::memory::gc::gc_invalidate_objects()
+  {
+   
+  }
+  
+  void scorpionvm::memory::gc::check_gc()
+  {
+     if(tracker >= default_gc_interval)
+        gc_invalidate_objects();
+     tracker=0;
+  }
            
-           void gc_invalidate_objects();
            
-           void check_gc();
-           
-        } // end gc
-     } // end memory
- } // end scorpionvm
-
- #endif // SCORPION_GARBAGE_COLLECTOR

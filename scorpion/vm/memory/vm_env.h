@@ -63,7 +63,8 @@
                    scorpionvm::memory::ObjectContainer* m_heap;
                    int64_t* m_stack;
                    
-                   int alloc(uint64_t _alloc_base, uint64_t _alloc_max, uint64_t stack_t)
+                   int alloc(uint64_t _alloc_base, uint64_t  _method_base, 
+                           uint64_t _alloc_max, uint64_t stack_t)
                    {
                        m_heap = base_allocator.malloc(_alloc_base, _alloc_max);
                        if(m_heap == NULL)
@@ -75,6 +76,7 @@
                          base_allocator.free(m_heap);
                          return 1;
                        }
+                       
                        return 0;
                    }
                    int destroy_self() // destroy*self()
@@ -85,7 +87,7 @@
                        r+=base_allocator2.free(m_stack);
                        return r;
                    }
-                   void setName(const char* n)
+                   void setname(const char* n)
                    {
                        name = n;
                    }
@@ -96,9 +98,17 @@
                        return ss.str();
                    }
                    
-                   uint64_t sizeinfo(int i, bool heap = true)
+                   uint64_t sizeinfo(int i, int id = 0)
                    {
-                       return ((heap) ? base_allocator.size_t(i) : base_allocator2.size_t(i));
+                       switch( id )
+                       {
+                          case 0:
+                            return base_allocator.size_t(i); // Env heap
+                          case 1:
+                            return base_allocator2.size_t(i); // Stack heap
+                          default:
+                            return base_allocator.size_t(i); // Env heap
+                       }
                    }
                    
                  private:

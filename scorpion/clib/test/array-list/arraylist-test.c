@@ -31,5 +31,14 @@ int main()
     numbers.insert(111, 0);
     
     printinfo();
+    
+    ListAdapter<int*> numbers2;
+    
+    int* i;
+    i = new int[1];
+    i[0] = 55;
+    numbers2.add(i);
+    cout << "numbers2 @1 = " << numbers2.valueAt(0)[0] << endl;
+    cout << "done.\n";
     return 0;
 }

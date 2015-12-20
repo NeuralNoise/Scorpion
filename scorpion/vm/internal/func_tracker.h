@@ -40,20 +40,21 @@
  #include <string>
  #include <sstream>
  #include <sys/time.h>
-
+ #include <stdint.h>
+ #include <stdio.h>
+ #include "../../clib/arraylist.h"
+ 
  using namespace std;
  
  namespace scorpionvm
  {
      struct func
      {
-         std::string name, _class,
+         std::string name, file, _class,
                      package;
          uint64_t line;
          bool native_func;
      };
-     
-     int max_func_size = 20;
      
      class function_tracker
      {
@@ -62,19 +63,41 @@
             {
                 function_list._init_();
             }
-            void add_func(std::string name, std::string _class, std::string package, 
-                    uint64_t call_line, bool native)
+            void add_func(std::string name, std::string file, std::string package, 
+                    std::string _class, uint64_t call_line, bool native)
             {
                 func f;
                 f.name = name;
-                f._class = _class;
+                f.file = file;
                 f.package = package;
                 f.line = call_line;
                 f.native_func = native;
+                f._class = _class;
                 
-                if(function_list.size() > max_func_size)
+                if(function_list.size() > 20)
                   function_list.remove(0); // remove first function
                 function_list.add(f);
+            }
+            
+            string get_func_trace()
+            {
+                stringstream ss;
+                ss << "Traceback (most recent call last)\n";
+                for(uint64_t i=0; i < function_list.size(); i++)
+                {
+                    ss << "at " << function_list.valueAt(i).package 
+                        << "." << function_list.valueAt(i)._class << "." 
+                          << function_list.valueAt(i).name << "(";
+                          
+                    if(function_list.valueAt(i).native_func)
+                      ss << "Native Function)\n";
+                    else
+                    {
+                      ss << function_list.valueAt(i).file << ":"
+                          << function_list.valueAt(i).line << ")\n";
+                    }
+                }
+                return ss.str();
             }
             
          private:
@@ -82,4 +105,4 @@
      };
  } // end ScorpionVM
  
- #endif // 
+ #endif // SCORPION_FUNCTION_TRACKER

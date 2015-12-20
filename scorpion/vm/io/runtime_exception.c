@@ -34,37 +34,31 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GARBAGE_COLLECTOR
- #define SCORPION_GARBAGE_COLLECTOR
  
  #include <string>
  #include <stdint.h>
- #include "allocation_scheme.h"
+ #include <signal.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
+ #include "../internal/globals.h"
+ #include "../internal/vm.h"
  #include "../../clib/arraylist.h"
+ #include "runtime_exception.h"
  
  using namespace std;
+ using namespace scorpionvm;
+ using namespace scorpionvm::vm;
+ using namespace scorpionvm::io::runtime_exception;
+ using namespace scorpionvm::io::runtime_exception;
  
   #define nullptr ((void *)0)
-  
- namespace scorpionvm
+ 
+ void scorpionvm::io::runtime_exception::runtime_error(Exception e, ScorpionVM* vm)
  {
-     namespace memory
-     {
-        namespace gc
-        {
-           enum // gc states
-           {
-              gc_clean=0,
-              gc_idle=1,
-              gc_dirty=2
-           };
-           
-           void gc_invalidate_objects();
-           
-           void check_gc();
-           
-        } // end gc
-     } // end memory
- } // end scorpionvm
-
- #endif // SCORPION_GARBAGE_COLLECTOR
+     if(vm != NULL)
+       printf("RuntimeException: Caused by %s: %s\n%s", e.what_arg, e.what.c_str(),
+           vm->func_tracker.get_func_trace().c_str());
+     g_Svm._sig_handler.raise_sig(SIGQUIT);
+ }

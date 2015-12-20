@@ -47,6 +47,15 @@ class ListAdapter {
             }
            return false;
         }
+        long long indexof(T value)
+        {
+            for(long long i = 0; i < size_t; i++)
+            {
+                if(values[i] == value)
+                   return i;
+            }
+           return -1;
+        }
         long size(){ return size_t; }
         string valueAt(long i)
         {

@@ -37,7 +37,9 @@
  #ifndef SCORPION_DEBUG_LOG_SREVICE
  #define SCORPION_DEBUG_LOG_SREVICE
  
+ #include <sstream>
  #include "log_service.h"
+ #include "../../clib/filestream.h"
  
  using namespace scorpionvm::log::log_service;
  
@@ -58,17 +60,16 @@
                        : precedence(VERBOSE),
                          file(""),
                          logstack(""),
-                         _class("System"),
                          package("vm.internal"),
                          basepackage("vm.internal"),
-                         baseclass("System"),
                          on(false),
                          bufferthreshold(124 * (1000)) // 124 kb
                        {
                        }
                      
-                       void service_setup(int level, bool usr, string _file, int usr_level)
+                       void service_setup(int level, bool usr, string _file)
                        {
+                          if(on) return; // you cant setup the log service more than once
                           #ifdef ENV_DEV
                             file = "/usr/share/scorpion/vm/log/out.log";
                           #endif
@@ -91,64 +92,58 @@
                              }
                              
                              if(usr) file = _file;
-                             precedence = ((usr) ? usr_level : level);
+                             precedence = level;
                              logstack = "";
                              logstack += "=======System Dev Log begin=======\n";
+                             
+                             stringstream ss;
+                             ss << "Log setup: using " << file;
+                             LOGV(ss.str());
                           }
-                       }
-                       
-                       void setclass(string name){
-                          _class = name;
                        }
                        void setpackage(string name){
                           package = name;
                        }
-                       void LOGA(string message){
-                          a(_class, message, file, on, logstack, precedence, package);
+                       void LOGA(string message, string class_ = "System"){
+                          a(class_, message, file, on, logstack, precedence, package);
                           if(logstack.size() >= bufferthreshold)
                              logstack = "";
-                          _class = baseclass;
                           package = basepackage;
                        }
-                       void LOGE(string message){
-                          e(_class, message, file, on, logstack, precedence, package);
+                       void LOGE(string message, string class_ = "System"){
+                          e(class_, message, file, on, logstack, precedence, package);
                           if(logstack.size() >= bufferthreshold)
                              logstack = "";
-                          _class = baseclass;
                           package = basepackage;
                        }
-                       void LOGW(string message){
-                          w(_class, message, file, on, logstack, precedence, package);  
+                       void LOGW(string message, string class_ = "System"){
+                          w(class_, message, file, on, logstack, precedence, package);  
                           if(logstack.size() >= bufferthreshold)
                              logstack = "";
-                          _class = baseclass;
                           package = basepackage;
                        }
-                       void LOGI(string message){
-                          i(_class, message, file, on, logstack, precedence, package);
+                       void LOGI(string message, string class_ = "System"){
+                          i(class_, message, file, on, logstack, precedence, package);
                           if(logstack.size() >= bufferthreshold)
                              logstack = "";
-                          _class = baseclass; 
                           package = basepackage;
                        }
-                       void LOGD(string message){
-                          d(_class, message, file, on, logstack, precedence, package);
+                       void LOGD(string message, string class_ = "System"){
+                          d(class_, message, file, on, logstack, precedence, package);
                           if(logstack.size() >= bufferthreshold)
                              logstack = "";
-                          _class = baseclass; 
-                          package = basepackage; 
+                          package = basepackage;
                        }
-                       void LOGV(string message){
-                          v(_class, message, file, on, logstack, precedence, package);  
+                       void LOGV(string message, string class_ = "System"){
+                          v(class_, message, file, on, logstack, precedence, package);  
                           if(logstack.size() >= bufferthreshold)
                              logstack = "";
-                          _class = baseclass;
                           package = basepackage;
                        }
                      
                      private:
                        int precedence;
-                       string file, logstack, _class, baseclass, 
+                       string file, logstack, 
                               package, basepackage;
                        bool on;
                        long bufferthreshold;

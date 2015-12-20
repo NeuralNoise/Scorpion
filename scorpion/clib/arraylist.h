@@ -167,6 +167,15 @@ class ListAdapter {
             }
            return false;
         }
+        long long indexof(T value)
+        {
+            for(long long i = 0; i < size_t; i++)
+            {
+                if(values[i] == value)
+                   return i;
+            }
+           return -1;
+        }
         void replace(T value, long i)
         {
             if(i >= size_t || i < 0 || !init){

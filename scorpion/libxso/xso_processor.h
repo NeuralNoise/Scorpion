@@ -34,37 +34,60 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GARBAGE_COLLECTOR
- #define SCORPION_GARBAGE_COLLECTOR
+ #ifndef SCORPION_XSO_PROCESSOR
+ #define SCORPION_XSO_PROCESSOR
  
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
+ #include <signal.h>
+ #include <assert.h>
+ #include <iostream>
+ #include <sstream>
  #include <string>
  #include <stdint.h>
- #include "allocation_scheme.h"
- #include "../../clib/arraylist.h"
+ #include "xso.h"
  
  using namespace std;
  
-  #define nullptr ((void *)0)
-  
  namespace scorpionvm
  {
-     namespace memory
+  
+     namespace xsoprocessor
      {
-        namespace gc
-        {
-           enum // gc states
-           {
-              gc_clean=0,
-              gc_idle=1,
-              gc_dirty=2
-           };
-           
-           void gc_invalidate_objects();
-           
-           void check_gc();
-           
-        } // end gc
-     } // end memory
+        
+         // *********************[[ Compiler flag id's ]]**********************
+         #define method (0x7f)
+         #define instr (0x5a)
+         #define string_instr (0x3b)
+         #define out_instr (0x2c)
+ 
+         class xso_processor
+         {
+             public:
+               xso_processor()
+               : i(0),
+                 byte(0),
+                 img_t(0),
+                 _eof(false),
+                 image("")
+               {
+               }
+               bool _eof;
+               uint64_t i, img_t;
+               std::string image;
+               char byte;
+               
+               char read_byte();
+               int preprocess();
+               string xso_text();
+               
+               void process_method();
+               void setbyte(double byte);
+               void process_instruction();
+               void process_str_instruction();
+         };
+     } // xso
  } // end scorpionvm
-
- #endif // SCORPION_GARBAGE_COLLECTOR
+ 
+ #endif // SCORPION_XSO_PROCESSOR

@@ -34,37 +34,26 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GARBAGE_COLLECTOR
- #define SCORPION_GARBAGE_COLLECTOR
  
  #include <string>
  #include <stdint.h>
- #include "allocation_scheme.h"
- #include "../../clib/arraylist.h"
+ #include "xso_reader.h"
  
  using namespace std;
  
-  #define nullptr ((void *)0)
-  
- namespace scorpionvm
- {
-     namespace memory
-     {
-        namespace gc
-        {
-           enum // gc states
-           {
-              gc_clean=0,
-              gc_idle=1,
-              gc_dirty=2
-           };
-           
-           void gc_invalidate_objects();
-           
-           void check_gc();
-           
-        } // end gc
-     } // end memory
- } // end scorpionvm
-
- #endif // SCORPION_GARBAGE_COLLECTOR
+ 
+    int scorpionvm::xsoreader::flag_minor_version     = 0x0005;
+    int scorpionvm::xsoreader::flag_major_version     = 0x0006;
+    int scorpionvm::xsoreader::flag_file_size          = 0x0007;
+    int scorpionvm::xsoreader::flag_target_dev_vers    = 0x0008;
+    int scorpionvm::xsoreader::flag_minimum_dev_vers   = 0x0009;
+    int scorpionvm::xsoreader::flag_version_number     = 0x0010;
+    int scorpionvm::xsoreader::flag_debugging          = 0x0011;
+    int scorpionvm::xsoreader::flag_logging            = 0x0012;
+    int scorpionvm::xsoreader::flag_log_precedence     = 0x0013;
+    int scorpionvm::xsoreader::flag_log_file           = 0x0014;
+    int scorpionvm::xsoreader::flag_application_id     = 0x0015; 
+    int scorpionvm::xsoreader::flag_permissions        = 0x0016;
+    int scorpionvm::xsoreader::flag_nameflag           = 0x0017;
+    int scorpionvm::xsoreader::flag_methodsize         = 0x0018;
+    

@@ -40,6 +40,7 @@
  #include <string>
  #include <stdint.h>
  #include <limits>
+ #include <sstream>
  #include "allocation_scheme.h"
  #include "block_allocator.h"
  #include "gc.h"
@@ -255,6 +256,7 @@
              MethodContainer()
              : clazz(""),
                package(""),
+               file(""),
                name(""),
                jmp(0),
                ret(0),
@@ -263,7 +265,7 @@
              }
              
              string clazz, package, 
-                    name;
+                    name, file;
              uint64_t jmp, ret;
              bool native;
          };

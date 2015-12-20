@@ -37,8 +37,6 @@
  #ifndef SCORPION_LOG_SREVICE
  #define SCORPION_LOG_SREVICE
  
- #include "../../clib/filestream.h"
- #include "sys_time.h"
  
  namespace scorpionvm
  {
@@ -59,73 +57,25 @@
             
              const int ASSERT = 7;
              
-             string t_ch(int priority)
-             {
-               switch( priority ){
-                  case 2:
-                    return "V";
-                  case 3:
-                    return "D";
-                  case 4:
-                    return "I";
-                  case 5:
-                    return "W";
-                  case 6:
-                    return "E";
-                  case 7:
-                    return "A";
-                  default:
-                    return "?";
-               }
-             }
+             string t_ch(int priority);
              
              void println(int priority,string tag,string message, const char* file, 
-                        string& stackmsg, string package)
-             {
-                 stackmsg += scorpionvm::system_time::currtime() + " " + package + " " + t_ch(priority) + "/" + tag + ": " + message + "\n";
-            
-                 FileStream::out(file, stackmsg);
-             }
+                        string& stackmsg, string package);
              
              void print(int priority, string tag, string message, bool log, const char* file, 
-                       string& stackmsg, int p, string package)
-             {
-                 if(!log) return;
-                 else if(log){
-                     if(priority >= p)
-                         println(priority,tag,message, file, stackmsg, package);
-                 }
-             }
+                       string& stackmsg, int p, string package);
              
-             void a(string tag, string message, string file, bool log, string& stackmsg, int p, string package)
-             {
-                print(ASSERT,tag,message,log,file.c_str(), stackmsg, p, package);
-             }
+             void a(string tag, string message, string file, bool log, string& stackmsg, int p, string package);
             
-             void e(string tag,string message, string file, bool log, string& stackmsg, int p, string package)
-             {
-                print(ERROR,tag,message,log,file.c_str(), stackmsg, p, package);
-             }
+             void e(string tag,string message, string file, bool log, string& stackmsg, int p, string package);
             
-             void w(string tag,string message, string file, bool log, string& stackmsg, int p, string package)
-             {
-                print(WARN,tag,message,log,file.c_str(), stackmsg, p, package);
-             }
+             void w(string tag,string message, string file, bool log, string& stackmsg, int p, string package);
             
-             void i(string tag,string message, string file, bool log, string& stackmsg, int p, string package)
-             {
-                print(INFO,tag,message,log,file.c_str(), stackmsg, p, package);
-             }
+             void i(string tag,string message, string file, bool log, string& stackmsg, int p, string package);
             
-             void d(string tag,string message, string file, bool log, string& stackmsg, int p, string package)
-             {
-                print(DEBUG,tag,message,log,file.c_str(), stackmsg, p, package);
-             }
+             void d(string tag,string message, string file, bool log, string& stackmsg, int p, string package);
              
-             void v(string tag,string message, string file, bool log, string& stackmsg, int p, string package)
-             {
-                print(VERBOSE,tag,message,log,file.c_str(), stackmsg, p, package);
-             }
+             void v(string tag,string message, string file, bool log, string& stackmsg, int p, string package);
 
          } // end log_service
      } // end log

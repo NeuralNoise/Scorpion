@@ -79,11 +79,11 @@ void printusage()
 
 #define nullptr ((void *)0)
 
-using namespace scorpionvm::memory::environment;
 using namespace scorpionvm;
 using namespace scorpionvm::vm;
-using namespace scorpionvm::log::log_service::debug;
 using namespace scorpionvm::xsoreader;
+using namespace scorpionvm::memory::environment;
+using namespace scorpionvm::log::log_service::debug;
 
 Globals g_Svm;
 Log usr_log;
@@ -101,12 +101,25 @@ Log ldebug;
 int main(int argc, const char **argv){
     ScorpionVM *vmstate = NULL;
     scorpion_env* p_env = NULL;
-    xso_reader* reader = NULL;
+    xso_reader reader;
     int optionCount, curOpt, i, argIdx;
     int needExtra = 0, result = 0;
     int status;
     std::string lastFlag;
     string problemFlag;
+    
+    /**
+     * 
+     * This is our special pointer that tells 
+     * us what virtual machine and environment we are 
+     * runnin out application on.
+     * 
+     * We initally set this pointers value to-1 so that 
+     * when incremented we are pointing to the correct
+     * virtual machine & env
+     * 
+     */
+    g_Svm.p_ptr=-1;
 
     if(argc == 1){
        printusage();
@@ -182,7 +195,7 @@ int main(int argc, const char **argv){
     /*
      * Start VM.  The current thread becomes the main thread of the VM.
      */
-     if((result = Init_CreateScorpionVM(vmstate, p_env, reader, argv, argc)) != 0)
+     if((result = Init_CreateScorpionVM(vmstate, p_env, &reader, argv, argc)) != 0)
      {
         if(result == 1) // only print this for standard errors
           fprintf(stderr, "Scorpion VM init failed (check log file)\n");
@@ -216,7 +229,7 @@ int main(int argc, const char **argv){
     // if (gSvm.vmstate->status != vm_status_normal) 
     //    Init_ShutdownScorpionVM();
     
-    //  alog.ALOGV("--- VM is down, process exiting.");
+      ldebug.LOGV("--- VM is down, process exiting.");
     cout << "done.\n";
       return result;
 }

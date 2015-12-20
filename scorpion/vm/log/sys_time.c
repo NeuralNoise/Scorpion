@@ -34,37 +34,38 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GARBAGE_COLLECTOR
- #define SCORPION_GARBAGE_COLLECTOR
  
  #include <string>
- #include <stdint.h>
- #include "allocation_scheme.h"
- #include "../../clib/arraylist.h"
- 
+ #include <sstream>
+ #include <sys/time.h>
+ #include "sys_time.h"
+
  using namespace std;
  
-  #define nullptr ((void *)0)
-  
- namespace scorpionvm
- {
-     namespace memory
+     // Begin Dalvik code
+    /*
+     * Get the wall-clock date/time, in usec.
+     */
+     long scorpionvm::system_time::getWallTimeInUsec()
      {
-        namespace gc
-        {
-           enum // gc states
-           {
-              gc_clean=0,
-              gc_idle=1,
-              gc_dirty=2
-           };
-           
-           void gc_invalidate_objects();
-           
-           void check_gc();
-           
-        } // end gc
-     } // end memory
- } // end scorpionvm
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        return  tv.tv_usec / 1000LL;
+     }
+     // END Delvik code
 
- #endif // SCORPION_GARBAGE_COLLECTOR
+     const string scorpionvm::system_time::currtime(){
+        time_t     now = time(0);
+        struct tm  tstruct;
+        char       buf[90];
+        tstruct = *localtime(&now);
+        // Time used for logging
+        strftime(buf, sizeof(buf), "%Y-%m-%d--%X", &tstruct);
+        stringstream ss;
+        ss << buf << "." << getWallTimeInUsec();
+        return ss.str();
+     }
+         
+         
+         
+         

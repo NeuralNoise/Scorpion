@@ -63,20 +63,20 @@
     * ***************************************
     * ***************************************
     */
-    int _minor_version     = 0xAF;
-    int _major_version     = 0xCE;
-    int file_size          = 0xEF;
-    int target_dev_vers    = 0xBC;
-    int minimum_dev_vers   = 0xFD;
-    int version_number     = 0xCE;
-    int debugging          = 0xEC;
-    int logging            = 0xFC;
-    int log_precedence     = 0xFA;
-    int log_file           = 0x3C;
-    int application_id     = 0xB5; 
-    int permissions        = 0xC1;
-    int nameflag           = 0x7A;
-    int methodsize         = 0xD9;
+    int _minor_version     = 0x0005;
+    int _major_version     = 0x0006;
+    int file_size          = 0x0007;
+    int target_dev_vers    = 0x0008;
+    int minimum_dev_vers   = 0x0009;
+    int version_number     = 0x0010;
+    int debugging          = 0x0011;
+    int logging            = 0x0012;
+    int log_precedence     = 0x0013;
+    int log_file           = 0x0014;
+    int application_id     = 0x0015; 
+    int permissions        = 0x0016;
+    int nameflag           = 0x0017;
+    int methodsize         = 0x0018;
 
  struct XsoHeader {
     u4            magic;
@@ -3065,7 +3065,7 @@ int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &__out_buf__ )
            head.log_precedence.byte1 = 2; // verbose
         
            head.log_file = "/usr/share/scorpion/lib/compiler.log";
-           head.target_dev_vers.byte1  = 255;
+           head.target_dev_vers.byte1  = 77;
            head.minimum_dev_vers.byte1 = 7;
         
            head.application_id = "com.scorpion.microsystems";

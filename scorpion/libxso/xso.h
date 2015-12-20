@@ -76,7 +76,30 @@
         class xso
         {
             public:
+              xso()
+              {
+              }
+              
               header xso_header;
+              
+              void print_header_info()
+              {
+                  printf("magic:  0xdf 0x4e 0xfa 0x2b\n");
+                  printf("name:   %s\n", xso_header.name.c_str());
+                  printf("application id:   %s\n", xso_header.application_id.c_str());
+                  printf("target dev version:  %lu\n", xso_header.target_dev_vers.byte1);
+                  printf("minumum dev version:  %lu\n", xso_header.minimum_dev_vers.byte1);
+                  printf("version number:   %s\n", xso_header.version_number.c_str());
+                  printf("logging:  %lu\n", xso_header.logging.byte1);
+                  printf("log file:   %s\n", xso_header.log_file.c_str());
+                  printf("minor version:  %lu.%lu\n", xso_header.minor_version.byte1, xso_header.minor_version.byte2);
+                  printf("major version:  %lu.%lu\n", xso_header.major_version.byte1, xso_header.major_version.byte2);
+                  printf("debug:  %li\n", xso_header.debug.byte1);
+                  printf("method size:  %lu\n", xso_header.method_size.byte1);
+                  printf("permissions:   %s\n", xso_header.permissions.c_str());
+                  printf("log precedence:  %lu\n", xso_header.log_precedence.byte1);
+                  printf("image size:  %lu bytes\n\n", xso_header.filesize.byte1);
+              }
         };
      } // _xso
  } // end scorpionvm

@@ -44,12 +44,18 @@
  #include <stdlib.h>
  #include <string.h>
  #include <unistd.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/wait.h>
  #include "../../clib/arraylist.h"
+ #include "../log/log.h"
  
  using namespace std;
+ using namespace scorpionvm::log::log_service::debug;
  
   #define nullptr ((void *)0)
-  
+ 
+ extern Log ldebug; 
  namespace scorpionvm
  {
      namespace io
@@ -67,6 +73,7 @@
                  public:
                    int sig;
                    ListAdapter <sig_atomic_t> sig_values;
+                   ListAdapter <std::string> sig_names; // TODO: add sig name and use this list to get sig name w/ sig_info
                    struct sigaction act;
 	           
                    sig_handler()
@@ -137,10 +144,48 @@
                      // TODO: process all IO signals
                      static void _sig_handler(int signo, siginfo_t *sinfo, void *context /* unused */)
                      {
-                         cout << "sig raised " << signo << endl;
+                         stringstream sig_info;
+                         sig_info << "signal caught:" << "\n\tsignal = " << signo << " (" << sig_str(signo) << ")" 
+                           << "\n\tproc = " << (long)getpid() << "\n\texit code (" << sinfo->si_status
+                             << ")" << "\n\texit reason " << sinfo->si_code << endl;
+                         ldebug.LOGA(sig_info.str(), "sig_handler");
+                         
+                         switch( signo )
+                         {
+                            case SIGINT:
+                                handle_signal_SIGINT("");
+                            case SIGSEGV:
+                                handle_signal_SIGSEGV();
+                            case SIGQUIT:
+                                handle_signal_SIGQUIT();
+                         }
+                         
+                         ldebug.LOGV("--- VM is down, process exiting.");
+                         exit(1);
                      }
                    
-                     void handle_signal_SIGINT(const std::string error){}
+                     private:
+                       static string sig_str(int signo)
+                       {
+                         switch( signo )
+                         {
+                            case SIGINT:
+                                return "SIGINT";
+                            case SIGSEGV:
+                                return "SIGSEGV";
+                            case SIGQUIT:
+                                return "SIGQUIT";
+                            default:
+                                return "SIGUNO";
+                         }
+                       }
+                       static void handle_signal_SIGINT(const std::string error){}
+                       static void handle_signal_SIGSEGV()
+                       {
+                       }
+                       static void handle_signal_SIGQUIT()
+                       {
+                       }
              };
          }
      }
