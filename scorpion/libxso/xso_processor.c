@@ -37,7 +37,6 @@
  
  #include <stdlib.h>
  #include <stdio.h>
- #include <string.h>
  #include <signal.h>
  #include <assert.h>
  #include <iostream>
@@ -66,7 +65,7 @@
          if(!(i< image.size()))
          {
            _eof = true;
-           return -1;
+           return 1;
          }
          return (byte = image.at(i++));
      }
@@ -162,11 +161,11 @@
          for(int i2 = index; i2 < method_info.size(); i2++)
               file_name << "" << method_info.at(i2);
          
-         g_Svm.native_methods[addr].name = m_name.str();
-         g_Svm.native_methods[addr].clazz = class_name.str();
-         g_Svm.native_methods[addr].package = package.str();
+         g_Svm.native_methods[addr].name = m_name.str().c_str();  
+         g_Svm.native_methods[addr].clazz = class_name.str().c_str();
+         g_Svm.native_methods[addr].package = package.str().c_str();
          g_Svm.native_methods[addr].native = native;
-         g_Svm.native_methods[addr].file = file_name.str();
+         g_Svm.native_methods[addr].file = file_name.str().c_str();
          g_Svm.native_methods[addr].jmp = 
             g_Svm.vmstates->image_stream.size();
          cout << "addr " << addr << " n " << g_Svm.native_methods[addr].name << " mm" << endl;
@@ -314,7 +313,7 @@
          read_byte();
          for( ;; )
          {
-            // cout << "byte " << (int)byte << endl;
+             //cout << "byte " << (int)byte << endl;
              switch( byte )
              {
                  case 0:
@@ -329,8 +328,8 @@
                  case string_instr:
                     process_str_instruction();
                  break;
-                 case -1:
-                  if(_eof){
+                 default:
+                   if(_eof){
                     _eof = false;
                   //  gSvm.image = "";
                    // cout << "img sz " << streamcount << " file sz " << gSvm.appheader.filesize.byte1 << endl;
@@ -348,9 +347,7 @@
                     ldebug.LOGV(ss.str());
                     return 1;
                   }
-                 break;
-                 default:
-                   return 1;
+                break;
              }
          }
          

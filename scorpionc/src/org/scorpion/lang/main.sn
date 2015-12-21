@@ -8,7 +8,7 @@ package org.scorpion.lang;
 public class Starter
 {
 
-   def getName()
+   def getName(int i)
    {
       asm("
           str_const @str ''
@@ -41,7 +41,7 @@ public class Starter
           
           cout ('Hello, World!\n' << (byte) x << ' ' << 67 << (char) 66 << '\n') 
           //hlt 
-          call getName[]
+          call getName[int]
           pop x
           push foo
           push max

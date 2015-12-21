@@ -393,7 +393,7 @@
            }
            
            ldebug.LOGD("Environment was created successfully.");   
-           g_Svm.native_methods = (MethodContainer*)malloc(sizeof(MethodContainer)*reader->xso_file.xso_header.method_size.byte1);
+           g_Svm.native_methods = method_allocator.malloc(reader->xso_file.xso_header.method_size.byte1,0);
        
            if(g_Svm.native_methods == NULL)
            {
@@ -408,6 +408,8 @@
            g_Svm.env = p_env;
            g_Svm.vmstates = vmstate;
            
+           g_Svm.env->m_heap[55].name = "Hello";
+           ldebug.LOGD("Preprocessing image file."); 
            if(reader->processor.preprocess() != 0)
            {
                cout << "Segmentation fault\n";

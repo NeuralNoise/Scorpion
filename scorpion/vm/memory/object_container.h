@@ -254,18 +254,20 @@
          {
            public:
              MethodContainer()
-             : clazz(""),
-               package(""),
-               file(""),
-               name(""),
-               jmp(0),
+             : jmp(0),
                ret(0),
                native(false)
              {
+				 clazz="";
+				 package="";
+				 name="";
+				 file="";
              }
              
-             string clazz, package, 
-                    name, file;
+             const char* clazz;
+             const char* package;
+             const char* name;
+             const char* file;
              uint64_t jmp, ret;
              bool native;
          };

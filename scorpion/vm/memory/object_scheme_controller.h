@@ -47,6 +47,8 @@
  #include "../../clib/arraylist.h"
  
  using namespace std;
+ using namespace scorpionvm::memory;
+ using namespace scorpionvm::memory::schema;
  
   #define nullptr ((void *)0)
   
@@ -66,31 +68,27 @@
                      object_alloc_failed=0xfff
                  };
                  
-                 bool isnumber(scorpionvm::memory::schema::ObjectSchema::t type)
+                 bool isnumber(ObjectSchema::t type)
                  {
-                     return (type == scorpionvm::memory::schema::ObjectSchema::SBOOL 
-                         || type == scorpionvm::memory::schema::ObjectSchema::SCHAR 
-                         || type == scorpionvm::memory::schema::ObjectSchema::SINT 
-                         || type == scorpionvm::memory::schema::ObjectSchema::SBYTE
-                         || type == scorpionvm::memory::schema::ObjectSchema::SLONG 
-                         || type == scorpionvm::memory::schema::ObjectSchema::SFLOAT 
-                         || type == scorpionvm::memory::schema::ObjectSchema::SDOUBLE 
-                         || type == scorpionvm::memory::schema::ObjectSchema::SSHORT);
+                     return (type == ObjectSchema::SBOOL || type == ObjectSchema::SCHAR 
+                         || type == ObjectSchema::SINT || type == ObjectSchema::SBYTE
+                         || type == ObjectSchema::SLONG || type == ObjectSchema::SFLOAT 
+                         || type == ObjectSchema::SDOUBLE || type == ObjectSchema::SSHORT);
                  }
                  
-                 int create_object(scorpionvm::memory::ObjectContainer &container, 
-                     scorpionvm::memory::schema::ObjectSchema::t type, uint64_t array)
+                 int create_object(ObjectContainer &container, 
+                     ObjectSchema::t type, uint64_t array)
                  {
-                     scorpionvm::scorpion_assert(container.gc_ == scorpionvm::memory::gc::gc_idle ||
-                               container.gc_ == 0, "container.gc_ == scorpionvm::memory::gc::gc_idle ||\n\tcontainer.gc_ == 0");
+                     scorpionvm::scorpion_assert(container.gc_ == gc::gc_idle ||
+                               container.gc_ == 0, "container.gc_ == gc::gc_idle ||\n\tcontainer.gc_ == 0");
                                
                      if(container.init)
                        return object_alreay_created;
-                     else if(container.gc_ == scorpionvm::memory::gc::gc_dirty)
+                     else if(container.gc_ == gc::gc_dirty)
                        return object_dirty;
                        
                      scorpionvm::memory::BlockAllocator
-                            <scorpionvm::memory::schema::ObjectSchema> schema_allocator;
+                            <ObjectSchema> schema_allocator;
                        
                      container.init = true;
                      if(isnumber(type))
@@ -118,18 +116,18 @@
                         container.size_t=0;
                         container.init=true;
                         container.array = ((array == 0) ? false : true);
-                        container.gc_ = scorpionvm::memory::gc::gc_clean;
+                        container.gc_ = gc::gc_clean;
                         
                         return object_alloc_ok;
                      }
                  }
                  
-                 int kill_object(scorpionvm::memory::ObjectContainer &container)
+                 int kill_object(ObjectContainer &container)
                  {
                      
                  }
                  
-                 int delete_object(scorpionvm::memory::ObjectContainer &container)
+                 int delete_object(ObjectContainer &container)
                  {
                      return container.destroy_self();
                  }
