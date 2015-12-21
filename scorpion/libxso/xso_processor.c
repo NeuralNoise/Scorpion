@@ -46,12 +46,14 @@
  #include "xso_processor.h"
  #include "../vm/internal/globals.h"
  #include "../vm/internal/Opcodes.h"
+ #include "../vm/memory/object_scheme_controller.h"
  
  using namespace std;
  using namespace scorpionvm::vm;
  using namespace scorpionvm::_xso;
  using namespace scorpionvm::xsoprocessor;
  using namespace scorpionvm::log::log_service::debug;
+ using namespace scorpionvm::memory::schema::object_scheme_controller;
  
  extern Log ldebug;
      // *********************[[ Compiler flag id's ]]**********************
@@ -92,7 +94,7 @@
      
      void process_err()
      {
-         cout << "Sgnmentation fault\n";
+         cout << "Segmentation fault\n";
          g_Svm._sig_handler.raise_sig(SIGQUIT);
      }
      
@@ -161,23 +163,23 @@
          for(int i2 = index; i2 < method_info.size(); i2++)
               file_name << "" << method_info.at(i2);
          
-         g_Svm.native_methods[addr].name = m_name.str().c_str();  
-         g_Svm.native_methods[addr].clazz = class_name.str().c_str();
-         g_Svm.native_methods[addr].package = package.str().c_str();
-         g_Svm.native_methods[addr].native = native;
-         g_Svm.native_methods[addr].file = file_name.str().c_str();
-         g_Svm.native_methods[addr].jmp = 
+         g_Svm.env->method_stack[addr].name = m_name.str().c_str();  
+         g_Svm.env->method_stack[addr].clazz = class_name.str().c_str();
+         g_Svm.env->method_stack[addr].package = package.str().c_str();
+         g_Svm.env->method_stack[addr].native = native;
+         g_Svm.env->method_stack[addr].file = file_name.str().c_str();
+         g_Svm.env->method_stack[addr].jmp = 
             g_Svm.vmstates->image_stream.size();
-         cout << "addr " << addr << " n " << g_Svm.native_methods[addr].name << " mm" << endl;
          
      }
      
      void xso_processor::process_instruction()
      {
-         byte=atof(xso_text().c_str());
+         byte=atol(xso_text().c_str());
          if(!(byte > 0) && !(byte <= sMaxOpcodeLimit))
              process_err();
          
+         long op = (long)byte;
          if(byte == OP_NOP || byte == OP_END || byte == OP_HLT || byte == OP_NO || byte == OP_ENDNO){  
              setbyte(byte);
              read_byte();
@@ -187,14 +189,28 @@
             || byte == OP_MTHD || byte == OP_LBL || byte == OP_IF || byte == OP_INC || byte == OP_DEC 
             || byte == OP_KILL || byte == OP_DELETE || byte == OP_NEG || byte == OP_CIN){
             double arg1 = atof(xso_text().c_str());
-            setbyte(byte);
+            setbyte(op);
             setbyte(arg1);
             
             if(byte == OP_LBL) {// preprocess label locations
-            //    u1 sz;
-            //    sz.byte1 = 1;
-            //    SVM_OBJECT_INIT(gSvm.env->getBitmap().objs[(long) arg1], TYPEDEF_GENERIC_LONG, sz);
-            //    svmSetGenericValue(gSvm.env->getBitmap().objs[(long) arg1], streamcount);
+              if((long) arg1 >= g_Svm.env->sizeinfo(0, 0))
+              {
+                  stringstream ss;
+                  ss << "Failure to access heap at pointer location #" << arg1 
+                      << ". Note: heap size: " << g_Svm.env->sizeinfo(0, 0) << ".";
+                  ldebug.LOGV(ss.str());
+                  process_err();
+              }
+              
+              int obj_res = create_object(g_Svm.env->m_heap[(long) arg1], ObjectSchema::SLONG, 0);
+             
+              if(obj_res != object_alloc_ok && obj_res != object_alreay_created)
+              {
+                 ldebug.LOGV("Failure to create object. Try optimizing your program!");
+                 process_err();
+              }
+             
+              g_Svm.env->m_heap[(long) arg1].set_schema_(g_Svm.vmstates->image_stream.size());
             }
             
             read_byte();
@@ -210,16 +226,16 @@
             double arg1 = atof(xso_text().c_str());
             double arg2 = atof(xso_text().c_str());
             
-            if(byte == OP_SCONST || byte == OP_BCONST || byte == OP_CCONST
-                || byte == OP_ICONST || byte == OP_DCONST || byte == OP_FCONST
-                || byte == OP_BYTE_CONST || byte == OP_LCONST)
-              setbyte(OP_CONST);
-            else if(byte == OP_DACONST || byte == OP_IACONST || byte == OP_FACONST 
-                || byte == OP_CACONST || byte == OP_BACONST || byte == OP_BYTE_ACONST 
-                || byte == OP_SACONST || byte == OP_LACONST)  
-              setbyte(OP_ACONST);
+            if(op == OP_SCONST || op == OP_BCONST || op == OP_CCONST
+                || op == OP_ICONST || op == OP_DCONST || op == OP_FCONST
+                || op == OP_BYTE_CONST || op == OP_LCONST)
+                  setbyte(OP_CONST);
+            else if(op == OP_DACONST || op == OP_IACONST || op == OP_FACONST 
+                || op == OP_CACONST || op == OP_BACONST || op == OP_BYTE_ACONST 
+                || op == OP_SACONST || op == OP_LACONST)  
+                  setbyte(OP_ACONST);
               
-            setbyte(byte);
+            setbyte(op);
             setbyte(arg1);
             setbyte(arg2);
             
@@ -234,12 +250,12 @@
             double arg2 = atof(xso_text().c_str());
             double arg3 = atof(xso_text().c_str());
             
-            if(byte == OP_ISEQ || byte == OP_ISLT || byte == OP_ISLE
-               || byte == OP_ISGT || byte == OP_ISGE || byte == OP_OR 
-               || byte == OP_AND)
-              setbyte(OP_CMP);
+            if(op == OP_ISEQ || op == OP_ISLT || op == OP_ISLE
+               || op == OP_ISGT || op == OP_ISGE || op == OP_OR 
+               || op == OP_AND)
+                  setbyte(OP_CMP);
             
-            setbyte(byte);
+            setbyte(op);
             setbyte(arg1);
             setbyte(arg2);
             setbyte(arg3);
@@ -254,11 +270,12 @@
      void xso_processor::process_str_instruction()
      {
          byte=atof(xso_text().c_str());
+         long long instr_ = byte;
          if(byte == OP_COUT){
              string msg = xso_text();
              long arg1 = msg.size();
              
-             setbyte(byte);
+             setbyte(instr_);
              setbyte(arg1);
              for(int i = 0; i < arg1; i++)
                  setbyte((int) msg.at(i));
@@ -270,7 +287,7 @@
              string msg = xso_text();
              long arg2 = msg.size();
              
-             setbyte(byte);
+             setbyte(instr_);
              setbyte(arg1);
              setbyte(arg2);
              for(int i = 0; i < arg2; i++)
@@ -291,8 +308,8 @@
         string method_info = xso_text();
         long m_adr = atol(xso_text().c_str());
         
-       g_Svm.vmstates->image_stream.add(OP_MTHD);
-       g_Svm.vmstates->image_stream.add(m_adr);
+       setbyte(OP_MTHD);
+       setbyte(m_adr);
        
        create_method(method_info, m_adr);
        
@@ -310,6 +327,7 @@
              return 1;
          }
          
+         i=0;
          read_byte();
          for( ;; )
          {
@@ -331,13 +349,12 @@
                  default:
                    if(_eof){
                     _eof = false;
-                  //  gSvm.image = "";
-                   // cout << "img sz " << streamcount << " file sz " << gSvm.appheader.filesize.byte1 << endl;
-                  /*  if(streamcount != gSvm.appheader.filesize.byte1){
-                        alog.setClass("XSO");
-                        alog.ALOGV("Image size does not match specified length. Try recompiling your application.");
+                    image = "";
+                   // cout << "img sz " << g_Svm.vmstates->image_stream.size() << " file sz " << img_t << endl;
+                    if(g_Svm.vmstates->image_stream.size() != img_t){
+                        ldebug.LOGV("Image size does not match specified length. Try recompiling your application.", "xso_processor");
                         process_err();
-                    }*/
+                    }
                     return 0;
                   }
                   else

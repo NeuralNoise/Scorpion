@@ -61,6 +61,7 @@
                  public:
                    const char* name;
                    scorpionvm::memory::ObjectContainer* m_heap;
+                   scorpionvm::memory::MethodContainer* method_stack;
                    int64_t* m_stack;
                    
                    int alloc(uint64_t _alloc_base, uint64_t  _method_base, 
@@ -77,6 +78,13 @@
                          return 1;
                        }
                        
+                       method_stack = base_allocator3.malloc(_method_base, 0);
+                       if(method_stack == NULL)
+                       {
+                         base_allocator.free(m_heap);
+                         base_allocator2.free(m_stack);
+                         return 1;
+                       }
                        return 0;
                    }
                    int destroy_self() // destroy*self()
@@ -85,6 +93,7 @@
                        name = "";
                        r+=base_allocator.free(m_heap);
                        r+=base_allocator2.free(m_stack);
+                       r+=base_allocator3.free(method_stack);
                        return r;
                    }
                    void setname(const char* n)
@@ -107,7 +116,7 @@
                           case 1:
                             return base_allocator2.size_t(i); // Stack heap
                           default:
-                            return base_allocator.size_t(i); // Env heap
+                            return base_allocator3.size_t(i); // Method Heap
                        }
                    }
                    
@@ -115,6 +124,8 @@
                     scorpionvm::memory::BlockAllocator
                        <scorpionvm::memory::ObjectContainer> base_allocator; // allocators for stack and heap
                     scorpionvm::memory::BlockAllocator<int64_t> base_allocator2;
+                    scorpionvm::memory::BlockAllocator
+                       <scorpionvm::memory::MethodContainer> base_allocator3;
              };
          } // end environments
      } // end memory

@@ -34,46 +34,28 @@
  * limitations under the License.
  *
  */
- #ifndef SCORPION_GLOBALS
- #define SCORPION_GLOBALS
+ #ifndef SCORPION_INTERP
+ #define SCORPION_INTERP
  
  #include <string>
  #include <stdint.h>
- #include <signal.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include "../memory/allocation_scheme.h"
- #include "../memory/object_container.h"
  #include "../memory/block_allocator.h"
- #include "../io/signal_handler.h"
- #include "func_tracker.h"
- #include "vm.h"
- #include "../memory/vm_env.h"
  #include "../../clib/arraylist.h"
+ #include "../../libxso/xso_reader.h"
+ #include "../memory/vm_env.h"
  
  using namespace std;
- using namespace scorpionvm;
- using namespace scorpionvm::vm;
- using namespace scorpionvm::memory;
- using namespace scorpionvm::io::signal;
- using namespace scorpionvm::memory::environment;
- 
- namespace scorpionvm
+ namespace scorpionvm // we do this to not confuse compiler
  {
-     struct Globals
+     namespace vm
      {
-         sig_handler _sig_handler; /* We handle most OS signals */
-         
-         ScorpionVM* vmstates; // TODO: put both pointer back into list adapter
-         scorpion_env* env;
-         
-         /* Global pointer to vm & environment */
-         uint64_t p_ptr;
-     };
+         namespace interpreter
+         {
+             void Invoke_Method(scorpion_env* env, ScorpionVM* vm_state, uint64_t ptr);
+             
+             void xso_exec(scorpion_env* env, ScorpionVM* vm_state);
+         }
+     }
  }
  
- extern Globals g_Svm;
- 
- #endif // SCORPION_GLOBALS
+ #endif // SCORPION_INTERP

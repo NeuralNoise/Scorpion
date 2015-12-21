@@ -201,23 +201,13 @@ int main(int argc, const char **argv){
           fprintf(stderr, "Scorpion VM init failed (check log file)\n");
         goto bail;
      }
+     
 
-
-   /* if(vmStatus != 0) { // have method return ScorpionEnv
-        printf("error:  Failed to initalize the Scorpion VM.\nA fatal error has occured, shutting down.\n");
-        goto bail;
-    }
-
-    gSvm.vmstate->status = vm_status_normal; // Virtual machine has been created
-    x = NULL;
-
-    /* We Skip creating the Main Thread */
+    g_Svm.vmstates->state = vm_state_normal; // Virtual machine has been created
 
     /* Start Virtual Machine */
-    //status = Init_StartScorpionVM();
-
-    //if (status != 0)
-    //    alog.ALOGW("Failed to start the Scorpion Virtual Machine.");
+    if (Init_StartScorpionVM() != 0)
+        ldebug.LOGW("Failed to start the Scorpion Virtual Machine.");
 
 
     /*
@@ -230,7 +220,6 @@ int main(int argc, const char **argv){
     //    Init_ShutdownScorpionVM();
     
       ldebug.LOGV("--- VM is down, process exiting.");
-    cout << "done.\n";
       return result;
 }
 

@@ -116,6 +116,7 @@
                   size_t(0),
                   if_count(0),
                   if_depth(0),
+                  func_depth(0),
                   state(0),
                   exc(true)
                {
@@ -124,7 +125,7 @@
                }
                
                uint64_t pc, size_t, state;
-               long if_count, if_depth;
+               int64_t if_count, if_depth, func_depth;
                bool exc;
                function_tracker func_tracker;
                ListAdapter<double> image_stream;
@@ -134,9 +135,9 @@
                {
                    if(vm == NULL || N == 0)
                      return 1;
-                
-		           int shutdown_response = SVM_OK;
-		           BlockAllocator<ScorpionVM> vm_allocator;
+                      
+	                  int shutdown_response = SVM_OK;
+	                  BlockAllocator<ScorpionVM> vm_allocator;
                             
                    if(N == 1)
                    {
@@ -146,8 +147,8 @@
                        if(vm->state != vm_state_normal)
                        {
                            stringstream ss;
-        				   ss << "The Scorpion virtual machine is attempting to shutdown with abnormal state (" << vm->state << ").";
-        				   ldebug.LOGV(ss.str(), "ScorpionVM");
+                           ss << "The Scorpion virtual machine is attempting to shutdown with abnormal state (" << vm->state << ").";
+                           ldebug.LOGV(ss.str(), "ScorpionVM");
                        }
                        
                        return vm_allocator.free( vm );
@@ -165,6 +166,8 @@
          
          int Init_CreateScorpionVM(ScorpionVM* vmstate, scorpion_env* p_env, xso_reader* reader, 
                     const char** argv, int argc);
+         
+         int Init_StartScorpionVM();
      } // end vm
  } // end scorpionvm
  

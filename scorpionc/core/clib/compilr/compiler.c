@@ -2666,7 +2666,7 @@ void parse_cmplr_items(stringstream &out_buf)
             || ins == OP_BACONST || ins == OP_BYTE_ACONST || ins == OP_SACONST 
             || ins == OP_LACONST || ins == OP_ISEQ || ins == OP_ISLT || ins == OP_ISLE
             || ins == OP_ISGT || ins == OP_ISGE || ins == OP_OR || ins == OP_AND) 
-             cres.size_t.byte1++;  // for preprocessor
+               cres.size_t.byte1++;  // for preprocessor
          
          //cout << "ins " << ins << endl;
          if(ins == OP_MTHD){

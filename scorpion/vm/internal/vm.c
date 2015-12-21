@@ -43,16 +43,19 @@
  #include "../../libxso/xso_reader.h"
  #include "../memory/object_container.h"
  #include "../memory/vm_env.h"
+ #include "func_tracker.h"
  #include "globals.h"
  #include "vm.h"
+ #include "interp.h"
  #include "../../clib/arraylist.h"
  
  using namespace std;
  using namespace scorpionvm;
- using namespace scorpionvm::memory;
  using namespace scorpionvm::_xso;
- using namespace scorpionvm::vm::console_helper;
+ using namespace scorpionvm::memory;
  using namespace scorpionvm::xsoreader;
+ using namespace scorpionvm::vm::interpreter;
+ using namespace scorpionvm::vm::console_helper;
  using namespace scorpionvm::memory::environment;
  using namespace scorpionvm::log::log_service::debug;
  
@@ -289,7 +292,6 @@
          BlockAllocator<ScorpionVM> vm_allocator;
          BlockAllocator<scorpion_env> env_allocator;
          BlockAllocator<xso_reader> xso_allocator;
-         BlockAllocator<MethodContainer> method_allocator;
          
          int status;
          
@@ -299,7 +301,7 @@
          ldebug.service_setup(console_options.log_level, false, "");
          if(console_response != 0)
          {
-             ldebug.LOGV("error processing console args.");
+             ldebug.LOGV("error processing console args.", "ScorpionVM");
              cout << "err\n";
              return 1;
          }
@@ -314,7 +316,7 @@
          
          if(!FileStream::endswith(".xso", console_options.xso_file))
          {
-             ldebug.LOGV("Executable File must be a .xso file.");
+             ldebug.LOGV("Executable File must be a .xso file.", "ScorpionVM");
              return 1;
          }
          else 
@@ -322,7 +324,7 @@
             if(!FileStream::exists(console_options.xso_file.c_str())){
                 stringstream ss;
                 ss << "Executable file: " << console_options.xso_file << " does not exist!";
-                ldebug.LOGV(ss.str());
+                ldebug.LOGV(ss.str(), "ScorpionVM");
                 return 1;
             }    
           }
@@ -347,7 +349,7 @@
            {
                stringstream ss;
                ss << "method size > PROTOTYPE_LIMIT (" << prototype_limit << ")";
-               ldebug.LOGV(ss.str());
+               ldebug.LOGV(ss.str(), "ScorpionVM");
            }
       
            if(reader->xso_file.xso_header.minimum_dev_vers.byte1 > revision_num)
@@ -356,11 +358,11 @@
                ss << "The application you are trying to run is not compatible with the current "
                     << "build of Scorpion. Note: current build " << revision_num
                       << ", supported minmum build " << reader->xso_file.xso_header.minimum_dev_vers.byte1;
-               ldebug.LOGV(ss.str());
+               ldebug.LOGV(ss.str(), "ScorpionVM");
            }
            
-           ldebug.LOGV("Application is compatible.");
-           ldebug.LOGV("Setting up application permissions.");
+           ldebug.LOGV("Application is compatible.", "ScorpionVM");
+           ldebug.LOGV("Setting up application permissions.", "ScorpionVM");
            for(int i = 0; i < reader->xso_file.xso_header.permissions.size(); i++){
                stringstream ss;
                for(int xx = i; xx < reader->xso_file.xso_header.permissions.size(); xx++){
@@ -373,7 +375,7 @@
                vmstate->permission_list.add(ss.str()); // The Scorpion API will handle host machine's security
            }
            
-           ldebug.LOGD("Usr log service setup running.");
+           ldebug.LOGD("Usr log service setup running.", "ScorpionVM");
            usr_log.service_setup(reader->xso_file.xso_header.log_precedence.byte1, 
              true, reader->xso_file.xso_header.log_file);
            
@@ -388,18 +390,12 @@
            if(p_env->alloc(console_options.min_heap, reader->xso_file.xso_header.method_size.byte1, 
                 console_options.max_heap, 0xfff) != 0)
            {
-               ldebug.LOGV("Environment creation failed. Have you requested too much memory?");
+               ldebug.LOGV("Environment creation failed. Have you requested too much memory?", "ScorpionVM");
                return 1;
            }
            
-           ldebug.LOGD("Environment was created successfully.");   
-           g_Svm.native_methods = method_allocator.malloc(reader->xso_file.xso_header.method_size.byte1,0);
-       
-           if(g_Svm.native_methods == NULL)
-           {
-              return 1;
-           }
-            cout << "addr " << 8 << " n " << g_Svm.native_methods[2].native << " mm" << endl;
+           ldebug.LOGD("Environment was created successfully.", "ScorpionVM");   
+           
            /**
             * We add both pointers to the global list for running multiple vm's 
             * on different threads
@@ -408,17 +404,38 @@
            g_Svm.env = p_env;
            g_Svm.vmstates = vmstate;
            
-           g_Svm.env->m_heap[55].name = "Hello";
-           ldebug.LOGD("Preprocessing image file."); 
+           ldebug.LOGD("Preprocessing image file.", "ScorpionVM"); 
            if(reader->processor.preprocess() != 0)
            {
                cout << "Segmentation fault\n";
-               ldebug.LOGD("Failed to properly preprocess the image file."); 
+               ldebug.LOGD("Failed to properly preprocess the image file.", "ScorpionVM"); 
                return err_seg_fault;
            }
            
-           ldebug.LOGD("The image file was succefully preprocessed."); 
+           ldebug.LOGD("The image file was succefully preprocessed.", "ScorpionVM"); 
+           ldebug.LOGD("The Scorpion Virtual Machine was created successfully.", "ScorpionVM"); 
            
            return 0;
+     }
+     
+     /**
+      * Its very simple to start the Scorpion VM, generally 
+      * there will be no errors thrown upon startup
+      */
+     int scorpionvm::vm::Init_StartScorpionVM()
+     {
+        /**
+        * Program termination code. This is how we know how our program terminated.
+        *
+        * Initally this is set to be printed (this can be shut off)
+        */
+         g_Svm.vmstates->exc = 1;
+         
+         g_Svm.vmstates->func_tracker.add_func(g_Svm.env->method_stack[0], 0, true);
+         
+         Invoke_Method(g_Svm.env, g_Svm.vmstates, 0);
+         
+         xso_exec(g_Svm.env, g_Svm.vmstates);
+         return 1;
      }
      

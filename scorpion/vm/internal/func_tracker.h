@@ -43,8 +43,10 @@
  #include <stdint.h>
  #include <stdio.h>
  #include "../../clib/arraylist.h"
+ #include "../memory/object_container.h"
  
  using namespace std;
+ using namespace scorpionvm::memory;
  
  namespace scorpionvm
  {
@@ -63,16 +65,22 @@
             {
                 function_list._init_();
             }
-            void add_func(std::string name, std::string file, std::string package, 
-                    std::string _class, uint64_t call_line, bool native)
+            void add_func(MethodContainer _method, uint64_t call_line, bool main = false)
             {
                 func f;
-                f.name = name;
-                f.file = file;
-                f.package = package;
+                if(main)
+                {
+                    stringstream ss;
+                    ss << _method.name << "<init>";
+                    _method.name = ss.str().c_str();
+                }
+                
+                f.name = _method.name;
+                f.file = _method.file;
+                f.package = _method.package;
                 f.line = call_line;
-                f.native_func = native;
-                f._class = _class;
+                f.native_func = _method.native;
+                f._class = _method.clazz;
                 
                 if(function_list.size() > 20)
                   function_list.remove(0); // remove first function
@@ -82,7 +90,7 @@
             string get_func_trace()
             {
                 stringstream ss;
-                ss << "Traceback (most recent call last)\n";
+                ss << "Traceback (most recent call last):\n";
                 for(uint64_t i=0; i < function_list.size(); i++)
                 {
                     ss << "at " << function_list.valueAt(i).package 

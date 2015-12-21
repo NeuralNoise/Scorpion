@@ -7,89 +7,12 @@ package org.scorpion.lang;
    
 public class Starter
 {
-
-   def getName(int i)
-   {
-      asm("
-          str_const @str ''
-          cout 'What is your name? '
-          
-          cconst @ch ' '
-          cconst @endl '\n'
-          cconst @bksp #127
-          bconst @_getch #1
-          ");
-   }
-   
-   def foobar(int a, int b){
-     
-   }
-   
    public static def __init__(string[] args)
    {
         asm("
-             iconst @x #0
-             lconst @max #1000000
-             
-             iconst @foo #6
-             bconst @go #1
-           
-           /*.label @exe
-              ilt go, x, max
-              inc x
-              jit exe, go*/
-          
-          cout ('Hello, World!\n' << (byte) x << ' ' << 67 << (char) 66 << '\n') 
-          //hlt 
-          call getName[int]
-          pop x
-          push foo
-          push max
-          call foobar[int,int]
-          pop x
-          cout ('x is ' << x << '\n\#') 
-          delete x
-          
-          bconst @boolean #1
-          
-          byte_const @array_response #0
-          byte_const @store_var #77
-          iconst @array_pos #4
-          lconst @array_max_size #9
-          byte_aconst @byte_array array_max_size
-          
-          astore byte_array, store_var, array_pos // store data into array
-          
-          aload array_response, byte_array, array_pos
-          
-          cout ('Array val @***' << (*array_response) << '*** is ' << array_response << '\n')
-          
-          if boolean
-             cout ('var boolean = ' << boolean << '\n')
-          end
-          
-          cout ('changing the console color to \{41}red\{0}\n')
-          
-          lconst @b #12 
-          cout ('b is ' << b << '\n')
-          cout ('x address is ' << (*x) << ' and b address is ' << *b << '\n')
-          cout 'returning main\n'
-          assn b, boolean
-          str_const @msg 'Test'
-          str_const @expn 'Exception'
-          at b, expn, boolean    
-          cout ('expn @1 = ' << (char) b << '\n')
-          dconst @PI #339393.14159265358979
-          cout ('PI = ' << PI << '\n')
-          fconst @casted_val #0
-          cast casted_val, PI, [*]
-          cout ('PI address is ' << casted_val << ' confirm PI >> ' << *PI << '\n')
-          //throw msg, expn
-          ret __init__[string[]] // return main
+             cout '\{35}Hello, World!\{0}\n'
           ");
-       return 10;
+       return 0;
    }
-   
-   
 }
 
