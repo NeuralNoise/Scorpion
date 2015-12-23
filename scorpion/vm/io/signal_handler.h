@@ -73,7 +73,6 @@
                  public:
                    int sig;
                    ListAdapter <sig_atomic_t> sig_values;
-                   ListAdapter <std::string> sig_names; // TODO: add sig name and use this list to get sig name w/ sig_info
                    struct sigaction act;
 	           
                    sig_handler()
@@ -100,9 +99,8 @@
                         return SIG_REGRISTRATION_SUCCESS;
                    }
                    
-                   void raise_sig(sig_atomic_t sig)
+                   static void raise_sig(sig_atomic_t sig)
                    {
-                       if(sig_values.contains(sig))
                           raise(sig);
                    }
                    
@@ -175,6 +173,8 @@
                                 return "SIGSEGV";
                             case SIGQUIT:
                                 return "SIGQUIT";
+                            case SIGABRT:
+                                return "SIGABRT";
                             default:
                                 return "SIGUNO";
                          }

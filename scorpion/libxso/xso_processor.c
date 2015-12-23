@@ -46,11 +46,13 @@
  #include "xso_processor.h"
  #include "../vm/internal/globals.h"
  #include "../vm/internal/Opcodes.h"
+ #include "../vm/memory/block_allocator.h"
  #include "../vm/memory/object_scheme_controller.h"
  
  using namespace std;
  using namespace scorpionvm::vm;
  using namespace scorpionvm::_xso;
+ using namespace scorpionvm::memory;
  using namespace scorpionvm::xsoprocessor;
  using namespace scorpionvm::log::log_service::debug;
  using namespace scorpionvm::memory::schema::object_scheme_controller;
@@ -163,14 +165,20 @@
          for(int i2 = index; i2 < method_info.size(); i2++)
               file_name << "" << method_info.at(i2);
          
-         g_Svm.env->method_stack[addr].name = m_name.str().c_str();  
-         g_Svm.env->method_stack[addr].clazz = class_name.str().c_str();
-         g_Svm.env->method_stack[addr].package = package.str().c_str();
-         g_Svm.env->method_stack[addr].native = native;
-         g_Svm.env->method_stack[addr].file = file_name.str().c_str();
-         g_Svm.env->method_stack[addr].jmp = 
+         MethodContainer m;
+         m.name = m_name.str();  
+         m.clazz = class_name.str();
+         m.package = package.str();
+         m.native = native;
+         m.file = "";
+         m.jmp = 
             g_Svm.vmstates->image_stream.size();
-         
+         g_Svm.env->method_stack.add(m);
+         if(g_Svm.env->method_stack._err())
+         {
+             ldebug.LOGV("Coud not add method, out of memory!");
+             process_err();
+         }
      }
      
      void xso_processor::process_instruction()
@@ -192,7 +200,7 @@
             setbyte(op);
             setbyte(arg1);
             
-            if(byte == OP_LBL) {// preprocess label locations
+            if(op == OP_LBL) {// preprocess label locations
               if((long) arg1 >= g_Svm.env->sizeinfo(0, 0))
               {
                   stringstream ss;
@@ -328,6 +336,8 @@
          }
          
          i=0;
+         g_Svm.vmstates->image_stream._init_();
+         g_Svm.vmstates->image_stream.enableprotected();
          read_byte();
          for( ;; )
          {
@@ -350,7 +360,7 @@
                    if(_eof){
                     _eof = false;
                     image = "";
-                   // cout << "img sz " << g_Svm.vmstates->image_stream.size() << " file sz " << img_t << endl;
+                    //cout << "img sz " << g_Svm.vmstates->image_stream.size() << " file sz " << img_t << endl;
                     if(g_Svm.vmstates->image_stream.size() != img_t){
                         ldebug.LOGV("Image size does not match specified length. Try recompiling your application.", "xso_processor");
                         process_err();

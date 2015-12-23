@@ -51,7 +51,7 @@
      {
          namespace interpreter
          {
-             void Invoke_Method(scorpion_env* env, ScorpionVM* vm_state, uint64_t ptr);
+             void Invoke_Method(scorpion_env* env, ScorpionVM* vm_state, uint64_t ptr, uint64_t l);
              
              void xso_exec(scorpion_env* env, ScorpionVM* vm_state);
          }

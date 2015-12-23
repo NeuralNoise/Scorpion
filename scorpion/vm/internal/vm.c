@@ -127,6 +127,24 @@
       printf("See %s for more details.\n", product_website.c_str());
      }
 
+     void exceptionStartup()
+     {
+         g_Svm.NullPointerException.error("NullPointerException", "Cannot operate on null object.");
+         g_Svm.HeapIndexOutOfBoundsException.error("HeapIndexOutOfBoundsException", "Scorpion heap space.");
+         g_Svm.StackOverflowException.error("StackOverflowException", "Scorpion statck space.");
+         g_Svm.StackUnderflowException.error("StackUnderflowException", "Scorpion statck space.");
+         g_Svm.ArrayIndexOutOfBoundsException.error("ArrayIndexOutOfBoundsException", "");
+         g_Svm.IllegalTypeException.error("IllegalTypeException", 
+               "Cannot operate on objects with different types");
+         g_Svm.OutOfMemoryErr.error("OutOfMemoryErr", "");
+         g_Svm.RuntimeException.error("RuntimeException", "");
+         g_Svm.IOFailure.error("IOFailure", "");
+         g_Svm.UnspecifiedException.error("UnspecifiedException", "");
+         g_Svm.MethodIndexOutOfBoundsException.error("MethodIndexOutOfBoundsException", "");
+         
+         for(unsigned long i = 0; i < 500000000; i++){}
+     }
+
      int scorpionvm::vm::console_helper::process_args(int argc, const char **argv)
      {
          /* Pre assign all values*/
@@ -294,19 +312,20 @@
          BlockAllocator<xso_reader> xso_allocator;
          
          int status;
+         /* We setup the service anyway to log errors*/
+         ldebug.service_setup(VERBOSE, false, "");
          
          int console_response = console_helper::process_args(argc, argv);
          
-         /* We setup the service anyway to log errors*/
-         ldebug.service_setup(console_options.log_level, false, "");
+         /* reset log service */
+         ldebug.service_setup(console_options.log_level, false, "", true);
          if(console_response != 0)
          {
              ldebug.LOGV("error processing console args.", "ScorpionVM");
-             cout << "err\n";
              return 1;
          }
          
-         vmstate = vm_allocator.calloc(1, 0);
+         vmstate = vm_allocator.malloc(1, 0);
          p_env = env_allocator.malloc(1, 0); // we dont need calloc() here
          
          if(vmstate == NULL || p_env == NULL)
@@ -314,6 +333,7 @@
              return 1;
          }
          
+         exceptionStartup();
          if(!FileStream::endswith(".xso", console_options.xso_file))
          {
              ldebug.LOGV("Executable File must be a .xso file.", "ScorpionVM");
@@ -431,10 +451,11 @@
         */
          g_Svm.vmstates->exc = 1;
          
-         g_Svm.vmstates->func_tracker.add_func(g_Svm.env->method_stack[0], 0, true);
+         g_Svm.vmstates->func_tracker.add_func(g_Svm.env->method_stack.valueAt(0), 0, true);
          
-         Invoke_Method(g_Svm.env, g_Svm.vmstates, 0);
-         
+         g_Svm.env->method_stack.valueAt(0).ret = g_Svm.vmstates->pc;
+         g_Svm.vmstates->pc = g_Svm.env->method_stack.valueAt(0).jmp;
+     
          xso_exec(g_Svm.env, g_Svm.vmstates);
          return 1;
      }

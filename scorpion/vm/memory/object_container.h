@@ -54,6 +54,29 @@
  {
      namespace memory
      {
+         class HashTable
+         {
+             public:
+               ListAdapter<int> table;
+               
+               void hash_set(string str, bool wipe_table = true)
+               {
+                  if(wipe_table)
+                    table.clear();
+                  
+                  for(uint64_t i=0; i < str.size(); i++)
+                     table.add((int)str.at(i));
+               }
+               
+               string hash_get()
+               {
+                  stringstream ss;
+                  for(uint64_t i=0; i < table.size(); i++)
+                     ss << (char)table.valueAt(i);
+                  return ss.str();
+               }
+         };
+         
          class ObjectContainer
          {
              public:
@@ -70,7 +93,7 @@
                const char* name; // for debugging objects
                
                uint64_t size_t;
-               int8_t gc_; // Garbage collector status
+               uint8_t gc_; // Garbage collector status
                bool init, string_, array;
                
                int destroy_self() // emplode object
@@ -80,15 +103,13 @@
                    if(string_)
                    {
                      set_size_t=0;
-                     scorpionvm::memory::BlockAllocator
-                            <ListAdapter<schar> > schema_allocator;
+                     scorpionvm::memory::BlockAllocator<ListAdapter<schar> > schema_allocator;
                             
                      return schema_allocator.free(hash_set);
                    }
                    else
                    {
-                      scorpionvm::memory::BlockAllocator
-                            <scorpionvm::memory::schema::ObjectSchema> schema_allocator;
+                      scorpionvm::memory::BlockAllocator<scorpionvm::memory::schema::ObjectSchema> schema_allocator;
                      return schema_allocator.free(valuetype);
                    }
                }
@@ -102,19 +123,19 @@
                        case scorpionvm::memory::schema::ObjectSchema::SBYTE: 
                               return ((!array) ? valuetype->byte : valuetype[i].byte); break;
                        case scorpionvm::memory::schema::ObjectSchema::SSHORT: 
-                              return ((!array) ? valuetype->short_ : valuetype[i].byte); break;
+                              return ((!array) ? valuetype->short_ : valuetype[i].short_); break;
                        case scorpionvm::memory::schema::ObjectSchema::SCHAR: 
-                              return ((!array) ? valuetype->char_ : valuetype[i].byte); break;
+                              return ((!array) ? valuetype->char_ : valuetype[i].char_); break;
                        case scorpionvm::memory::schema::ObjectSchema::SINT: 
-                              return ((!array) ? valuetype->int_ : valuetype[i].byte); break;
+                              return ((!array) ? valuetype->int_ : valuetype[i].int_); break;
                        case scorpionvm::memory::schema::ObjectSchema::SLONG: 
-                              return ((!array) ? valuetype->long_ : valuetype[i].byte); break;
+                              return ((!array) ? valuetype->long_ : valuetype[i].long_); break;
                        case scorpionvm::memory::schema::ObjectSchema::SFLOAT: 
-                              return ((!array) ? valuetype->float_ : valuetype[i].byte); break;
+                              return ((!array) ? valuetype->float_ : valuetype[i].float_); break;
                        case scorpionvm::memory::schema::ObjectSchema::SDOUBLE: 
-                              return ((!array) ? valuetype->double_ : valuetype[i].byte); break;
+                              return ((!array) ? valuetype->double_ : valuetype[i].double_); break;
                        case scorpionvm::memory::schema::ObjectSchema::SBOOL: 
-                              return ((!array) ? valuetype->boolean : valuetype[i].byte); break;
+                              return ((!array) ? valuetype->boolean : valuetype[i].boolean); break;
                    }
                }
                
@@ -130,31 +151,175 @@
                        break;
                        case scorpionvm::memory::schema::ObjectSchema::SSHORT: 
                                if(!array) valuetype->short_ =  data;
-                               else valuetype[i].byte = data; 
+                               else valuetype[i].short_ = data; 
                        break;
                        case scorpionvm::memory::schema::ObjectSchema::SCHAR: 
                                if(!array) valuetype->char_ = data;
-                               else valuetype[i].byte = data; 
+                               else valuetype[i].char_ = data; 
                        break;
                        case scorpionvm::memory::schema::ObjectSchema::SINT: 
                                if(!array) valuetype->int_ = data;
-                               else valuetype[i].byte = data; 
+                               else valuetype[i].int_ = data; 
                        break;
                        case scorpionvm::memory::schema::ObjectSchema::SLONG: 
                                if(!array) valuetype->long_ = data;
-                               else valuetype[i].byte = data; 
+                               else valuetype[i].long_ = data; 
                        break;
                        case scorpionvm::memory::schema::ObjectSchema::SFLOAT:  
                                if(!array) valuetype->float_ = data;
-                               else valuetype[i].byte = data; 
+                               else valuetype[i].float_ = data; 
                        break;
                        case scorpionvm::memory::schema::ObjectSchema::SDOUBLE: 
                                if(!array) valuetype->double_ = data;
-                               else valuetype[i].byte = data; 
+                               else valuetype[i].double_ = data; 
                        break;
                        case scorpionvm::memory::schema::ObjectSchema::SBOOL: 
-                               if(!array) valuetype->boolean = data;
-                               else valuetype[i].byte = data; 
+                               if(!array) valuetype->boolean = (bool)data;
+                               else valuetype[i].boolean = (bool)data; 
+                       break;
+                   }
+               }
+               
+               void schema_inc(uint64_t i = 0)
+               {
+                   if(string_) return;
+                   if(array && (i<0||i>size_t)) return;
+                   switch( valuetype->type )
+                   {
+                       case scorpionvm::memory::schema::ObjectSchema::SBYTE: 
+                               if(!array) valuetype->byte++;
+                               else valuetype[i].byte++; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SSHORT: 
+                               if(!array) valuetype->short_++;
+                               else valuetype[i].short_++; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SCHAR: 
+                               if(!array) valuetype->char_++;
+                               else valuetype[i].char_++; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SINT: 
+                               if(!array) valuetype->int_++;
+                               else valuetype[i].int_++; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SLONG: 
+                               if(!array) valuetype->long_++;
+                               else valuetype[i].long_++; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SFLOAT:  
+                               if(!array) valuetype->float_++;
+                               else valuetype[i].float_++; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SDOUBLE: 
+                               if(!array) valuetype->double_++;
+                               else valuetype[i].double_++; 
+                       break;
+                   }
+               }
+               
+               void schema_dec(uint64_t i = 0)
+               {
+                   if(string_) return;
+                   if(array && (i<0||i>size_t)) return;
+                   switch( valuetype->type )
+                   {
+                       case scorpionvm::memory::schema::ObjectSchema::SBYTE: 
+                               if(!array) valuetype->byte--;
+                               else valuetype[i].byte--; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SSHORT: 
+                               if(!array) valuetype->short_--;
+                               else valuetype[i].short_--; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SCHAR: 
+                               if(!array) valuetype->char_--;
+                               else valuetype[i].char_--; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SINT: 
+                               if(!array) valuetype->int_--;
+                               else valuetype[i].int_--; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SLONG: 
+                               if(!array) valuetype->long_--;
+                               else valuetype[i].long_--; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SFLOAT:  
+                               if(!array) valuetype->float_--;
+                               else valuetype[i].float_--; 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SDOUBLE: 
+                               if(!array) valuetype->double_--;
+                               else valuetype[i].double_--; 
+                       break;
+                   }
+               }
+               
+               
+               void schema_shift(long units, bool right, uint64_t i = 0)
+               {
+                   if(string_) return;
+                   if(array && (i<0||i>size_t)) return;
+                   switch( valuetype->type )
+                   {
+                       case scorpionvm::memory::schema::ObjectSchema::SBYTE: 
+                            if(right)
+                            {
+                               if(!array) valuetype->byte >>= units;
+                               else valuetype[i].byte >>= units;
+                            }
+                            else
+                            {
+                               if(!array) valuetype->byte <<= units;
+                               else valuetype[i].byte <<= units;
+                            } 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SSHORT:  
+                            if(right)
+                            {
+                               if(!array) valuetype->short_ >>= units;
+                               else valuetype[i].short_ >>= units;
+                            }
+                            else
+                            {
+                               if(!array) valuetype->short_ <<= units;
+                               else valuetype[i].short_ <<= units;
+                            } 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SCHAR:  
+                            if(right)
+                            {
+                               if(!array) valuetype->char_ >>= units;
+                               else valuetype[i].char_ >>= units;
+                            }
+                            else
+                            {
+                               if(!array) valuetype->char_ <<= units;
+                               else valuetype[i].char_ <<= units;
+                            } 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SINT:  
+                            if(right)
+                            {
+                               if(!array) valuetype->int_ >>= units;
+                               else valuetype[i].int_ >>= units;
+                            }
+                            else
+                            {
+                               if(!array) valuetype->int_ <<= units;
+                               else valuetype[i].int_ <<= units;
+                            } 
+                       break;
+                       case scorpionvm::memory::schema::ObjectSchema::SLONG:  
+                            if(right)
+                            {
+                               if(!array) valuetype->long_ >>= units;
+                               else valuetype[i].long_ >>= units;
+                            }
+                            else
+                            {
+                               if(!array) valuetype->long_ <<= units;
+                               else valuetype[i].long_ <<= units;
+                            } 
                        break;
                    }
                }
@@ -225,8 +390,7 @@
                int string_schema_init(uint64_t i)
                {
                    if(!string_) return 1;
-                   scorpionvm::memory::BlockAllocator
-                            <ListAdapter<schar> > schema_allocator;
+                   scorpionvm::memory::BlockAllocator<ListAdapter<schar> > schema_allocator;
                             
                    hash_set = schema_allocator.malloc(i,0);
                    if(hash_set==NULL) return 1;
@@ -258,16 +422,11 @@
                ret(0),
                native(false)
              {
-				 clazz="";
-				 package="";
-				 name="";
-				 file="";
              }
              
-             const char* clazz;
-             const char* package;
-             const char* name;
-             const char* file;
+             /* Method textual info */
+              std::string name, clazz, 
+                   package, file;
              uint64_t jmp, ret;
              bool native;
          };

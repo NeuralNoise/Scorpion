@@ -125,7 +125,7 @@
                }
                
                uint64_t pc, size_t, state;
-               int64_t if_count, if_depth, func_depth;
+               int64_t if_count, if_depth, func_depth, sp;
                bool exc;
                function_tracker func_tracker;
                ListAdapter<double> image_stream;

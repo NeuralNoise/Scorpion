@@ -66,7 +66,7 @@
                  {
                      void* ptr = nullptr;
                      
-                     ptr = std::malloc(sizeof(T)*N);
+                     ptr = std::malloc(sizeof(T)*N+1);
                      if(ptr == NULL)
                      {
                          T* p=NULL;

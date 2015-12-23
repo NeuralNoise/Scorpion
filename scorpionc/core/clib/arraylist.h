@@ -166,7 +166,7 @@ class ListAdapter {
                 if(values[i] == value)
                    return i;
             }
-           return -1;
+           return 0;
         }
         void replace(T value, long i)
         {

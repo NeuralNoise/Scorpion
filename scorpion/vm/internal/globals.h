@@ -48,6 +48,7 @@
  #include "../memory/object_container.h"
  #include "../memory/block_allocator.h"
  #include "../io/signal_handler.h"
+ #include "../io/runtime_exception.h"
  #include "func_tracker.h"
  #include "vm.h"
  #include "../memory/vm_env.h"
@@ -59,6 +60,7 @@
  using namespace scorpionvm::memory;
  using namespace scorpionvm::io::signal;
  using namespace scorpionvm::memory::environment;
+ using namespace scorpionvm::io::runtime_exception;
  
  namespace scorpionvm
  {
@@ -70,7 +72,21 @@
          scorpion_env* env;
          
          /* Global pointer to vm & environment */
-         uint64_t p_ptr;
+         int64_t p_ptr;
+         
+         
+         /* Quick lookups for throwing frequently thrown runtime exceptions */
+         Exception NullPointerException;
+         Exception HeapIndexOutOfBoundsException;
+         Exception ArrayIndexOutOfBoundsException;
+         Exception IllegalTypeException;
+         Exception OutOfMemoryErr;
+         Exception RuntimeException;
+         Exception IOFailure;
+         Exception UnspecifiedException;
+         Exception StackUnderflowException;
+         Exception StackOverflowException;
+         Exception MethodIndexOutOfBoundsException;
      };
  }
  

@@ -44,11 +44,14 @@
  #include <stdlib.h>
  #include <string.h>
  #include <unistd.h>
+ #include "signal_handler.h"
  #include "../internal/vm.h"
+ #include "../../clib/arraylist.h"
  
  using namespace std;
  using namespace scorpionvm;
  using namespace scorpionvm::vm;
+ using namespace scorpionvm::io::signal;
  
   #define nullptr ((void *)0)
 
@@ -61,21 +64,26 @@
              class Exception
              {
                  public:
-                   void error(string what)
+                   void error(string __what)
                    {
-                       what_arg=("Exception");
-                       what=(what);
+                       what=(__what);
                    }
                    void error(const char* _what_arg, string _what)
                    {
                      what_arg=(_what_arg);
                      what=(_what);
                    }
+                   void _throw_(ScorpionVM* vm)
+                   {
+                      if(vm != NULL)
+                        printf("RuntimeException: Caused by %s: %s\n%s", what_arg, what.c_str(),
+                            vm->func_tracker.get_func_trace().c_str());
+                      sig_handler::raise_sig(SIGQUIT);
+                   }
                    const char* what_arg;
                    std::string what;
              };
              
-             void runtime_error(Exception e, ScorpionVM* vm);
          }
      }
  }

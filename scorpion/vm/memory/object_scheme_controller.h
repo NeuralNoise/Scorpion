@@ -68,69 +68,18 @@
                      object_alloc_failed=0xfff
                  };
                  
-                 bool isnumber(ObjectSchema::t type)
-                 {
-                     return (type == ObjectSchema::SBOOL || type == ObjectSchema::SCHAR 
-                         || type == ObjectSchema::SINT || type == ObjectSchema::SBYTE
-                         || type == ObjectSchema::SLONG || type == ObjectSchema::SFLOAT 
-                         || type == ObjectSchema::SDOUBLE || type == ObjectSchema::SSHORT);
-                 }
+                 bool isnumber(ObjectSchema::t type);
+                 
+                 bool isnumber(ObjectContainer &container);
+                 
+                 void arrycpy(ObjectContainer &container, ObjectContainer &container2);
                  
                  int create_object(ObjectContainer &container, 
-                     ObjectSchema::t type, uint64_t array)
-                 {
-                     scorpionvm::scorpion_assert(container.gc_ == gc::gc_idle ||
-                               container.gc_ == 0, "container.gc_ == gc::gc_idle ||\n\tcontainer.gc_ == 0");
-                               
-                     if(container.init)
-                       return object_alreay_created;
-                     else if(container.gc_ == gc::gc_dirty)
-                       return object_dirty;
-                       
-                     scorpionvm::memory::BlockAllocator
-                            <ObjectSchema> schema_allocator;
-                       
-                     container.init = true;
-                     if(isnumber(type))
-                     {
-                        container.string_=false;
-                        container.valuetype = schema_allocator.malloc(((array==0) ? 1 : array),0); // add if statement to check if array is == 0
-                        if(container.valuetype==NULL)
-                        {
-                            return object_alloc_failed;
-                        }
-                        
-                        container.valuetype->type = type;
-                        container.size_t=1;
-                        container.init=true;
-                        container.array = ((array == 0) ? false : true);
-                        container.gc_ = scorpionvm::memory::gc::gc_clean;
-                        
-                        return object_alloc_ok;
-                     }
-                     else // object is a string
-                     {
-                        container.string_=true;
-                        if(container.string_schema_init(((array == 0) ? 1 : array)) != 0)
-                          return object_alloc_failed;
-                        container.size_t=0;
-                        container.init=true;
-                        container.array = ((array == 0) ? false : true);
-                        container.gc_ = gc::gc_clean;
-                        
-                        return object_alloc_ok;
-                     }
-                 }
+                     ObjectSchema::t type, uint64_t array);
                  
-                 int kill_object(ObjectContainer &container)
-                 {
-                     
-                 }
+                 int kill_object(ObjectContainer &container);
                  
-                 int delete_object(ObjectContainer &container)
-                 {
-                     return container.destroy_self();
-                 }
+                 int delete_object(ObjectContainer &container);
              } // end object__scheme_controller
          } // end schema
      } // end memory

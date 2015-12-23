@@ -51,13 +51,7 @@
   
  namespace scorpionvm
  {
-     void scorpion_assert(bool case_, std::string case_source)
-     {
-         if(!case_)
-         {
-             cout << "Assertion `" << case_source << "` failed.\nAborting\n";
-         }
-     }
+     void scorpion_assert(bool case_, std::string case_source);
  }
 
 #endif // 

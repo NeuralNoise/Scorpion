@@ -40,7 +40,6 @@ class ListAdapter {
         { pmode = !pmode; }
         void _init_()
         {
-		   if(init) return;
 		   init = false;	
            err = false;
            pmode = false;
@@ -174,7 +173,7 @@ class ListAdapter {
                 if(values[i] == value)
                    return i;
             }
-           return -1;
+           return 0;
         }
         void replace(T value, long i)
         {

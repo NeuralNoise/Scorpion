@@ -37,28 +37,25 @@
  
  #include <string>
  #include <stdint.h>
- #include <signal.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include "../internal/globals.h"
- #include "../internal/vm.h"
+ #include "allocation_scheme.h"
+ #include "gc.h"
+ #include "../io/signal_handler.h"
+ #include "object_container.h"
+ #include "block_allocator.h"
  #include "../../clib/arraylist.h"
- #include "runtime_exception.h"
+ #include "scorpion_assert.h"
  
  using namespace std;
- using namespace scorpionvm;
- using namespace scorpionvm::vm;
- using namespace scorpionvm::io::runtime_exception;
- using namespace scorpionvm::io::runtime_exception;
+ using namespace scorpionvm::io::signal;
  
   #define nullptr ((void *)0)
- 
- void scorpionvm::io::runtime_exception::runtime_error(Exception e, ScorpionVM* vm)
- {
-     if(vm != NULL)
-       printf("RuntimeException: Caused by %s: %s\n%s", e.what_arg, e.what.c_str(),
-           vm->func_tracker.get_func_trace().c_str());
-     g_Svm._sig_handler.raise_sig(SIGQUIT);
- }
+  
+  void scorpionvm::scorpion_assert(bool case_, std::string case_source)
+  {
+      if(!case_)
+      {
+          cout << "Assertion `" << case_source << "` failed.\nAborting\n";
+          sig_handler::raise_sig(SIGABRT);
+      }
+  }
+

@@ -67,9 +67,9 @@
                        {
                        }
                      
-                       void service_setup(int level, bool usr, string _file)
+                       void service_setup(int level, bool usr, string _file, bool force_update = false)
                        {
-                          if(on) return; // you cant setup the log service more than once
+                          if(on && !force_update) return; // you cant setup the log service more than once
                           #ifdef ENV_DEV
                             file = "/usr/share/scorpion/vm/log/out.log";
                           #endif
@@ -93,12 +93,15 @@
                              
                              if(usr) file = _file;
                              precedence = level;
-                             logstack = "";
-                             logstack += "=======System Dev Log begin=======\n";
-                             
-                             stringstream ss;
-                             ss << "Log setup: using " << file;
-                             LOGV(ss.str());
+                             if(!force_update)
+                             {
+                                 logstack = "";
+                                 logstack += "=======System Dev Log begin=======\n";
+                                 
+                                 stringstream ss;
+                                 ss << "Log setup: using " << file;
+                                 LOGV(ss.str());
+                             }
                           }
                        }
                        void setpackage(string name){

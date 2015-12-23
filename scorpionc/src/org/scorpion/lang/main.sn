@@ -10,7 +10,16 @@ public class Starter
    public static def __init__(string[] args)
    {
         asm("
-             cout '\{35}Hello, World!\{0}\n'
+             iconst @i #0
+             iconst @limit #1000000
+             bconst @go #0
+             
+             .label @foo
+               inc i
+               ile go, i,limit
+               jit foo, go
+               
+             cout ('\{35}Hello, World!\{0}\n' << 'i = ' << i << '\n')
           ");
        return 0;
    }
