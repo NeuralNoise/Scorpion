@@ -11,7 +11,7 @@ class ListAdapter {
      T* values;
      unsigned long size_t;
      bool init;
-    
+     
      public:
         void clear()
         {

@@ -1,0 +1,433 @@
+/*
+ * Copyright (C) 2015 The Scorpion Programming Language
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Portions of the code surrounded by "// Begin Dalvik code" and
+ * "// END Delvik code" are copyrighted and licensed separately, as
+ * follows:
+ *
+ * Copyright (C) 2014 The Android Open Source Project
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. The ASF licenses this file to You
+ * under the Apache License, Version 2.0 (the "License"); you may not use 
+ * this file except in compliance with the License.  You may obtain a copy
+ * of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+ #ifndef SCORPION_OBJECT_CONTAINER
+ #define SCORPION_OBJECT_CONTAINER
+ 
+ #include <string>
+ #include <stdint.h>
+ #include <limits>
+ #include <sstream>
+ #include "allocation_scheme.h"
+ #include "block_allocator.h"
+ #include "gc.h"
+ #include "../../clib/arraylist.h"
+ 
+ using namespace std;
+ 
+  #define nullptr ((void *)0)
+  
+ class HashTable
+ {
+     public:
+       ListAdapter<int> table;
+       
+       void hash_set(string str, bool wipe_table = true)
+       {
+          if(wipe_table)
+            table.clear();
+          
+          for(uint64_t i=0; i < str.size(); i++)
+             table.add((int)str.at(i));
+       }
+       
+       string hash_get()
+       {
+          stringstream ss;
+          for(uint64_t i=0; i < table.size(); i++)
+             ss << (char)table.valueAt(i);
+          return ss.str();
+       }
+ };
+ 
+ class ObjectContainer
+ {
+     public:
+       ObjectContainer()
+       : init(false),
+         string_(false),
+         array(false),
+         gc_(gc_idle),
+         size_t(0)
+       {
+       }
+       
+       ObjectSchema* valuetype;
+       const char* name; // for debugging objects
+       
+       uint64_t size_t;
+       uint8_t gc_; // Garbage collector status
+       bool init, string_, array;
+       
+       int destroy_self() // emplode object
+       {
+           if(!init) return 1;
+           init=false;
+           string_=false;
+           array=false;
+           gc_=(gc_idle);
+           size_t=0;
+           if(string_)
+           {
+             set_size_t=0;
+             BlockAllocator<ListAdapter<schar> > schema_allocator;
+                    
+             return schema_allocator.free(hash_set);
+           }
+           else
+           {
+              BlockAllocator<ObjectSchema> schema_allocator;
+             return schema_allocator.free(valuetype);
+           }
+       }
+           
+       double schema_value(uint64_t i = 0)
+       {
+           if(string_||!init) return std::numeric_limits<double>::max();
+           if(array && (i<0||i>size_t)) return std::numeric_limits<double>::max();
+           switch( valuetype->type )
+           {
+               case ObjectSchema::SBYTE: 
+                      return ((!array) ? valuetype->byte : valuetype[i].byte); break;
+               case ObjectSchema::SSHORT: 
+                      return ((!array) ? valuetype->short_ : valuetype[i].short_); break;
+               case ObjectSchema::SCHAR: 
+                      return ((!array) ? valuetype->char_ : valuetype[i].char_); break;
+               case ObjectSchema::SINT: 
+                      return ((!array) ? valuetype->int_ : valuetype[i].int_); break;
+               case ObjectSchema::SLONG: 
+                      return ((!array) ? valuetype->long_ : valuetype[i].long_); break;
+               case ObjectSchema::SFLOAT: 
+                      return ((!array) ? valuetype->float_ : valuetype[i].float_); break;
+               case ObjectSchema::SDOUBLE: 
+                      return ((!array) ? valuetype->double_ : valuetype[i].double_); break;
+               case ObjectSchema::SBOOL: 
+                      return ((!array) ? valuetype->boolean : valuetype[i].boolean); break;
+           }
+       }
+       
+       void set_schema_(double data, uint64_t i = 0)
+       {
+           if(string_||!init) return;
+           if(array && (i<0||i>size_t)) return;
+           switch( valuetype->type )
+           {
+               case ObjectSchema::SBYTE: 
+                       if(!array) valuetype->byte = data;
+                       else valuetype[i].byte = data; 
+               break;
+               case ObjectSchema::SSHORT: 
+                       if(!array) valuetype->short_ =  data;
+                       else valuetype[i].short_ = data; 
+               break;
+               case ObjectSchema::SCHAR: 
+                       if(!array) valuetype->char_ = data;
+                       else valuetype[i].char_ = data; 
+               break;
+               case ObjectSchema::SINT: 
+                       if(!array) valuetype->int_ = data;
+                       else valuetype[i].int_ = data; 
+               break;
+               case ObjectSchema::SLONG: 
+                       if(!array) valuetype->long_ = data;
+                       else valuetype[i].long_ = data; 
+               break;
+               case ObjectSchema::SFLOAT:  
+                       if(!array) valuetype->float_ = data;
+                       else valuetype[i].float_ = data; 
+               break;
+               case ObjectSchema::SDOUBLE: 
+                       if(!array) valuetype->double_ = data;
+                       else valuetype[i].double_ = data; 
+               break;
+               case ObjectSchema::SBOOL: 
+                       if(!array) valuetype->boolean = (bool)data;
+                       else valuetype[i].boolean = (bool)data; 
+               break;
+           }
+       }
+       
+       void schema_inc(uint64_t i = 0)
+       {
+           if(string_) return;
+           if(array && (i<0||i>size_t)) return;
+           switch( valuetype->type )
+           {
+               case ObjectSchema::SBYTE: 
+                       if(!array) valuetype->byte++;
+                       else valuetype[i].byte++; 
+               break;
+               case ObjectSchema::SSHORT: 
+                       if(!array) valuetype->short_++;
+                       else valuetype[i].short_++; 
+               break;
+               case ObjectSchema::SCHAR: 
+                       if(!array) valuetype->char_++;
+                       else valuetype[i].char_++; 
+               break;
+               case ObjectSchema::SINT: 
+                       if(!array) valuetype->int_++;
+                       else valuetype[i].int_++; 
+               break;
+               case ObjectSchema::SLONG: 
+                       if(!array) valuetype->long_++;
+                       else valuetype[i].long_++; 
+               break;
+               case ObjectSchema::SFLOAT:  
+                       if(!array) valuetype->float_++;
+                       else valuetype[i].float_++; 
+               break;
+               case ObjectSchema::SDOUBLE: 
+                       if(!array) valuetype->double_++;
+                       else valuetype[i].double_++; 
+               break;
+           }
+       }
+       
+       void schema_dec(uint64_t i = 0)
+       {
+           if(string_) return;
+           if(array && (i<0||i>size_t)) return;
+           switch( valuetype->type )
+           {
+               case ObjectSchema::SBYTE: 
+                       if(!array) valuetype->byte--;
+                       else valuetype[i].byte--; 
+               break;
+               case ObjectSchema::SSHORT: 
+                       if(!array) valuetype->short_--;
+                       else valuetype[i].short_--; 
+               break;
+               case ObjectSchema::SCHAR: 
+                       if(!array) valuetype->char_--;
+                       else valuetype[i].char_--; 
+               break;
+               case ObjectSchema::SINT: 
+                       if(!array) valuetype->int_--;
+                       else valuetype[i].int_--; 
+               break;
+               case ObjectSchema::SLONG: 
+                       if(!array) valuetype->long_--;
+                       else valuetype[i].long_--; 
+               break;
+               case ObjectSchema::SFLOAT:  
+                       if(!array) valuetype->float_--;
+                       else valuetype[i].float_--; 
+               break;
+               case ObjectSchema::SDOUBLE: 
+                       if(!array) valuetype->double_--;
+                       else valuetype[i].double_--; 
+               break;
+           }
+       }
+       
+       
+       void schema_shift(long units, bool right, uint64_t i = 0)
+       {
+           if(string_||!init) return;
+           if(array && (i<0||i>size_t)) return;
+           switch( valuetype->type )
+           {
+               case ObjectSchema::SBYTE: 
+                    if(right)
+                    {
+                       if(!array) valuetype->byte >>= units;
+                       else valuetype[i].byte >>= units;
+                    }
+                    else
+                    {
+                       if(!array) valuetype->byte <<= units;
+                       else valuetype[i].byte <<= units;
+                    } 
+               break;
+               case ObjectSchema::SSHORT:  
+                    if(right)
+                    {
+                       if(!array) valuetype->short_ >>= units;
+                       else valuetype[i].short_ >>= units;
+                    }
+                    else
+                    {
+                       if(!array) valuetype->short_ <<= units;
+                       else valuetype[i].short_ <<= units;
+                    } 
+               break;
+               case ObjectSchema::SCHAR:  
+                    if(right)
+                    {
+                       if(!array) valuetype->char_ >>= units;
+                       else valuetype[i].char_ >>= units;
+                    }
+                    else
+                    {
+                       if(!array) valuetype->char_ <<= units;
+                       else valuetype[i].char_ <<= units;
+                    } 
+               break;
+               case ObjectSchema::SINT:  
+                    if(right)
+                    {
+                       if(!array) valuetype->int_ >>= units;
+                       else valuetype[i].int_ >>= units;
+                    }
+                    else
+                    {
+                       if(!array) valuetype->int_ <<= units;
+                       else valuetype[i].int_ <<= units;
+                    } 
+               break;
+               case ObjectSchema::SLONG:  
+                    if(right)
+                    {
+                       if(!array) valuetype->long_ >>= units;
+                       else valuetype[i].long_ >>= units;
+                    }
+                    else
+                    {
+                       if(!array) valuetype->long_ <<= units;
+                       else valuetype[i].long_ <<= units;
+                    } 
+               break;
+           }
+       }
+       
+       int string_schema_set_(string data, bool append, uint64_t i = 0)
+       {
+           if(!string_||!init) return 1;
+           if(!append)
+           {
+               if(array)
+                 hash_set[i].clear();
+               else hash_set->clear();
+           }
+           if(array && (i<0||i>=set_size_t)) return 2;
+           
+           if(array)
+           {
+               for( uint64_t i2=0; i2<data.size(); i2++ )
+               {
+                   hash_set[i].add((schar)data.at(i2));
+               }
+               return 0;
+           }
+           else 
+           {
+               for( uint64_t i2=0; i2<data.size(); i2++ )
+               {
+                   hash_set->add((schar)data.at(i2));
+               }
+               return 0;
+           }
+       }
+       
+       string string_schema_get_(uint64_t i = 0)
+       {
+           if(!string_||!init) return "";
+           if(array && (i<0||i>set_size_t)) return "";
+           
+           stringstream ss;
+           if(array)
+           {
+               for( uint64_t i2=0; i2<hash_set[i].size(); i2++ )
+               {
+                   ss << (char) hash_set[i].valueAt(i2);
+               }
+               return ss.str();
+           }
+           else 
+           {
+               for( uint64_t i2=0; i2<hash_set->size(); i2++ )
+               {
+                   ss << (char) hash_set->valueAt(i2);
+               }
+               return ss.str();
+           }
+       }
+       
+       schar string_schema_at_(uint64_t i, uint64_t id = 0)
+       {
+           if(!string_||!init) return 1;
+           if(array && (id<0||id>=set_size_t)) return 2;
+           if(i>hash_set[id].size() || i<0) return 0;
+           return ((array) ? hash_set[id].valueAt(i) : hash_set->valueAt(i));
+       }
+       
+       int string_schema_init(uint64_t i)
+       {
+           if(!string_||!init) return 1;
+           BlockAllocator<ListAdapter<schar> > schema_allocator;
+                    
+           hash_set = schema_allocator.malloc(i,0);
+           if(hash_set==NULL) return 1;
+           set_size_t=i;
+           size_t=i;
+           if(i==0)
+           {
+             hash_set->_init_();
+             hash_set->register_listener(); // set adapter class to protected mode
+           }
+           else
+           {
+             hash_set[i]._init_();
+             hash_set[i].register_listener(); // set adapter class to protected mode
+           }
+           return 0;
+       }
+       
+     private:
+       ListAdapter<schar>* hash_set; // for string objects
+       uint64_t set_size_t;
+ };
+ 
+ class MethodContainer
+ {
+   public:
+     MethodContainer()
+     : jmp(0),
+       ret(0),
+       native(false)
+     {
+     }
+     
+     /* Method textual info */
+      std::string name, clazz, 
+           package, file;
+     uint64_t jmp, ret;
+     bool native;
+ };
+         
+#endif // SCORPION_OBJECT_CONTAINER
+         

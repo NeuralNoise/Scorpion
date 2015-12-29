@@ -47,53 +47,49 @@
     * ***************************************
     *       Header File Symbols
     *
-    *         minor version: 0xAF
-    *         major version: 0xAE
-    *             file size: 0xFF
-    *    target dev version: 0xBC
-    *      minimum_dev_vers: 0xFD
-    *        version_number: 0xCE
-    *                 debug: 0xCC
-    *               logging: 0xDB
-    *        log precedence: 0xFA
-    *              log file: 0x3C
-    *        application id: 0xB5
-    *           permissions: 0xC1
-    *
     * ***************************************
     * ***************************************
     */
-    int _minor_version     = 0x0005;
-    int _major_version     = 0x0006;
-    int file_size          = 0x0007;
-    int target_dev_vers    = 0x0008;
-    int minimum_dev_vers   = 0x0009;
-    int version_number     = 0x0010;
-    int debugging          = 0x0011;
-    int logging            = 0x0012;
-    int log_precedence     = 0x0013;
-    int log_file           = 0x0014;
-    int application_id     = 0x0015; 
-    int permissions        = 0x0016;
-    int nameflag           = 0x0017;
-    int methodsize         = 0x0018;
+    
+    enum // header_flags
+    {
+      minor_version=1,
+      major_version=2,
+      target=3,
+      base_target=4,
+      version=5,
+      debuggable=6,
+      loggable=7,
+      log_level=8,
+      log_file=9,
+      app_id=11,
+      permissions=12,
+      image_size=13,
+      name=14,
+      address_cap=15,
+      method_cap=16,
+      eoh=0x17
+    };
 
- struct XsoHeader {
+
+ struct EsoHeader {
+    int           edian;
     u4            magic;
     u2            minor_version;
     u2            major_version;
-    u1            target_dev_vers;
-    u1            minimum_dev_vers;
-    string        version_number;
+    u1            target;
+    u1            base_target;
+    string        version;
     u1            debug;
-    u1            logging;
-    u1            log_precedence;
+    u1            loggable;
+    u1            log_level;
     string        log_file;
-    string        application_id;
+    string        app_id;
     string*       permissions;
     int           permission_t;
     u1            filesize;            // The full size of the image section in bytes
     string        name;
+    u1            address_cap;
     u1            method_size; 
  };
  
@@ -2331,10 +2327,9 @@
                            
                           arg1.type = typedef_string;
                           arg1.isarray = true;
-                         cout << "entry.\n";
+                          
                           ListAdapter<Object> initargs;
                           initargs.add(arg1);
-                         cout << "entry.\n";
      
                            if(!methodfound && !cglobals.hasInit && functionname == "__init__" 
                                && memoryhelper::methodhelper::sameargs(initargs, args) && getparentclass() == "Starter")
@@ -2966,7 +2961,7 @@ string null(int offset)
    return ss.str();
  }
  
- string addpermissions(XsoHeader &header)
+ string addpermissions(EsoHeader &header)
  {
     stringstream ss, ss1;
     ss << (char) permissions;
@@ -2977,48 +2972,68 @@ string null(int offset)
     return ss.str();
  }
 
-void objto_xso(XsoHeader header, stringstream &out_buf)
+void objto_eso(EsoHeader header, stringstream &out_buf)
  {
-     out_buf << (char) header.magic.byte1 << (char) header.magic.byte2 << (char) header.magic.byte3 << (char) header.magic.byte4 << (char) 0;
-     out_buf << (char) nameflag << header.name << null(3);
+     stringstream ss1, __ostream_buf__;
      
-     stringstream ss1;
+     out_buf << (char)0 << "ESO     " << null(11) << (char)header.edian << (char) header.magic.byte1 << (char) header.magic.byte2 << (char) header.magic.byte3 << (char) header.magic.byte4 << (char) 0;
+     out_buf << (char) name << header.name << null(3);
+     
      ss1 << (long) header.method_size.byte1;
      
-     stringstream __ostream_buf__;
      Binary::encode_str(ss1.str(), __ostream_buf__);
-     out_buf << (char) methodsize << __ostream_buf__.str()  << null(1);
+     out_buf << (char) method_cap << __ostream_buf__.str()  << null(1);
      __ostream_buf__.str("");
      ss1.str("");
      
-     out_buf << (char) _minor_version << (char) header.minor_version.byte1 << (char) header.minor_version.byte2 << null(1);
-     out_buf << (char) _major_version << (char) header.major_version.byte1 << (char) header.major_version.byte2 << null(1);
+     out_buf << (char) minor_version << (char) header.minor_version.byte1 << (char) header.minor_version.byte2 << null(1);
+     out_buf << (char) major_version << (char) header.major_version.byte1 << (char) header.major_version.byte2 << null(1);
      
      ss1 << (long) header.filesize.byte1;
     
      Binary::encode_str(ss1.str(), __ostream_buf__);
      ss1.str("");
 
-     out_buf << (char) file_size << __ostream_buf__.str() << null(1);
-     __ostream_buf__.str("");
-     out_buf << (char) target_dev_vers << (char) header.target_dev_vers.byte1 << null(1);
-     out_buf << (char) minimum_dev_vers << (char) header.minimum_dev_vers.byte1 << null(1);
-     
-     Binary::encode_str(header.version_number, __ostream_buf__);
-     out_buf << (char) version_number << __ostream_buf__.str() << null(1);
+     out_buf << (char) image_size << __ostream_buf__.str() << null(1);
      __ostream_buf__.str("");
      
-     out_buf << (char) debugging << (long) header.debug.byte1 << null(1);
-     out_buf << (char) logging << (long) header.logging.byte1 << null(1);
-     out_buf << (char) log_precedence << header.log_precedence.byte1 << null(1);
+     ss1 << header.target.byte1;
+     Binary::encode_str(ss1.str(), __ostream_buf__);
+     ss1.str("");
+     
+     out_buf << (char) target << __ostream_buf__.str() << null(1);
+     __ostream_buf__.str("");
+     
+     ss1 << header.base_target.byte1;
+     Binary::encode_str(ss1.str(), __ostream_buf__);
+     ss1.str("");
+     
+     out_buf << (char) base_target << __ostream_buf__.str() << null(1);
+     __ostream_buf__.str("");
+     
+     Binary::encode_str(header.version, __ostream_buf__);
+     out_buf << (char) version << __ostream_buf__.str() << null(1) << '\n';
+     __ostream_buf__.str("");
+     
+     out_buf << (char) debuggable << (long) header.debug.byte1 << null(1);
+     out_buf << (char) loggable << (long) header.loggable.byte1 << null(1);
+     out_buf << (char) log_level << header.log_level.byte1 << null(1);
      
      Binary::encode_str(header.log_file, __ostream_buf__);
      out_buf << (char) log_file << __ostream_buf__.str()  << null(1);
      __ostream_buf__.str("");
      
-     Binary::encode_str(header.application_id, __ostream_buf__);
-     out_buf << (char) application_id << __ostream_buf__.str() << null(1) << "\n" << addpermissions(header);
-     out_buf << null(1) << null(12) << "\n" << null(20);
+     Binary::encode_str(header.app_id, __ostream_buf__);
+     out_buf << (char) app_id << __ostream_buf__.str() << null(1) << "\n" << addpermissions(header);
+     __ostream_buf__.str("");
+     
+     ss1.str("");
+     ss1 << (long) header.address_cap.byte1;
+    
+     Binary::encode_str(ss1.str(), __ostream_buf__);
+     
+     out_buf << null(1) << (char) address_cap << __ostream_buf__.str() << null(1) << (char)eoh;
+     out_buf << null(12) << "\n" << null(20);
  } 
  
 int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &__out_buf__ )
@@ -3047,28 +3062,31 @@ int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &__out_buf__ )
            cout<<"success\n";
            stringstream __new_buf__;
            
-           XsoHeader head;
-           head.magic.byte1=0xdf;
-           head.magic.byte2=0x4e;
-           head.magic.byte3=0xfa;
+           EsoHeader head;
+           head.edian = 'e';
+           head.magic.byte1=0xd0;
+           head.magic.byte2=0xfe;
+           head.magic.byte3=0xe8;
            head.magic.byte4=0x2b;
            
            head.minor_version.byte1 = 0x70;
            head.minor_version.byte2 = 0x010;
 
-           head.major_version.byte1 = 0x7;
-           head.major_version.byte2 = 0x10;
+           head.major_version.byte1 = 0x1;
+           head.major_version.byte2 = 0x20;
            
-           head.version_number = "0.1.0.0";
+           head.version = "0.1.0.0";
            head.debug.byte1 = 0;
-           head.logging.byte1 = 1;
-           head.log_precedence.byte1 = 2; // verbose
+           head.loggable.byte1 = 1;
+           head.log_level.byte1 = 2; // verbose
+           head.address_cap.byte1 = cglobals.objectadr;
+           cout << "address cap " << head.address_cap.byte1 << endl;
         
            head.log_file = "/usr/share/scorpion/lib/compiler.log";
-           head.target_dev_vers.byte1  = 77;
-           head.minimum_dev_vers.byte1 = 7;
+           head.target.byte1  = 10000000;
+           head.base_target.byte1 = 8;
         
-           head.application_id = "com.scorpion.microsystems";
+           head.app_id = "com.scorpion.microsystems";
            head.permissions = new string[2];
            head.permissions[0] = "scorpion.permission.READ_INTERNAL_STORAGE";
            head.permissions[1] = "scorpion.permission.WRITE_INTERNAL_STORAGE";
@@ -3077,7 +3095,7 @@ int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &__out_buf__ )
            
            head.filesize.byte1 = cres.size_t.byte1;
            head.method_size.byte1 = cglobals.method_t;
-           objto_xso(head, __new_buf__);
+           objto_eso(head, __new_buf__);
            
            Zlib zlib;
            zlib.Compress_Buffer2Buffer(__out_buf__.str(), __new_buf__, ZLIB_LAST_SEGMENT);

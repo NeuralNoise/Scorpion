@@ -16,10 +16,19 @@ public class Starter
              
              .label @foo
                inc i
-               ile go, i,limit
-               jit foo, go
+               ile go, i,limit  
+              // jit foo, go
+              if go
+                cout 'go!!\n'
+              end
                
              cout ('\{35}Hello, World!\{0}\n' << 'i = ' << i << '\n')
+             
+             iconst @i #66
+             cout ('i = ' << i << ' but i is ')
+             delete i
+             cout (<< i << '\n')
+             
           ");
        return 0;
    }
