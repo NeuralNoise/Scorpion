@@ -332,7 +332,7 @@ static void PrintCode(const Proto* f)
     printf("\t; %s",UPVALNAME(b));
     break;
    case OP_GETTABUP:
-    printf("\t; %s",UPVALNAME(b));-
+    printf("\t; %s",UPVALNAME(b));
     if (ISK(c)) { printf(" "); PrintConstant(f,INDEXK(c)); }
     break;
    case OP_SETTABUP:

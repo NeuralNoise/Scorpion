@@ -36,7 +36,7 @@
 /**
  * Command line ivocation of the Scorpion virtual machine
 */
-#include <iostream>
+#include <iosfwd>
 #include <stdlib.h>
 #include "sio.h"
 #include "eso.h"
@@ -183,7 +183,7 @@ int main(int argc, const char** argv)
     scorpion_state* state = NULL;
     Eso reader;
     int result = 0, N=0;
-    sstring *ScorpionOptions;
+    sstring *ScorpionOptions = NULL;
     
     stringstream ss;
     

@@ -4,7 +4,24 @@
 *
 */
 package org.scorpion.lang;
+
+
+class Starter
+{
+   def main()
+   {
+     asm("
+       cout 'Hello, World!'
+     ");
+   }
    
+   public static def __init__(string[] args)
+   {
+      return 0;
+   }
+}
+
+/*
 public class Starter
 {
    public static def __init__(string[] args)
@@ -34,3 +51,4 @@ public class Starter
    }
 }
 
+*/

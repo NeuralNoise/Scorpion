@@ -16,11 +16,6 @@ extern int vm_assert, vm_debug, vm_list,
 unsigned int prototype_limit=((84*1024)+(8*156));         
 extern void std_err_(string n);
 
-void list_handler(std::string what)
-{
-  std_err_( what );
-}
-
 int emplode(scorpion_state* s_state, int N)
 {
     if(s_state == NULL || N==0)
@@ -28,8 +23,8 @@ int emplode(scorpion_state* s_state, int N)
       
     if(N==0)
     {
-        if(s_state->i_heap.size() != 0)
-          s_state->i_heap.clear();
+        if(s_state->iheap_t != 0)
+          free( s_state->i_heap );
         
         if(s_state->state != 0)
         {
@@ -50,12 +45,13 @@ int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader,
    log.service_setup( vm_log, false, "" );
    
    /* Setup Scorpion state */
-   s_state = (scorpion_state*)malloc(1);
+   s_state = (scorpion_state*)malloc(1*sizeof(scorpion_state));
    if(s_state == NULL)
      return 1;
    
+   s_state->args_t = argc;
+   s_state->p_args = ScorpionOptions; // These will be handled later
    reader->read( ScorpionOptions[0].str().c_str(), io );
-   s_state->permission_list._init_();
    
    if(vm_list)
    {
@@ -74,7 +70,16 @@ int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader,
    }
    
    log.LOGI("Setting up application permissions.");
-   for(unsigned int i = 0; i < reader->header.permissions.size(); i++){
+   int psize=0,iter=0;
+   for(unsigned int x = 0; x < reader->header.permissions.size(); x++){
+       if(reader->header.permissions.at(x) == ';')
+        psize++;
+   }
+   s_state->permission_list = (sstring*)malloc( psize*sizeof(sstring) );
+   if(s_state->permission_list == NULL) return 1;
+   s_state->permission_t = psize;
+   
+   for(int i = 0; i < psize; i++){
        stringstream ss;
        for(unsigned int xx = i; xx < reader->header.permissions.size(); xx++){
            if(reader->header.permissions.at(xx) != ';')
@@ -83,11 +88,32 @@ int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader,
              break;
            i++;
        }
-       s_state->permission_list.add(ss.str()); // The Scorpion API will handle host machine's security
+       s_state->permission_list[iter++].str( ss.str() ); // The Scorpion API will handle host machine's security
    }
    
    log.LOGI("Setting up application log service.");
    usr_log.service_setup(reader->header.log_precedence, 
      true, reader->header.log_file.str());
+
+   log.LOGD("Setting up memory structures.");
+   
+   s_state->init();
+   if(s_state->alloc(reader->header.address_cap+1, 0xffff, reader->header.method_size) != 0)
+   {
+       log.LOGV("Failed to allocate memory for the Scorpion "
+                "virtual machine, try optimizing your application.");
+       return 1;
+   }
+   
+   log.LOGD("Memory allocation was successful.");
+   log.LOGI("Pre-processing eso image.");
+   if(reader->process( s_state ) != 0)
+   {
+       log.LOGV("failed to pre-process eso image.");
+       return 1;
+   }
+   
+   log.LOGV("Eso image was processed successfully.");
+   log.LOGD("Scorpion virtual machine was created successfully.");
    return ( 0 );
 }

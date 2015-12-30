@@ -2671,8 +2671,8 @@ void parse_cmplr_items(stringstream &out_buf)
                 out_buf << (char) cplr_method << OP_MTHD << (char) 0 << ((m.isnative) ? "~" : "") << m.name << "&" << m.parentclass << "&" << m.package << (char) 0;
                 out_buf << m.eadr.byte1 << (char) 0;
                 
-               //cout << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0 << " `";
-               //cout << m.eadr.byte1 << (char) 0 << endl;
+               cout << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0 << " `";
+               cout << m.eadr.byte1 << (char) 0 << endl;
          }
          else if(ins == OP_NODE) cres.size_t.byte1--;
          else if(ins == OP_COUT || ins == OP_STRCONST){

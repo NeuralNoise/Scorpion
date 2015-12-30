@@ -14,19 +14,20 @@
 #include <sstream>
 #include "stypes.h"
 #include "sio.h"
+#include "sstate.h"
 #include <string.h>
 
 struct Header
 {
-    sstring      magic;
+     sstring     magic;
     uint16_t     minor_version[2];
     uint16_t     major_version[2];
-    int64_t      target_plat_vers;
-    int64_t      minimum_plat_vers;
+     int64_t     target_plat_vers;
+     int64_t     minimum_plat_vers;
      sstring     version_number;
         bool     debug;
         bool     logging;
-     int8_t      log_precedence;
+      int8_t     log_precedence;
      sstring     log_file;
      sstring     application_id;
      sstring     permissions;
@@ -66,8 +67,9 @@ class Eso
     public:
       Header header;
       std::string image;
-      uint64_t n;
+      uint64_t n, p;
       int read(const char* file, BIO* io);
+      int process(scorpion_state* v_state);
       string header_info();
 };
 

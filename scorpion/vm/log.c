@@ -9,6 +9,7 @@
 
 #include <string>
 #include <sstream>
+#include <iosfwd>
 #include <sys/time.h>
 #include "log.h"
 
@@ -53,7 +54,6 @@ using namespace std;
 
      buff_leak( gstate.io );
      buffS_fill( stackmsg, gstate.io );
-     cout << "\nlogging " << buf_data( gstate.io ).str();
      buffS_write( file, gstate.io );
  }
  

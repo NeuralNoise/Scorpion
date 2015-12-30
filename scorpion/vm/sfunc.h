@@ -5,13 +5,13 @@
  #include <string>
  #include <sstream>
  #include <stdint.h>
- #include "arraylist.h"
+ #include "stypes.h"
  
  using namespace std;
  
  struct func
  {
-     std::string name, file, _class,
+     sstring name, file, _class,
                  package;
      uint64_t line, goto_, ret;
      bool native_func;
@@ -20,43 +20,66 @@
  class function_tracker
  {
      public:
+        void init()
+        {
+            function_list = new func[20];
+            n=0;
+        }
+        void push_back()
+        {
+            n = 19;
+            for(int i = 0; i < 19; i++)
+            {
+                function_list[i] = function_list[i+1];
+            }
+        }
+        void add_func(func f)
+        {
+            if(n >=19)
+            {
+                push_back();
+                function_list[19] = f;
+            }
+            else
+                function_list[n++] = f;
+        }
         void add_func(func _func, uint64_t call_line, bool main = false)
         {
             if(main)
             {
                 stringstream ss;
-                ss << _func.name << "<init>";
-                _func.name = ss.str();
+                ss << _func.name.str() << "<init>";
+                _func.name.str(ss.str());
             }
             
-            if(function_list.size() > 20)
-              function_list.remove(0); // remove first function
-            function_list.add(_func);
+            _func.line = call_line;
+            add_func( _func );
         }
         
         string get_func_trace()
         {
             stringstream ss;
             ss << "  Traceback (most recent call last):\n";
-            for(uint64_t i=0; i < function_list.size(); i++)
+            for(int i=0; i < n; i++)
             {
-                ss << "    at " << function_list.valueAt(i).package 
-                    << "." << function_list.valueAt(i)._class << "." 
-                      << function_list.valueAt(i).name << "(";
+                ss << "    at " << function_list[i].package.str() 
+                    << "." << function_list[i]._class.str() << "." 
+                      << function_list[i].name.str() << "(";
                       
-                if(function_list.valueAt(i).native_func)
+                if(function_list[i].native_func)
                   ss << "Native Function)\n";
                 else
                 {
-                  ss << function_list.valueAt(i).file << ":"
-                      << function_list.valueAt(i).line << ")\n";
+                  ss << function_list[i].file.str() << ":"
+                      << function_list[i].line << ")\n";
                 }
             }
             return ss.str();
         }
         
      private:
-       ListAdapter<func> function_list;
+       func* function_list;
+       int n;
  };
  
 

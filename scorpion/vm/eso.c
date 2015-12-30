@@ -1,6 +1,6 @@
 /**
 * Copyright (C) 2015 The Scorpion Programming Language
-* Braxton Nullally, see full copyright licence in main.c
+* Braxton Nunnally, see full copyright licence in main.c
 * 
 * Standard Routines for processing a Scorpion
 * image.
@@ -9,16 +9,120 @@
 #include "eso.h"
 #include "binary.h"
 #include "zlib.h"
-#include <iostream>
+#include "log.h"
+#include "sopcodes.h"
+#include <iosfwd>
 #include <iomanip>
 
 extern void std_err_(string n);
 extern int revision;
 
-int readc(std::string &image, uint64_t *ndx)
+unsigned int eso_buf_limit = (64*1024)*(8*156);
+/* Compiler flags */
+#define flag_method 0x7f 
+#define flag_ins  0x5a
+#define flag_str_ins 0x3b
+
+/**
+ * This array holds the size for each
+ * Scorpion opcode, this is very useful
+ * for quick opcode processing
+ */
+int op_t[] = {
+  0, /* OP_NOP */
+  1, /* OP_PUSH */
+  1, /* OP_POP */
+  1, /* OP_JMP */
+  1, /* OP_MTHD */
+  1, /* OP_RETURN */
+  0, /* OP_END */
+  1, /* OP_CALL */
+  3, /* OP_ISEQ */
+  3, /* OP_ISLT */
+  3, /* OP_ISLE */
+  3, /* OP_ISGT */
+  3, /* OP_ISGE */
+  2, /* OP_ICONST */
+  2, /* OP_SCONST */
+  2, /*OP_DCONST */
+  2, /*OP_FCONST */
+  2, /*OP_CCONST */
+  2, /*OP_BCONST */
+ -1, /*OP_STRCONST */  // this must be speciall processed
+  3, /*OP_ADD */
+  3, /*OP_SUB */
+  3, /*OP_MULT */
+  3, /*OP_DIV */
+  3, /*OP_MOD */
+  2, /*OP_LSHFT */
+  2, /*OP_RSHFT */
+  1, /*OP_CIN */
+ -1, /*OP_COUT */  // this must be speciall processed
+  0, /*OP_HLT */
+  2, /*OP_JIT */
+  2, /*OP_JIF */
+  1, /*OP_LBL */
+  0, /*OP_NO */
+  0, /*OP_ENDNO */
+  1, /*OP_IF */
+  3, /*OP_OR */
+  1, /*OP_INC */
+  1, /*OP_DEC */
+  3, /*OP_AND */
+  2, /*OP_THROW */
+  3, /*OP_AT */
+  2, /*OP_STR_APND */
+  1, /*OP_KILL */
+  1, /*OP_DELETE */
+  3, /*OP_ALOAD */
+  3, /*OP_ASTORE */
+  2, /*OP_ASSN */
+  3, /*OP_IACONST */
+  3, /*OP_STR_ACONST */
+  3, /*OP_CAST */
+  3, /*OP_BYTE_CONST */
+  3, /*OP_LCONST */
+  3, /*OP_SACONST */
+  3, /*OP_BYTE_ACONST */
+  3, /*OP_FACONST */
+  3, /*OP_DACONST */
+  3, /*OP_CACONST */
+  3, /*OP_LACONST */
+  3, /*OP_BACONST */
+  1, /*OP_NODE */
+  1, /*OP_NEG */
+};
+
+bool op_const( int op )
+{
+    return (op == OP_SCONST || op == OP_BCONST || op == OP_CCONST
+            || op == OP_ICONST || op == OP_DCONST || op == OP_FCONST
+            || op == OP_BYTE_CONST || op == OP_LCONST);
+}
+
+bool op_aconst( int op )
+{
+    return (op == OP_DACONST || op == OP_IACONST || op == OP_FACONST 
+            || op == OP_CACONST || op == OP_BACONST || op == OP_BYTE_ACONST 
+            || op == OP_SACONST || op == OP_LACONST);
+}
+
+bool op_compare( int op )
+{
+    return (op == OP_ISEQ || op == OP_ISLT || op == OP_ISLE
+            || op == OP_ISGT || op == OP_ISGE || op == OP_OR 
+            || op == OP_AND);
+}
+    
+int readc(std::string &image, uint64_t *ndx, bool safe_mode = false)
 {
     if((*ndx) >= image.size())
-      std_err_("unexpected end of file in eso image.");
+    {
+        if(!safe_mode)
+          std_err_("unexpected end of file in eso image.");
+        else
+          return 356;
+    }
    //   std::cout << " read byte " << (int)image.at( (*ndx) ) << endl;
     return (int)image.at( (*ndx)++ );
 }
@@ -75,6 +179,222 @@ string _image_section( string &image, uint64_t *ndx )
     return ss.str();
 }
 
+void add_byte(double byte, scorpion_state* v_state, uint64_t* p)
+{
+    if((*p) > v_state->iheap_t)
+    {
+        log.LOGV( "Image size bigger than specified." );
+        std_err_( "Eso preprocessing failure." );
+    }
+    
+    v_state->i_heap[ (*p)++ ] = byte;
+}
+
+void create_method(scorpion_state* v_state, std::string method_info, slong addr, slong p)
+{
+    stringstream m_name, class_name, 
+                package, file_name;
+     int index = 0;
+     bool native = false;
+     if(method_info.at(0) == '~'){
+       index = 1;
+       native = true;
+     }
+
+     for(unsigned int i2 = index; i2 < method_info.size(); i2++){
+        if(method_info.at(i2) == '&'){
+            index++;
+            break;
+        }
+        else {
+          m_name << "" << method_info.at(i2);
+        }
+        index++;
+     }
+     
+     for(unsigned int i2 = index; i2 < method_info.size(); i2++){
+        if(method_info.at(i2) == '&'){
+            index++;
+            break;
+        }
+        else
+          class_name << "" << method_info.at(i2);
+        index++;
+     }
+    
+     for(unsigned int i2 = index; i2 < method_info.size(); i2++){
+        if(method_info.at(i2) == '&'){
+            index++;
+            break;
+        }
+        else
+          package << "" << method_info.at(i2);
+        index++;
+     }
+    
+     for(unsigned int i2 = index; i2 < method_info.size(); i2++)
+          file_name << "" << method_info.at(i2);
+     
+     func m;
+     m.name.str(m_name.str());  
+     m._class.str(class_name.str());
+     m.package.str(package.str());
+     m.native_func = native;
+     m.file.str(" ");
+     m.goto_ = p;
+     
+     v_state->static_methods[addr] = m;
+}
+     
+
+int Eso::process(scorpion_state* v_state)
+{
+    if(header.file_size >= eso_buf_limit)
+    {
+        stringstream ss;
+        ss << "Image size too large. Note: size = " << header.file_size 
+           << " >= max size (" << eso_buf_limit << ").";
+        log.LOGV( ss.str() );
+        return 1;
+    }
+    n=0;
+    p=0;
+    v_state->i_heap = (double*)malloc(header.file_size*sizeof(double));
+    if(v_state->i_heap == NULL)
+    {
+        log.LOGV("Could not allocate resources for eso image.");
+        return 1;
+    }
+    v_state->iheap_t = header.file_size;
+    
+    slong byte = readc( image, &n, true );
+    for( ;; )
+    {
+        switch( byte )
+        {
+            case 0: { byte = readc( image, &n, true ); }
+            case flag_method: {
+                 byte=atof(readstr( image, &n, false ).c_str());
+                 if(byte != OP_MTHD)
+                   return 1;
+                   
+                 string info = readstr( image, &n, false );
+                 slong arg1 = atol(readstr( image, &n, false ).c_str());
+                 
+                 add_byte( byte, v_state, &p );
+                 add_byte( arg1, v_state, &p );
+                 
+                 if((unsigned int) arg1 >= v_state->method_t)
+                 {
+                     log.LOGV("There are more methods than specified.");
+                     return 1;
+                 }
+                 
+                 create_method(v_state, info, arg1, p);
+                 byte = readc( image, &n, true );
+                 continue; 
+            }
+            case flag_ins: {
+                 byte=atol(readstr( image, &n, false ).c_str());
+                 if(!(byte > 0) && !(byte <= sMaxOpcodeLimit))
+                   return 1;
+                 
+                 if(op_t[ byte ] == 0)
+                 {
+                    add_byte( byte, v_state, &p );
+                    byte = readc( image, &n, true );
+                    continue; 
+                 }
+                 else if(op_t[ byte ] == 1)
+                 {
+                    slong arg1 = atol(readstr( image, &n, false ).c_str());
+                    add_byte( byte, v_state, &p );
+                    add_byte( arg1, v_state, &p );
+                    
+                    if(byte == OP_LBL)
+                    {
+                        create_object(primitive_long, &v_state->heap[ arg1 ]);
+                        sSet(&v_state->heap[ arg1 ], p);
+                    }
+                    byte = readc( image, &n, true );
+                    continue; 
+                 }
+                 else if(op_t[ byte ] == 2)
+                 {
+                    if(op_const( byte ))
+                       add_byte( OP_CONST, v_state, &p );
+                    else if(op_aconst( byte ))
+                       add_byte( OP_ACONST, v_state, &p );
+                      
+                    add_byte( byte, v_state, &p );
+                    add_byte( atof(readstr( image, &n, false ).c_str()), v_state, &p );
+                    add_byte( atof(readstr( image, &n, false ).c_str()), v_state, &p );
+                    byte = readc( image, &n, true );
+                    continue; 
+                 }
+                 else if(op_t[ byte ] == 3)
+                 {
+                    if(op_compare( byte ))
+                       add_byte( OP_CMP, v_state, &p );
+                      
+                    add_byte( byte, v_state, &p );
+                    add_byte( atof(readstr( image, &n, false ).c_str()), v_state, &p );
+                    add_byte( atof(readstr( image, &n, false ).c_str()), v_state, &p );
+                    add_byte( atof(readstr( image, &n, false ).c_str()), v_state, &p );
+                    byte = readc( image, &n, true );
+                    continue; 
+                 }
+                 else
+                   return 1;
+            }
+            case flag_str_ins: {
+                 byte=atol(readstr( image, &n, false ).c_str());
+                 if(byte == OP_COUT){
+                     string msg = readstr( image, &n, false );
+                     add_byte( byte, v_state, &p );
+                     add_byte( msg.size(), v_state, &p );
+                     
+                     for(unsigned int i = 0; i < msg.size(); i++)
+                         add_byte( (int) msg.at(i), v_state, &p );
+                         
+                     byte = readc( image, &n, true);
+                     continue;
+                 }
+                 else if(byte == OP_STRCONST){
+                     add_byte( byte, v_state, &p );
+                     add_byte( atol(readstr( image, &n, false ).c_str()), v_state, &p );
+                     string msg = readstr( image, &n, false );
+                     add_byte( msg.size(), v_state, &p );
+                     
+                     for(unsigned int i = 0; i < msg.size(); i++)
+                         add_byte( (int) msg.at(i), v_state, &p );
+                         
+                     byte = readc( image, &n, true);
+                     continue;
+                 }
+                 else
+                    return 1;
+            }
+            case 356: {
+                image = "";
+                if(p != header.file_size)
+                {
+                    log.LOGD("Eso image bytes processed does not match expected length.");
+                    return 1;
+                }
+                return 0;
+            }
+            default: {
+                stringstream ss;
+                ss << "Invalid flag found in eso image (" << byte << ")";
+                log.LOGV( ss.str() );
+                return 1;
+            }
+        }
+    }
+    return ( 0 );
+}
+      
 int Eso::read(const char* file, BIO* io)
 {
     n=0;
@@ -208,12 +528,12 @@ int Eso::read(const char* file, BIO* io)
      
     zip.Decompress_Buffer2Buffer(_image_section( image, &n ), __img_buf__);
     if(zres.response == ZLIB_FAILURE){
-        cout << zres.reason.str();
+        printf("%s", zres.reason.str().c_str());
         zip.Cleanup();
         std_err_("error decompressing eso file, error is not recioverable.\nexiting with status code 1");
     }
     else if(zres._warnings_.str() != "")
-        cout << zres._warnings_.str();
+        printf("%s", zres._warnings_.str().c_str());
      
     image = no_nln(__img_buf__.str());
     __img_buf__.str("");
@@ -228,7 +548,7 @@ string Eso::header_info()
     ss << "magic e -- 0xd0 0xfe 0xe8 0x2b\n";
     ss << "Eso format (minor--major) version: 0x" << hex << (int) header.minor_version[0] 
        << " 0x" << (int) header.minor_version[1] << " -- 0x" << (int) header.major_version[0]
-       << " 0x" << (int) header.major_version[2] << dec << endl;
+       << " 0x" << (int) header.major_version[1] << dec << endl;
     ss << "app name: " << header.name.str() << endl;
     ss << "app id: " << header.application_id.str() << endl;
     ss << "target platform: " << header.target_plat_vers << endl;

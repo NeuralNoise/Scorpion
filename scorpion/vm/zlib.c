@@ -27,7 +27,7 @@
  #include "zinclude.h"
  #include <stdio.h>
  #include <string.h>
- #include <iostream>
+ #include <iosfwd>
  #include <sstream>
  #include <new>
 

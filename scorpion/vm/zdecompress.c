@@ -27,7 +27,7 @@
  #include "zdecompress.h"
  #include "zlib.h"
  #include <sstream>
- #include <iostream>
+ #include <iosfwd>
  using namespace std;
 
 

@@ -12,6 +12,9 @@
 
 #include "sstate.h"
 #include <sstream>
+#include <iostream>
+
+using namespace std;
  
 #define ENV_DEV
 //  #define ENV_RUNTIME

@@ -1,6 +1,6 @@
 /**
 * Copyright (C) 2015 The Scorpion Programming Language
-* Braxton Nullally, see full copyright licence in main.c
+* Braxton Nunnally, see full copyright licence in main.c
 * 
 * Standard IO Routines for scorpion
 * 

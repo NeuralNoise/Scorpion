@@ -10,7 +10,7 @@
 #include <sstream>
 #include <stdlib.h> 
 #include <string.h>
-#include <iostream>
+#include <iosfwd>
 #include "sio.h"
 
 using namespace std;
@@ -40,6 +40,7 @@ void buff_leak(BIO* b)
     b->size_t=0;
     b->p=0;
     free( b->buf );
+    b->buf = NULL;
 }
 
 /* Initalize a buffer */

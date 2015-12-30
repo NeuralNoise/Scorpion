@@ -11,7 +11,11 @@ S_VERSION="SCORPION_1_0"
 
 
 # We want our warnings to become errors
-C_FLAGS="-Wall -g -m32"
+#C_FLAGS="-W -Wall -ansi -pedantic -Wformat-nonliteral -Wcast-align
+# -Wpointer-arith -Wmissing-declarations -Winline -Wundef
+# -Wcast-qual -Wshadow -Wconversion -Wwrite-strings
+# -Wno-conversion -ffloat-store -g -m32 -Os -s"
+C_FLAGS="-W -Wall "
 
 # Compile first source tree
 SOURCE_TREE_1="*.c"

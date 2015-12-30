@@ -1,6 +1,6 @@
 /**
 * Copyright (C) 2015 The Scorpion Programming Language
-* Braxton Nullally, see full copyright licence in main.c
+* Braxton Nunnally, see full copyright licence in main.c
 * 
 * Standard structure for scorpion virtual machine
 * 
@@ -9,8 +9,11 @@
 #ifndef state_h
 #define state_h
 
+class Eso;
+struct scorpion_state;
+
 #include <stdint.h>
-#include "arraylist.h"
+#include <stdlib.h>
 #include "sfunc.h"
 #include "sio.h"
 #include "eso.h"
@@ -24,19 +27,54 @@
  */
 struct scorpion_state
 {
-    uint64_t pc, size_t, state;
+    uint64_t pc, size_t, state, iheap_t,permission_t,
+             *stack, stack_t, method_t, args_t;
     int64_t if_count, if_depth, 
             func_depth, sp;
     function_tracker func_tracker;
-    ListAdapter<double> i_heap;
-    ListAdapter<std::string> permission_list;
+    
+    double* i_heap;
+    sstring* permission_list, *p_args;
     
     SObject *heap;
+    SObject *node_map; /* i'll deal with this later */
     func* static_methods;
+    
+    void init() // zero out all values
+    {
+        pc=0;
+        size_t=0;
+        state=0;
+        iheap_t=0;
+        permission_t=0;
+        if_count=0;
+        if_depth=0;
+        func_depth=0;
+        sp=-1;
+        i_heap = NULL;
+        heap = NULL;
+        stack = NULL;
+        static_methods = NULL;
+    }
+    int alloc(int64_t base_addrs, int64_t _stack_t, int64_t _method_t)
+    {
+        heap = (SObject*)malloc(base_addrs*sizeof(SObject));
+        stack = (uint64_t*)malloc(_stack_t*sizeof(uint64_t));
+        static_methods = (func*)malloc(_method_t*sizeof(func));
+        
+        if(!heap || !stack || !static_methods)
+          return 1;
+          
+        size_t=base_addrs;
+        stack_t=_stack_t;
+        method_t=_method_t;
+        return 0;
+    }
 };
 
 int emplode(scorpion_state* s_state, int N);
-int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader, sstring* ScorpionOptions, int argc );
+int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader, 
+       sstring* ScorpionOptions, int argc );
 
 /**
  * This structure will hold everything we need 
@@ -47,7 +85,6 @@ int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader, s
  */
 struct scorpion_gstate
 {
-    uint64_t s_ptr;  // "state pointer" this will point to wich state we are running
     BIO* io;  // our standard io buffer
 };
 
