@@ -36,7 +36,7 @@ int op_t[] = {
   1, /* OP_MTHD */
   1, /* OP_RETURN */
   0, /* OP_END */
-  1, /* OP_CALL */
+  2, /* OP_CALL */
   3, /* OP_ISEQ */
   3, /* OP_ISLT */
   3, /* OP_ISLE */
@@ -74,6 +74,7 @@ int op_t[] = {
   2, /*OP_STR_APND */
   1, /*OP_KILL */
   1, /*OP_DELETE */
+-10, /* unused */
   3, /*OP_ALOAD */
   3, /*OP_ASTORE */
   2, /*OP_ASSN */
@@ -90,7 +91,7 @@ int op_t[] = {
   3, /*OP_LACONST */
   3, /*OP_BACONST */
   1, /*OP_NODE */
-  1, /*OP_NEG */
+  1 /*OP_NEG */
 };
 
 bool op_const( int op )
@@ -236,6 +237,11 @@ void create_method(scorpion_state* v_state, std::string method_info, slong addr,
           file_name << "" << method_info.at(i2);
      
      func m;
+     m.name.hash_start();
+     m._class.hash_start();
+     m.package.hash_start();
+     m.file.hash_start();
+     
      m.name.str(m_name.str());  
      m._class.str(class_name.str());
      m.package.str(package.str());
@@ -257,6 +263,7 @@ int Eso::process(scorpion_state* v_state)
         log.LOGV( ss.str() );
         return 1;
     }
+    
     n=0;
     p=0;
     v_state->i_heap = (double*)malloc(header.file_size*sizeof(double));
@@ -413,6 +420,13 @@ int Eso::read(const char* file, BIO* io)
         }
     }
     
+    header.magic.hash_start();
+    header.version_number.hash_start();
+    header.log_file.hash_start();
+    header.application_id.hash_start();
+    header.permissions.hash_start();
+    header.name.hash_start();
+    
     image = buf_data( io ).str();
     buff_leak( io ); // free io buffer
     stringstream magic_edian;
@@ -464,15 +478,15 @@ int Eso::read(const char* file, BIO* io)
                 continue;
             }
             case flag_debuggable: {
-                header.debug = readc( image, &n );
+                header.debug = (bool)atol(readstr( image, &n, false ).c_str());
                 continue;
             }
             case flag_loggable: {
-                header.logging = readc( image, &n );
+                header.logging = (bool)atol(readstr( image, &n, false ).c_str());
                 continue;
             }
             case flag_log_level: {
-                header.log_precedence = readc( image, &n );
+                header.log_precedence = atol(readstr( image, &n, false ).c_str());
                 continue;
             }
             case flag_log_file: {
@@ -554,10 +568,10 @@ string Eso::header_info()
     ss << "target platform: " << header.target_plat_vers << endl;
     ss << "base target platform: " << header.minimum_plat_vers << endl;
     ss << "build version: " << header.version_number.str() << endl;
-    ss << "log endabled: " << ((header.logging) ? "true" : "false") << endl;
+    ss << "log enabled: " << ((header.logging==1) ? "true" : "false") << endl;
     ss << "log file: " << header.log_file.str() << endl;
-    ss << "log level: " << header.log_precedence << endl;
-    ss << "debugging endabled: " << ((header.debug) ? "true" : "false") << endl;
+    ss << "log level: " << (int)header.log_precedence << endl;
+    ss << "debugging enabled: " << ((header.debug==1) ? "true" : "false") << endl;
     ss << "method size: " << header.method_size << endl;
     ss << "image size: " << header.file_size << " bytes" << endl;
     return ss.str();

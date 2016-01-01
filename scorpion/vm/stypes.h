@@ -26,16 +26,16 @@ typedef int16_t schar;
 
 enum // primitives
 {
-    primitive_string,
-    primitive_short,
-    primitive_byte,
-    primitive_int,
-    primitive_long,
-    primitive_float,
-    primitive_double,
-    primitive_boolean,
-    primitive_char,
-    primitive_bit
+    primitive_string=0,
+    primitive_short=1,
+    primitive_byte=2,
+    primitive_int=3,
+    primitive_long=4,
+    primitive_float=5,
+    primitive_double=6,
+    primitive_boolean=7,
+    primitive_char=8,
+    primitive_bit=9
 };
 
 enum // special types
@@ -76,9 +76,12 @@ struct scorpion_state;
 
 extern void create_object(int type, SObject* o, slong size_t = 1, bool array = false);
 extern double sValue(SObject* o, slong ndx = -1);
+extern string s_strValue(SObject* o, slong ndx = -1);
 extern void delete_object(SObject* o);
 extern void sSet(SObject* o, double v, slong ndx = -1);
-extern bool isnumber(SObject* o1, SObject* o2);
+extern void s_strSet(SObject* o, string v, slong ndx = -1);
+extern bool isnumber(SObject* o);
 extern bool isarray(SObject* o);
+extern bool isstring(SObject* o);
 
 #endif // stypes_h

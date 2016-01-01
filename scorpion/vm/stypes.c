@@ -16,16 +16,27 @@ void create_object(int type, SObject* o, slong size_t, bool array)
 {
     if(o->alloc) return;
     o->alloc = true;
-    o->size_t = size_t;
+    o->size_t = ((size_t<=0) ? 1 : size_t);
     o->array = array;
     o->name = NULL;
     o->elements = NULL;
     o->o = NULL;
     
-    o->o = (SType*)malloc(((size_t<=0) ? 1 : size_t)*sizeof(SType));
+    o->o = (SType*)malloc(o->size_t*sizeof(SType));
     if(o->o == NULL) return; // TODO: throw exception
     
     o->o->type = type;
+    if(type == primitive_string)
+    {
+        if(array)
+        {
+            slong iter=0;
+            while(iter < o->size_t)
+              o->o[iter++].s_str.hash_start();
+        }
+        else
+          o->o->s_str.hash_start();
+    }
 }
 
 void delete_object(SObject* o)
@@ -56,8 +67,8 @@ double sValue(SObject* o, slong ndx)
         }
         case primitive_boolean:
         {
-            if(o->array) return o->o[ndx].s_bool;
-            else return o->o->s_bool;
+            if(o->array) return (bool)o->o[ndx].s_bool;
+            else return (bool)o->o->s_bool;
         }
         case primitive_byte:
         {
@@ -112,8 +123,8 @@ void sSet(SObject* o, double v, slong ndx)
         }
         case primitive_boolean:
         {
-            if(o->array) o->o[ndx].s_bool = v;
-            else o->o->s_bool = v;
+            if(o->array) o->o[ndx].s_bool =(bool) v;
+            else o->o->s_bool =(bool) v;
             return;
         }
         case primitive_byte:
@@ -161,9 +172,32 @@ void sSet(SObject* o, double v, slong ndx)
     }
 }
 
+string s_strValue(SObject* o, slong ndx)
+{
+    if(!o->alloc) return "null";
+    if(o->array && (ndx <0 || ndx >= o->size_t)) return "null"; // TODO: throw exception
+    if(o->array) return o->o[ndx].s_str.str();
+    else return o->o->s_str.str();
+    
+    return "null";
+}
+
+void s_strSet(SObject* o, string v, slong ndx)
+{
+    if(!o->alloc) return;
+    if(o->array && (ndx <0 || ndx >= o->size_t)) return; // TODO: throw exception
+    if(o->array) o->o[ndx].s_str.str(v);
+    else o->o->s_str.str(v);
+}
+
 bool isnumber(SObject* o)
 {
     return (o->alloc && num_type(o->o->type));
+}
+
+bool isstring(SObject* o)
+{
+    return (o->alloc && (o->o->type == primitive_string));
 }
 
 bool isarray(SObject* o)

@@ -45,7 +45,7 @@
 #include "stypes.h"
 using namespace std;
 
-#define PROGNAME	"scorpion"		/* default program name */
+#define PROGNAME     "scorpion"  /* default program name */
 
 // Runtime builds
 #define VM_64BIT
@@ -99,7 +99,7 @@ void usage(string n, bool stderr_)
          "    -da -disableassertions\n"
          "                    disable assertions.\n"
          "    -sdb            enable the scorpion debug bridge.\n"
-         "    -?std           print non-standard options.\n"
+         "    -?std -??       print non-standardized options.\n"
          "See %s for more details.\n", product_website.c_str());
   }
   exit(EXIT_FAILURE);
@@ -122,6 +122,7 @@ sstring* getargs(int argc, const char** argv, int* N)
           
           do
           {
+            vm_argv[iter].hash_start();
             if(vm_argv[iter++].str(argv[i++])!=0)
                 std_err_("could not initalize Scorpion vm args!");
           }
@@ -150,24 +151,24 @@ sstring* getargs(int argc, const char** argv, int* N)
          vm_assert = 1;
       else if(contains("-sdb"))
          vm_debug = 1;
-      else if(contains("-?std")) 
+      else if(contains("-?std") || contains("-??")) 
          nstd_usage();
       else if(contains("-l"))
          vm_list = 1;
       else if(contains("-log=off")) 
-         vm_log = 1;
+         vm_log = ASSERT+1;
       else if(contains("-log=verbose")) 
-         vm_log = 2;
+         vm_log = VERBOSE;
       else if(contains("-log=debug")) 
-         vm_log = 3;
+         vm_log = DEBUG;
       else if(contains("-log=info")) 
-         vm_log = 4;
+         vm_log = INFO;
       else if(contains("-log=warn")) 
-         vm_log = 5;
+         vm_log = WARN;
       else if(contains("-log=error"))
-         vm_log = 6;
+         vm_log = ERROR;
       else if(contains("-log=assert"))
-         vm_log = 7;
+         vm_log = ASSERT;
       else {
           stringstream ss;
           ss << "Unrecognized command line option: " << argv[i];
@@ -188,7 +189,9 @@ int main(int argc, const char** argv)
     stringstream ss;
     
     io = (BIO*)malloc(1*sizeof(BIO));
-    if( io == NULL ) goto bail;
+    state = (scorpion_state*)malloc(1*sizeof(scorpion_state));
+    
+    if( io == NULL || state == NULL ) goto bail;
     if( argc == 1 )
         usage("no input files!", false);
     
@@ -207,7 +210,10 @@ int main(int argc, const char** argv)
     if((result = Scorpion_Init_create_state( io, state, &reader, ScorpionOptions, N )) != 0)
         std_err_("could not create the Scorpion vm.");
     
-    bail:
+    Scorpion_Init_start_state( state );
     
+    bail:
+      destroy_state( state, 1 );
+      log.LOGV("--- vm is down, process exiting.");
     return ( result );
 }

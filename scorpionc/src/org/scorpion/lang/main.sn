@@ -5,50 +5,21 @@
 */
 package org.scorpion.lang;
 
-
-class Starter
+class Starter 
 {
-   def main()
+   static def __init__(string[] args)
    {
      asm("
-       cout 'Hello, World!'
-     ");
-   }
-   
-   public static def __init__(string[] args)
-   {
-      return 0;
-   }
-}
-
-/*
-public class Starter
-{
-   public static def __init__(string[] args)
-   {
-        asm("
-             iconst @i #0
-             iconst @limit #1000000
-             bconst @go #0
-             
-             .label @foo
-               inc i
-               ile go, i,limit  
-              // jit foo, go
-              if go
-                cout 'go!!\n'
-              end
-               
-             cout ('\{35}Hello, World!\{0}\n' << 'i = ' << i << '\n')
-             
-             iconst @i #66
-             cout ('i = ' << i << ' but i is ')
-             delete i
-             cout (<< i << '\n')
-             
-          ");
-       return 0;
+	     bconst @jump #0
+         iconst @i #0
+		 iconst @size_t #10
+		 
+		 .label @l_start
+		   inc i
+		   cout ('i = ' << i << '\n')
+		   ilt jump, i,size_t
+		   jit l_start, jump
+	     ");
+     return 1;
    }
 }
-
-*/

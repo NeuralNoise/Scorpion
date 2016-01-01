@@ -8,6 +8,7 @@
 
 #include "sstate.h"
 #include "log.h"
+#include "vm.h"
 #include <stdlib.h>
 
 extern int vm_assert, vm_debug, vm_list,
@@ -15,26 +16,59 @@ extern int vm_assert, vm_debug, vm_list,
          
 unsigned int prototype_limit=((84*1024)+(8*156));         
 extern void std_err_(string n);
-
-int emplode(scorpion_state* s_state, int N)
+    
+int destroy_state(scorpion_state* s_state, int N)
 {
+    int status=0;
     if(s_state == NULL || N==0)
       return 1;
       
-    if(N==0)
+    if(N==1)
     {
-        if(s_state->iheap_t != 0)
-          free( s_state->i_heap );
+        if(s_state->permission_t != 0)
+          free( s_state->permission_list );
         
-        if(s_state->state != 0)
-        {
-          cout << "The Scorpion virtual machine is attempting to shutdown with abnormal state (" << s_state->state << ").";
-        } // TODO: add logging here
+        if(s_state->size_t != 0)
+          free( s_state->heap );
           
+        if(s_state->p_args != NULL) free( s_state->p_args );
+        if(s_state->stack != NULL) free( s_state->stack );
+        if(s_state->i_heap != NULL) free( s_state->i_heap );
+        if(s_state->static_methods != NULL) free( s_state->static_methods );
+          
+        if(s_state->state != state_normal)
+        {
+          stringstream ss;
+          ss << "The Scorpion virtual machine is attempting to shutdown with abnormal state (" << s_state->state << ").";
+          log.LOGV( ss.str() );
+          status = 1;
+        } 
+        
+        s_state->pc = 0;
+        s_state->size_t = 0;
+        s_state->permission_t = 0;
+        s_state->method_t = 0;
+        s_state->args_t = 0;
+        s_state->sp = 0;
+        s_state->if_count = 0;
+        s_state->if_depth = 0;
+        s_state->func_depth = 0;
+        s_state->state = 0;
+        s_state->stack_t = 0;
+        s_state->iheap_t = 0;
+        
         free( s_state );
     }
       
-    return ( 0 );
+    return ( status );
+}
+
+void Scorpion_Init_start_state(scorpion_state* s_state)
+{
+    s_state->func_tracker.add_func(s_state->static_methods[0], 0, true);
+    s_state->pc = s_state->static_methods[0].goto_;
+    
+    scorpion_vexecute( s_state );
 }
 
 int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader, 
@@ -44,11 +78,8 @@ int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader,
    log.log();
    log.service_setup( vm_log, false, "" );
    
-   /* Setup Scorpion state */
-   s_state = (scorpion_state*)malloc(1*sizeof(scorpion_state));
-   if(s_state == NULL)
-     return 1;
-   
+   s_state->init();
+   s_state->func_tracker.init();
    s_state->args_t = argc;
    s_state->p_args = ScorpionOptions; // These will be handled later
    reader->read( ScorpionOptions[0].str().c_str(), io );
@@ -88,16 +119,16 @@ int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader,
              break;
            i++;
        }
+       s_state->permission_list[iter].hash_start();
        s_state->permission_list[iter++].str( ss.str() ); // The Scorpion API will handle host machine's security
    }
    
    log.LOGI("Setting up application log service.");
+   if(!reader->header.logging) reader->header.log_precedence = ASSERT+1;
    usr_log.service_setup(reader->header.log_precedence, 
      true, reader->header.log_file.str());
 
    log.LOGD("Setting up memory structures.");
-   
-   s_state->init();
    if(s_state->alloc(reader->header.address_cap+1, 0xffff, reader->header.method_size) != 0)
    {
        log.LOGV("Failed to allocate memory for the Scorpion "

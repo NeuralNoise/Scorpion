@@ -451,7 +451,7 @@
            o.eadr.byte1 = cglobals.objectadr++;
            o.parentclass = parentclass;
            o.size_t.byte1 = 0;
-           cout << "create " << name << " scopelvl " << ((cglobals.infunction == 0) ? -1 : cglobals.scopelevel) << endl;
+        //   cout << "create " << name << " scopelvl " << ((cglobals.infunction == 0) ? -1 : cglobals.scopelevel) << endl;
            o.scopeLevel = ((cglobals.infunction == 0) ? -1 : cglobals.scopelevel); // TODO: Add scope level processing instead of local -1 if not local
            
            if(type == typedef_class)
@@ -2671,8 +2671,8 @@ void parse_cmplr_items(stringstream &out_buf)
                 out_buf << (char) cplr_method << OP_MTHD << (char) 0 << ((m.isnative) ? "~" : "") << m.name << "&" << m.parentclass << "&" << m.package << (char) 0;
                 out_buf << m.eadr.byte1 << (char) 0;
                 
-               cout << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0 << " `";
-               cout << m.eadr.byte1 << (char) 0 << endl;
+            //   cout << (char) cplr_method << OP_MTHD << (char) 0 << m.name << "&" << m.parentclass << "&" << m.package << (char) 0 << " `";
+            //   cout << m.eadr.byte1 << (char) 0 << endl;
          }
          else if(ins == OP_NODE) cres.size_t.byte1--;
          else if(ins == OP_COUT || ins == OP_STRCONST){
@@ -2713,7 +2713,7 @@ void parse_cmplr_items(stringstream &out_buf)
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
                 << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0;   
-             //   cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << endl;
+             //  cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << endl;
          }
          else if(ins == OP_ADD || ins == OP_ISEQ || ins == OP_ISLT || ins == OP_ISLE || ins == OP_ISGT 
                    || ins == OP_ISGE || ins == OP_SUB || ins == OP_MULT || ins == OP_DIV || ins == OP_MOD 
@@ -2723,6 +2723,9 @@ void parse_cmplr_items(stringstream &out_buf)
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
                 << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0 << cplrfreelist1.valueAt(0).sub_item.valueAt(2).item.byte1 << (char) 0;
+         
+                // cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 
+                //       << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(2).item.byte1 << endl;
          }
          else {
              cglobals.out << "Unknown instruction (" << ins << ").";
@@ -3015,9 +3018,11 @@ void objto_eso(EsoHeader header, stringstream &out_buf)
      out_buf << (char) version << __ostream_buf__.str() << null(1) << '\n';
      __ostream_buf__.str("");
      
+     cout <<" logging " << header.loggable.byte1 << endl;
+     
      out_buf << (char) debuggable << (long) header.debug.byte1 << null(1);
      out_buf << (char) loggable << (long) header.loggable.byte1 << null(1);
-     out_buf << (char) log_level << header.log_level.byte1 << null(1);
+     out_buf << (char) log_level << (long)header.log_level.byte1 << null(1);
      
      Binary::encode_str(header.log_file, __ostream_buf__);
      out_buf << (char) log_file << __ostream_buf__.str()  << null(1);
@@ -3077,7 +3082,7 @@ int Cmplr_Compile_Zip( Archive &zip_archive, stringstream &__out_buf__ )
            
            head.version = "0.1.0.0";
            head.debug.byte1 = 0;
-           head.loggable.byte1 = 1;
+           head.loggable.byte1 = 0;
            head.log_level.byte1 = 2; // verbose
            head.address_cap.byte1 = cglobals.objectadr;
            cout << "address cap " << head.address_cap.byte1 << endl;

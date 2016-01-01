@@ -38,7 +38,6 @@ class ListAdapter {
         bool _err() { return err; }
         void _init_()
         {
-		   if(init) return;
 		   init = false;	
            err = false;
            pmode = false;

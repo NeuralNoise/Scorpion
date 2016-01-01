@@ -84,7 +84,7 @@ int Compiler::compile(){
               cout << cres._warnings_.str();
               
         if(_ostream_buf__.str() != ""){
-            if(FileStream::out("/usr/share/scorpion/lib/compiler.eso",_ostream_buf__.str()) != 0)
+            if(FileStream::out("/usr/share/scorpion/lib/compiler",_ostream_buf__.str()) != 0)
             { cout << "scorpionc:  error: could not write to executable file.\n"; return COMPILR_FAILURE; }
               
         }

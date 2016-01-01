@@ -28,9 +28,9 @@ struct scorpion_state;
 struct scorpion_state
 {
     uint64_t pc, size_t, state, iheap_t,permission_t,
-             *stack, stack_t, method_t, args_t;
+             stack_t, method_t, args_t;
     int64_t if_count, if_depth, 
-            func_depth, sp;
+            func_depth, sp,*stack;
     function_tracker func_tracker;
     
     double* i_heap;
@@ -52,6 +52,7 @@ struct scorpion_state
         func_depth=0;
         sp=-1;
         i_heap = NULL;
+        p_args = NULL;
         heap = NULL;
         stack = NULL;
         static_methods = NULL;
@@ -59,10 +60,10 @@ struct scorpion_state
     int alloc(int64_t base_addrs, int64_t _stack_t, int64_t _method_t)
     {
         heap = (SObject*)malloc(base_addrs*sizeof(SObject));
-        stack = (uint64_t*)malloc(_stack_t*sizeof(uint64_t));
+        stack = (int64_t*)malloc(_stack_t*sizeof(uint64_t));
         static_methods = (func*)malloc(_method_t*sizeof(func));
         
-        if(!heap || !stack || !static_methods)
+        if(heap == NULL || stack == NULL || static_methods == NULL)
           return 1;
           
         size_t=base_addrs;
@@ -72,10 +73,17 @@ struct scorpion_state
     }
 };
 
-int emplode(scorpion_state* s_state, int N);
+enum // vm_states
+{
+   state_normal=0,
+   state_frozen=1,
+   state_passive_frozen=2
+};
+
+int destroy_state(scorpion_state* s_state, int N);
 int Scorpion_Init_create_state( BIO* io, scorpion_state* s_state, Eso *reader, 
        sstring* ScorpionOptions, int argc );
-
+void Scorpion_Init_start_state(scorpion_state* s_state);
 /**
  * This structure will hold everything we need 
  * for the entire vm. This represents a 

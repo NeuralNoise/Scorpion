@@ -1,3 +1,11 @@
+/**
+* Copyright (C) 2015 The Scorpion Programming Language
+* Braxton Nunnally, see full copyright licence in main.c
+* 
+* Standard Routines for tracking function calls
+* in the scorpion virtual machine
+* 
+*/
 
 #ifndef sfunc_h
 #define s_func_h
@@ -6,7 +14,7 @@
  #include <sstream>
  #include <stdint.h>
  #include "stypes.h"
- 
+ #include <iosfwd>
  using namespace std;
  
  struct func
