@@ -79,6 +79,7 @@ extern double sValue(SObject* o, slong ndx = -1);
 extern string s_strValue(SObject* o, slong ndx = -1);
 extern void delete_object(SObject* o);
 extern void sSet(SObject* o, double v, slong ndx = -1);
+extern int sAt(SObject* o, long ndx);
 extern void s_strSet(SObject* o, string v, slong ndx = -1);
 extern bool isnumber(SObject* o);
 extern bool isarray(SObject* o);

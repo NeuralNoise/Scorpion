@@ -127,6 +127,15 @@ void stack_push(scorpion_state* v_state)
    v_state->stack[++v_state->sp] = v_state->i_heap[v_state->pc++];
 }
 
+void setvalue(int op, slong ptr, scorpion_state* v_state, double v, double v2)
+{
+    if(op==OP_ADD) sSet(&v_state->heap[ptr], (v+v2));
+    else if(op==OP_SUB) sSet(&v_state->heap[ptr], (v-v2));
+    else if(op==OP_MULT) sSet(&v_state->heap[ptr], (v*v2));
+    else if(op==OP_DIV) sSet(&v_state->heap[ptr], (v/v2));
+    else if(op==OP_MOD) sSet(&v_state->heap[ptr], ((slong)v%(slong)v2));
+}
+
 int OPTYPE(int op)
 {
     if(op == OP_ICONST || op == OP_IACONST)
@@ -174,6 +183,14 @@ int OPTYPE(int op)
           if(sValue(&v_state->heap[ptr2]) == ((i==OP_JIT) ? 1 : 0)) \
              v_state->pc = sValue(&v_state->heap[ptr]); \
            goto exe_; \
+        }
+
+#define arith_op(op, v_state) \
+        {\
+          slong ptr = v_state->i_heap[v_state->pc++]; \
+          slong ptr2 = v_state->i_heap[v_state->pc++]; \
+          slong ptr3 = v_state->i_heap[v_state->pc++]; \
+          setvalue(op, ptr, v_state, sValue(&v_state->heap[ptr2]), sValue(&v_state->heap[ptr3]));\
         }
         
 bool op_compare(int op, scorpion_state* v_state)
@@ -540,12 +557,12 @@ void scorpion_vexecute(scorpion_state* v_state)
                  continue;
             }
             case OP_KILL: {
-                 long ptr = v_state->i_heap[v_state->pc++];
+                 slong ptr = v_state->i_heap[v_state->pc++];
                  //TODO: kill object
                  continue;
             }
             case OP_NEG: {
-                 long ptr = v_state->i_heap[v_state->pc++];
+                 slong ptr = v_state->i_heap[v_state->pc++];
                  sSet(&v_state->heap[ptr], !((bool)sValue(&v_state->heap[ptr])));
                  continue;
             }
@@ -568,6 +585,36 @@ void scorpion_vexecute(scorpion_state* v_state)
             }
             case OP_DELETE: {
                  delete_object(&v_state->heap[(slong)v_state->i_heap[v_state->pc++]]);
+                 continue;
+            }
+            case OP_STR_X2I: {
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
+                 sSet(&v_state->heap[ptr], atol(s_strValue(&v_state->heap[ptr2]).c_str()));
+                 continue;
+            }
+            case OP_STR_X2F: {
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
+                 sSet(&v_state->heap[ptr], atof(s_strValue(&v_state->heap[ptr2]).c_str()));
+                 continue;
+            }
+            case OP_ADD: {
+                 arith_op(i, v_state);
+                 continue;
+            }
+            case OP_SUB: {
+                 arith_op(i, v_state);
+                 continue;
+            }
+            case OP_MULT: {
+                 arith_op(i, v_state);
+                 continue;
+            }
+            case OP_DIV: {
+                 arith_op(i, v_state);
+                 continue;
+            }
+            case OP_MOD: {
+                 arith_op(i, v_state);
                  continue;
             }
             case OP_CONST: {
@@ -606,27 +653,27 @@ void scorpion_vexecute(scorpion_state* v_state)
                  do_jump(i,v_state);
             }
             case OP_LSHFT: {
-                 long ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
                  sSet(&v_state->heap[ptr], ((slong)sValue(&v_state->heap[ptr])<<(slong)sValue(&v_state->heap[ptr2])));
                  continue;
             }
             case OP_RSHFT: {
-                 long ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
                  sSet(&v_state->heap[ptr], ((slong)sValue(&v_state->heap[ptr])>>(slong)sValue(&v_state->heap[ptr2])));
                  continue;
             }
             case OP_CMP: {
-                 long op = v_state->i_heap[v_state->pc++], ptr = v_state->i_heap[v_state->pc++];
+                 slong op = v_state->i_heap[v_state->pc++], ptr = v_state->i_heap[v_state->pc++];
                  sSet(&v_state->heap[ptr], op_compare(op,v_state));
                  continue;
             }
             case OP_THROW: {
-                 long ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
                  runtime_err(v_state, s_strValue(&v_state->heap[ptr]), s_strValue(&v_state->heap[ptr2]));
                  continue;
             }
             case OP_CIN: {
-                 long ptr = v_state->i_heap[v_state->pc++];
+                 slong ptr = v_state->i_heap[v_state->pc++];
                  sSet(&v_state->heap[ptr], _getch_());
                  continue;
             }
@@ -635,8 +682,37 @@ void scorpion_vexecute(scorpion_state* v_state)
                  continue;
             }
             case OP_ASSN: {
-                 long ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++];
                  scorpion_Vassign(ptr,ptr2,v_state);
+                 continue;
+            }
+            case OP_AT: {
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++],
+                       ptr3 = v_state->i_heap[v_state->pc++];
+                 sSet(&v_state->heap[ptr], sAt(&v_state->heap[ptr2], sValue(&v_state->heap[ptr3])));
+                 continue;
+            }
+            case OP_ALOAD: {
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++],
+                       ptr3 = v_state->i_heap[v_state->pc++];
+                 if(isnumber(&v_state->heap[ptr]))
+                   sSet(&v_state->heap[ptr], sValue(&v_state->heap[ptr2], 
+                      sValue(&v_state->heap[ptr3])));
+                 else if(isstring(&v_state->heap[ptr]))
+                   s_strSet(&v_state->heap[ptr], s_strValue(&v_state->heap[ptr2], 
+                      sValue(&v_state->heap[ptr3])));
+                 continue;
+            }
+            case OP_ASTORE: {
+                 slong ptr = v_state->i_heap[v_state->pc++], ptr2 = v_state->i_heap[v_state->pc++],
+                       ptr3 = v_state->i_heap[v_state->pc++];
+                 if(isnumber(&v_state->heap[ptr2]))
+                   sSet(&v_state->heap[ptr], sValue(&v_state->heap[ptr2]), 
+                      sValue(&v_state->heap[ptr3]));
+                 else if(isstring(&v_state->heap[ptr2]))
+                   s_strSet(&v_state->heap[ptr], s_strValue(&v_state->heap[ptr2]),
+                      sValue(&v_state->heap[ptr3]));
+                 continue;
             }
             default: {
                 segfault(v_state);

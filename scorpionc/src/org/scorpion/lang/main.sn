@@ -7,18 +7,61 @@ package org.scorpion.lang;
 
 class Starter 
 {
+
+   def get_num()
+   {
+      asm("
+	         str_const @number ''
+			 cconst @c #0
+			 cconst @endl '\n'
+			 bconst @read_char #1
+			 iconst @num #0
+			 
+		     .label @get_ch
+			   cin c
+			   cout (<< c)
+			   ieq read_char, c,endl
+			   neg read_char
+			   if read_char
+                  str_apnd number, c
+			   end
+			   jit get_ch, read_char
+			  
+			  str_x2i num,number
+			  push num
+			  ret get_num[]
+	      ");
+   }
+
    static def __init__(string[] args)
    {
      asm("
-	     bconst @jump #0
-         iconst @i #0
-		 iconst @size_t #10
-		 
-		 .label @l_start
-		   inc i
-		   cout ('i = ' << i << '\n')
-		   ilt jump, i,size_t
-		   jit l_start, jump
+	      iconst @length #0
+		  iconst @width #0
+		  iconst @area #0
+		  iconst @perimeter #0
+		  iconst @holder #0
+			 cconst @endl '\n'
+		  str_const @unit 'ft'
+		  
+	      cout '------------- Area Of a square -------------\n'
+		  cout 'Please type the length of your square: '
+		  call get_num[]
+		  pop length
+		  
+		  cout 'Please type the width of your square: '
+		  call get_num[]
+		  pop width
+		  
+		  cout ('square size ' << length << 'x' << width << ' ' << unit << '\n')
+		  mult area, length,width
+		  add holder, length,length
+		  add perimeter, width,width
+		  add perimeter, perimeter,perimeter
+		  
+		  cout ('area: ' << area << unit << endl)
+		  cout ('perimeter: ' << perimeter << unit << endl)
+		  cout ('square footage: ' << area << unit << '^2' << endl)
 	     ");
      return 1;
    }

@@ -11,15 +11,15 @@
 #define opcode_h
 
 // The max numeric value of a VM opcode
-#define sMaxOpcodeLimit 65
+#define sMaxOpcodeLimit 67
 #define sMaxOpLen 62 // for op_t[]
 
 /*
 * vm instruction flags
 */
-#define OP_CONST 63
-#define OP_ACONST 64
-#define OP_CMP 65
+#define OP_CONST 65
+#define OP_ACONST 66
+#define OP_CMP 67
 
   enum Opcodes {
       OP_NOP = 0, 
@@ -83,7 +83,9 @@
       OP_LACONST = 59,
       OP_BACONST = 60,
       OP_NODE = 61,
-      OP_NEG = 62
+      OP_NEG = 62,
+      OP_STR_X2I = 63,
+      OP_STR_X2F = 64
   };
   extern int op_t[];
   // TODO: add sizeOf & instanceOf instructions

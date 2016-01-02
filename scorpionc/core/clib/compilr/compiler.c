@@ -1892,7 +1892,8 @@
 				  }
 			   }
                else if(temp_t.value == "jit" || temp_t.value == "jif" || temp_t.value == "lsft" || temp_t.value == "rsft"
-                      || temp_t.value == "str_apnd" || temp_t.value == "throw" || temp_t.value == "assn")
+                      || temp_t.value == "str_apnd" || temp_t.value == "throw" || temp_t.value == "assn"
+                      || temp_t.value == "str_x2i" || temp_t.value == "str_x2f")
                {
 				   string op = temp_t.value;
 				   long obj1,obj2;
@@ -2586,6 +2587,8 @@
             if(op == "s_aconst") return OP_SACONST;
             if(op == "node") return OP_NODE;
             if(op == "neg") return OP_NEG;
+            if(op == "str_x2i") return OP_STR_X2I;
+            if(op == "str_x2f") return OP_STR_X2F;
             return -33;
        }
       
@@ -2708,7 +2711,8 @@ void parse_cmplr_items(stringstream &out_buf)
                    || ins == OP_DCONST || ins == OP_FCONST || ins == OP_THROW || ins == OP_LCONST 
                    || ins == OP_BYTE_CONST || ins == OP_STR_APND || ins == OP_ASSN || ins == OP_BYTE_ACONST
                    || ins == OP_FACONST || ins == OP_DACONST || ins == OP_IACONST || ins == OP_LACONST
-                   || ins == OP_SACONST || ins == OP_BACONST || ins == OP_STR_ACONST || ins == OP_CACONST)
+                   || ins == OP_SACONST || ins == OP_BACONST || ins == OP_STR_ACONST || ins == OP_CACONST
+                   || ins == OP_STR_X2F || ins == OP_STR_X2I)
          {
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0

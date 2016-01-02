@@ -80,7 +80,7 @@ void Binary::decode_str( const std::string &text, stringstream &__outbuf__) {
         unsigned long i = 0;
 
         for( size_t len = text.size(); len--; ) {
-            unsigned int d = dectab[text.at(i++)];
+            unsigned int d = dectab[(int)text.at(i++)];
             if (d == 91)
                 continue;   /* ignore non-alphabet chars */
             if (val == -1)

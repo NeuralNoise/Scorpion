@@ -172,6 +172,14 @@ void sSet(SObject* o, double v, slong ndx)
     }
 }
 
+int sAt(SObject* o, long ndx)
+{
+    if(!o->alloc || o->array) return -1;
+    if(!(o->o->type == primitive_string) 
+       || ((unsigned int)ndx >= o->o->s_str.size())) return -1; // Throw Exception
+    return o->o->s_str.at( ndx );
+}
+
 string s_strValue(SObject* o, slong ndx)
 {
     if(!o->alloc) return "null";

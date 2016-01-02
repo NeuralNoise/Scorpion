@@ -78,20 +78,22 @@ int op_t[] = {
   3, /*OP_ALOAD */
   3, /*OP_ASTORE */
   2, /*OP_ASSN */
-  3, /*OP_IACONST */
-  3, /*OP_STR_ACONST */
+  2, /*OP_IACONST */
+  2, /*OP_STR_ACONST */
   3, /*OP_CAST */
   3, /*OP_BYTE_CONST */
   3, /*OP_LCONST */
-  3, /*OP_SACONST */
-  3, /*OP_BYTE_ACONST */
-  3, /*OP_FACONST */
-  3, /*OP_DACONST */
-  3, /*OP_CACONST */
-  3, /*OP_LACONST */
-  3, /*OP_BACONST */
+  2, /*OP_SACONST */
+  2, /*OP_BYTE_ACONST */
+  2, /*OP_FACONST */
+  2, /*OP_DACONST */
+  2, /*OP_CACONST */
+  2, /*OP_LACONST */
+  2, /*OP_BACONST */
   1, /*OP_NODE */
-  1 /*OP_NEG */
+  1, /*OP_NEG */
+  2, /*OP_STR_X2I*/
+  2  /*OP_STR_X2F*/
 };
 
 bool op_const( int op )
