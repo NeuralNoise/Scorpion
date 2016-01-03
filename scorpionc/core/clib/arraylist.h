@@ -19,11 +19,13 @@ class ListAdapter {
     // ListAdapter<long> flaggedItems; 
     
      public:
-        ListAdapter(){
-            init=false;
-            err = false;
-            pmode = false;
-            size_t=0;
+        ListAdapter()
+        : 
+          init(false),
+          err(false),
+          pmode(false),
+          size_t(0)
+        {
         }
         void clear()
         {
@@ -111,7 +113,8 @@ class ListAdapter {
                 exit(1);
              }
     
-            size_t--;
+            if(size_t == 0) {}
+            else size_t--;
             newValues = new (nothrow) T[size_t];
             if(newValues == nullptr){
                 cout << "std: array_out_of_memory\n\tarray remove[" << size_t << "]\n";
@@ -146,7 +149,8 @@ class ListAdapter {
                 newValues[i] = values[i];
             }
         
-            size_t--;
+            if(size_t == 0) {}
+            else size_t--;
             values = &newValues[0];
         }
         bool contains(T value)

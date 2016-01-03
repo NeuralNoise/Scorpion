@@ -65,8 +65,7 @@ struct SObject
 {
    SType* o;
    slong size_t, hex_a;
-   bit alloc:1;
-   int8_t gc, array;
+   int8_t gc, array, alloc;
    
    sstring* name;
    struct SObject* elements; // for creation of node objects

@@ -334,7 +334,7 @@ int Eso::process(scorpion_state* v_state)
                        add_byte( OP_CONST, v_state, &p );
                     else if(op_aconst( byte ))
                        add_byte( OP_ACONST, v_state, &p );
-                      
+                       
                     add_byte( byte, v_state, &p );
                     add_byte( atof(readstr( image, &n, false ).c_str()), v_state, &p );
                     add_byte( atof(readstr( image, &n, false ).c_str()), v_state, &p );

@@ -455,7 +455,10 @@
            o.scopeLevel = ((cglobals.infunction == 0) ? -1 : cglobals.scopelevel); // TODO: Add scope level processing instead of local -1 if not local
            
            if(type == typedef_class)
+           {
                o.C = new ClassObject[1];
+               o.C[0].iqueue._init_();
+           }
            
            if(ocmp(o))
              return false;
@@ -736,8 +739,8 @@
             long queuesize()
             {
                 if(cglobals.classdepth == 0){ return 0; }
-                else if(cglobals.classdepth == 1){ cglobals.classParent.C[0].iqueue.size(); }
-                else cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.size();
+                else if(cglobals.classdepth == 1){ return cglobals.classParent.C[0].iqueue.size(); }
+                else return cglobals.classParent.C[0].classObjects.valueAt( cglobals.classdepth-1 ).C[0].iqueue.size();
             }
             
             /* Insert a class init instruction to the beginning of the queue */
@@ -860,6 +863,7 @@
                objects.replace(objforalloc, i); // Reuse old objects for alloc
            }
        }
+       
     }
 	   
     namespace helper
@@ -1460,7 +1464,7 @@
        void parse_asm_method_args(lexr::parser_helper& lex, ListAdapter<Object> &args)
        {
            lexr::token temp_t;
-           bool comma;
+           bool comma = false;
            args._init_();
            
            for( ;; )
@@ -1554,7 +1558,6 @@
            for( ;; )
            {
                temp_t = getNextToken(lex);
-               
                
                if(cglobals.eof)
                   break;
@@ -2170,7 +2173,6 @@
            while( cglobals.block_stack!=block_begin)
            {
                temp_t = getNextToken(lex);
-               
                if(cglobals.eof)
                { 
 			      cglobals.out << "Unexpected end of file.";
@@ -2263,7 +2265,6 @@
            while( cglobals.block_stack!=block_begin)
            {
                temp_t = getNextToken(lex);
-               
                if(cglobals.eof)
                { 
 			      cglobals.out << "Unexpected end of file.";
@@ -2402,6 +2403,7 @@
            while( cglobals.block_stack!=block_begin)
            {
                temp_t = getNextToken(lex);
+               
                if(cglobals.eof)
                  break;
                if(temp_t.value == "}")
@@ -2717,7 +2719,7 @@ void parse_cmplr_items(stringstream &out_buf)
                 cres.size_t.byte1 += cplrfreelist1.valueAt(0).size_t.byte1;
                 out_buf << (char) cplr_instr <<  ins << (char) 0  << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << (char) 0
                 << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << (char) 0;   
-             //  cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << endl;
+               cout << ins << " -> " << cplrfreelist1.valueAt(0).sub_item.valueAt(0).item.byte1 << " : " << cplrfreelist1.valueAt(0).sub_item.valueAt(1).item.byte1 << endl;
          }
          else if(ins == OP_ADD || ins == OP_ISEQ || ins == OP_ISLT || ins == OP_ISLE || ins == OP_ISGT 
                    || ins == OP_ISGE || ins == OP_SUB || ins == OP_MULT || ins == OP_DIV || ins == OP_MOD 
@@ -2933,6 +2935,7 @@ int Compilr_Compile_Buf(Archive &zip_archive, stringstream &out_buf)
              error(cglobals.lex);
            }
         }
+     
      }
      
      if(!cglobals.hasStarter)

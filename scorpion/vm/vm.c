@@ -618,8 +618,8 @@ void scorpion_vexecute(scorpion_state* v_state)
                  continue;
             }
             case OP_CONST: {
-                 slong op = v_state->i_heap[v_state->pc++];
-                 slong ptr = v_state->i_heap[v_state->pc++];
+                 slong op = v_state->i_heap[v_state->pc++],
+                      ptr = (slong)v_state->i_heap[v_state->pc++];
                  
                  create_object(OPTYPE(op), &v_state->heap[ptr]);
                  sSet(&v_state->heap[ptr], v_state->i_heap[v_state->pc++]);
