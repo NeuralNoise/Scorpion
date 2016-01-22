@@ -85,6 +85,17 @@ int Compiler::compile(){
         }
         else if(zres._warnings_.str() != "")
               cout << cres._warnings_.str();
+<<<<<<< Updated upstream:scorpionc/core/compiler.c
+=======
+              
+        if(_ostream_buf__.str() != ""){
+            stringstream ss;
+            ss << "/usr/share/scorpion/lib/compiler_" << i;
+            if(FileStream::out(ss.str().c_str(),_ostream_buf__.str()) != 0)
+            { cout << "scorpionc:  error: could not write to executable file.\n"; return COMPILR_FAILURE; }
+              
+        }
+>>>>>>> Stashed changes:scorpionc/old/compiler.c
         
         kernal.Cleanup( true );*/
         archive.clean();
