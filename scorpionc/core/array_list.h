@@ -26,7 +26,7 @@ class ArrayList
      void list_start()
      {
          size_t = 0;
-         set = (T*)malloc(1*sizeof(T));
+         set = NULL;
      }
      void add(T item)
      {

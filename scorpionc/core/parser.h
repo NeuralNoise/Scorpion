@@ -73,7 +73,6 @@ class parser
       ast_node else_if_stm();
       ast_node else_block_stm();
       ast_node if_stm();
-      ast_node print_stm();
       ast_node return_stm();
       ast_node assignment_stm();
       ast_node expression_stm();

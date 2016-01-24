@@ -26,7 +26,9 @@ enum // ast_base_types
     ast_eq_expr = 119, ast_diff_expr =120, 
     ast_log_and_expr = 121, ast_log_or_expr = 122,
     ast_type_expr = 123, ast_condition_expr = 124,
-    ast_log_expr = 125
+    ast_log_expr = 125, ast_for_init_expr = 126,
+    ast_for_stm_expr = 127, ast_else_expr = 128,
+    ast_return_expr= 129
 };
 
 enum // ast_failures
@@ -63,6 +65,7 @@ class ast_node
        {
            atom =a;
            value.hash_start();
+           child_nodes.list_start();
        }
 
        void ast_start();

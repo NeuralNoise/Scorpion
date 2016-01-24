@@ -15,8 +15,8 @@ S_VERSION="SCORPIONC_1_0"
 # -Wpointer-arith -Wmissing-declarations -Winline -Wundef
 # -Wcast-qual -Wshadow -Wconversion -Wwrite-strings
 # -Wno-conversion -ffloat-store -g -m32 -Os -s"
-#  C_FLAGS="-W -Wall  -m32 -g"
-C_FLAGS="-W -Wall -Os -s"
+  C_FLAGS="-W -Wall  -m32 -g"
+# C_FLAGS="-W -Wall -Os -s"
 # C_FLAGS=" -Os -s"
 
 # Compile first source tree

@@ -40,8 +40,7 @@ bool reserved_id(std::string symbol)
 }
 
 ast_node parser::identifier() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.kind == k_symbol && !reserved_id(t.text.str())) {
@@ -53,8 +52,7 @@ ast_node parser::identifier() {
 }
 
 ast_node parser::float_literal() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.is_float) {
@@ -66,8 +64,7 @@ ast_node parser::float_literal() {
 }
 
 ast_node parser::int_literal() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.kind == k_number || t.kind == k_hex_number) {
@@ -79,8 +76,7 @@ ast_node parser::int_literal() {
 }
 
 ast_node parser::string_literal() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.kind == k_string) {
@@ -92,8 +88,7 @@ ast_node parser::string_literal() {
 }
 
 ast_node parser::char_literal() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.kind == k_char) {
@@ -105,8 +100,7 @@ ast_node parser::char_literal() {
 }
 
 ast_node parser::bool_literal() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.text.str() == "true" || t.text.str() == "false") {
@@ -118,8 +112,7 @@ ast_node parser::bool_literal() {
 }
 
 ast_node parser::object_type() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.text.str() == "object") {
@@ -131,8 +124,7 @@ ast_node parser::object_type() {
 }
 
 ast_node parser::int_type() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.text.str() == "int" || t.text.str() == "short" || t.text.str() == "byte"
@@ -145,8 +137,7 @@ ast_node parser::int_type() {
 }
 
 ast_node parser::float_type() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.text.str() == "float" || t.text.str() == "double") {
@@ -158,8 +149,7 @@ ast_node parser::float_type() {
 }
 
 ast_node parser::bool_type() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.text.str() == "bool" || t.text.str() == "bit") {
@@ -171,8 +161,7 @@ ast_node parser::bool_type() {
 }
 
 ast_node parser::string_type() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.text.str() == "string") {
@@ -184,8 +173,7 @@ ast_node parser::string_type() {
 }
 
 ast_node parser::char_type() {
-  ast_node n;
-  n.ast_start();
+  ast_node n(ast_failed);
   token t = lex_.next_token();
   
   if (t.text.str() == "char") {
@@ -1171,14 +1159,13 @@ ast_node parser::block_stm() {
      ast_node ast__(ast_gte_expr), ast_t(ast_failed);
      unsigned long iter;
      
-     if((ast__ = block_begin()).atom != ast_failed) {
+     if((ast_t = block_begin()).atom != ast_failed) {
             ast__.new_child( ast_t );
      }
      else {
          syntax_error << "expected '{' before `" << lex_.tok.text.str() << "'.";
          return ast_t;
      }
-     return ast__;
      
      iter = lex_.iter;
      statement_:
@@ -1206,80 +1193,493 @@ ast_node parser::var_stm() {
 }
 
 ast_node parser::for_init() {
-
+     ast_node ast__(ast_for_init_expr), ast_t(ast_failed);
+     unsigned long iter = lex_.iter;
+     
+       if((ast__ = var_stm()).atom != ast_failed) {
+           ast__.new_child( ast_t );
+           goto end;
+       }
+       else {
+           lex_.iter = iter;
+       }
+       
+       if((ast__ = assignment_stm()).atom != ast_failed) {
+           ast__.new_child( ast_t );
+           goto end;
+       }
+       else {
+           lex_.iter = iter;
+       }
+     
+     // error
+     ast__.atom = ast_failed;
+     end:
+       return ast__;
 }
 
 ast_node parser::for_cond() {
-
+    return expression();
 }
 
 ast_node parser::for_step() {
-
+    return assignment_stm();
 }
 
 ast_node parser::for_stm() {
-
+   ast_node ast__(ast_for_stm_expr), ast_t(ast_failed);
+   syntax_error.str("");
+   
+   if(lex_.peek_next_token().text.str() != "for") {
+       return ast_t;
+   }
+   else {
+       lex_.next_token();
+   }
+   
+   if((ast_t = begin_paren()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected '(' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if(lex_.peek_next_token().text.str() != ";") {
+       if((ast_t = for_init()).atom != ast_failed)
+           ast__.new_child( ast_t );
+       else {
+           syntax_error << "expected '(' before `" << lex_.tok.text.str() << "'.";
+           ast__.atom = ast_failed; 
+           return ast__;
+       }
+   }
+   
+   if(lex_.next_token().text.str() != ";")
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected ';' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if(lex_.peek_next_token().text.str() != ";") {
+       if((ast_t = for_cond()).atom != ast_failed)
+           ast__.new_child( ast_t );
+       else {
+           syntax_error << "expected '(' before `" << lex_.tok.text.str() << "'.";
+           ast__.atom = ast_failed; 
+           return ast__;
+       }
+   }
+   
+   if(lex_.next_token().text.str() != ";")
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected ';' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if(lex_.peek_next_token().text.str() != ";") {
+       if((ast_t = for_step()).atom != ast_failed)
+           ast__.new_child( ast_t );
+       else {
+           syntax_error << "expected '(' before `" << lex_.tok.text.str() << "'.";
+           ast__.atom = ast_failed; 
+           return ast__;
+       }
+   }
+   
+   if(lex_.next_token().text.str() != ";")
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected ';' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = end_paren()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected ')' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = block_stm()).atom != ast_failed) {
+       ast__.childs().get( ast__.childs().size() - 1 )
+         .childs() = ast_t.childs();
+   }
+   else  {
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   return ast__;
 }
 
 ast_node parser::while_stm() {
-
+   ast_node ast__(ast_for_stm_expr), ast_t(ast_failed);
+   syntax_error.str("");
+   
+   if(lex_.peek_next_token().text.str() != "while") {
+       return ast_t;
+   }
+   else {
+       lex_.next_token();
+   }
+   
+   if((ast_t = begin_paren()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected '(' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = expression()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected expression before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = end_paren()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected ')' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = block_stm()).atom != ast_failed) {
+       ast__.childs().get( ast__.childs().size() - 1 )
+         .childs() = ast_t.childs();
+   }
+   else  {
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   return ast__;
 }
 
 ast_node parser::else_if_stm() {
-
+    return if_stm();
 }
 
 ast_node parser::else_block_stm() {
-
+    return block_stm();
 }
 
 ast_node parser::if_stm() {
-
-}
-
-ast_node parser::print_stm() {
-
+   ast_node ast__(ast_for_stm_expr), ast_t(ast_failed);
+   syntax_error.str("");
+   unsigned long iter;
+   
+   if(lex_.peek_next_token().text.str() != "if") {
+       return ast_t;
+   }
+   else {
+       lex_.next_token();
+   }
+   
+   if((ast_t = begin_paren()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected '(' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = expression()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected expression before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = end_paren()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected ')' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = block_stm()).atom != ast_failed) {
+       ast__.childs().get( ast__.childs().size() - 1 )
+         .childs() = ast_t.childs();
+   }
+   else  {
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if(lex_.peek_next_token().text.str() != "else") {
+       ast_t.atom = ast_else_expr;
+       iter = lex_.iter;
+     
+       if((ast_t = else_if_stm()).atom != ast_failed) {
+           ast__.new_child( ast_t );
+           goto end;
+       }
+       else {
+           lex_.iter = iter;
+       }
+       
+       if((ast_t = else_block_stm()).atom != ast_failed) {
+           ast__.new_child( ast_t );
+           goto end;
+       }
+       else {
+           lex_.iter = iter;
+       }
+   }
+   
+   end:
+     return ast__;
 }
 
 ast_node parser::return_stm() {
-
+   ast_node ast__(ast_return_expr), ast_t(ast_failed);
+   syntax_error.str("");
+   unsigned long iter;
+   
+   if(lex_.peek_next_token().text.str() != "return") {
+       return ast_t;
+   }
+   else {
+       lex_.next_token();
+   }
+   
+   iter = lex_.iter;  
+   if((ast_t = expression()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       lex_.iter = iter;
+   }
+       
+   return ast__;
 }
 
 ast_node parser::assignment_stm() {
-
-}
-
-ast_node parser::expression_stm() {
-
-}
-
-ast_node parser::var_inst() {
-
-}
-
-ast_node parser::var_init() {
-
-}
-
-ast_node parser::var_def() {
-
+   ast_node ast__(ast_return_expr), ast_t(ast_failed);
+   syntax_error.str("");
+   
+   if((ast_t = expression()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected expression before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+    
+   if(lex_.next_token().text.str() == "=") {
+       ast__.new_child( ast_t );
+   }
+   else {
+       syntax_error << "expected '=' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = expression()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected expression before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+       
+   return ast__;
 }
 
 ast_node parser::statement() {
+     ast_node ast__(ast_failed);
+     unsigned long iter = lex_.iter;
+     
+     if((ast__ = block_stm()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if((ast__ = var_stm()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if((ast__ = for_stm()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if((ast__ = while_stm()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if((ast__ = if_stm()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if((ast__ = return_stm()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if((ast__ = assignment_stm()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if((ast__ = expression_stm()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if(lex_.peek_next_token().text.str() == "=") {
+         lex_.iter++;
+         goto end;
+     }
+     
+     // error
+     end:
+       return ast__;
+}
 
+ast_node parser::expression_stm() {
+    return expression();
+}
+
+ast_node parser::var_inst() {
+   ast_node ast__(ast_return_expr), ast_t(ast_failed);
+   syntax_error.str("");
+   
+   if((ast_t = type()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected expression before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = identifier()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected expression before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+       
+   return ast__;
+}
+
+ast_node parser::var_init() {
+   ast_node ast__(ast_return_expr), ast_t(ast_failed);
+   syntax_error.str("");
+    
+   if(lex_.next_token().text.str() == "=") {
+       ast__.new_child( ast_t );
+   }
+   else {
+       syntax_error << "expected '=' before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = expression()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected expression before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+       
+   return ast__;
+}
+
+ast_node parser::var_def() {
+   ast_node ast__(ast_return_expr), ast_t(ast_failed);
+   syntax_error.str("");
+   unsigned long iter;
+   
+   if((ast_t = var_inst()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected expression before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+       
+    iter = lex_.iter;   
+   if((ast_t = var_init()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       lex_.iter = iter;
+   }
+   
+   return ast__;
 }
 
 ast_node parser::struct_member() {
-
+     ast_node ast__(ast_failed);
+     unsigned long iter = lex_.iter;
+     
+     if((ast__ = var_inst()).atom != ast_failed) {
+         goto end;
+     }
+     else lex_.iter = iter;
+     
+     if(lex_.peek_next_token().text.str() == ";") {
+         lex_.iter++;
+         goto end;
+     }
+     
+     // error
+     end:
+       return ast__;
 }
 
 ast_node parser::func_args() {
-
+   ast_node ast__(ast_struct), ast_t(ast_failed);
+   syntax_error.str("");
+   
+   new_arg:
+   if((ast_t = identifier()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected identifier before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if((ast_t = identifier()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected identifier before `" << lex_.tok.text.str() << "'.";
+       ast__.atom = ast_failed; 
+       return ast__;
+   }
+   
+   if(lex_.peek_next_token().text.str() == ",") {
+           lex_.iter++;
+           goto new_arg;
+     }
+     else {
+         goto end;
+     }
+   
+   end:
+     return ast__;
 }
 
 ast_node parser::struct_decl() {
-   ast_node ast__(ast_struct), ast_t;
-   ast_t.ast_start();
+   ast_node ast__(ast_struct), ast_t(ast_failed);
    syntax_error.str("");
    
    if(lex_.peek_next_token().text.str() != "node") {
@@ -1288,11 +1688,11 @@ ast_node parser::struct_decl() {
    else {
        lex_.next_token();
    }
+   return ast__;
 }
 
 ast_node parser::var_decl() {
-   ast_node ast__(ast_var), ast_t;
-   ast_t.ast_start();
+   ast_node ast__(ast_var), ast_t(ast_failed);
    syntax_error.str("");
    
    if(lex_.peek_next_token().text.str() != "int") {
@@ -1301,11 +1701,11 @@ ast_node parser::var_decl() {
    else {
        lex_.next_token();
    }
+   return ast__;
 }
 
 ast_node parser::func_decl() {
-   ast_node ast__(ast_function), ast_t;
-   ast_t.ast_start();
+   ast_node ast__(ast_function), ast_t(ast_failed);
    syntax_error.str("");
    
    if(lex_.peek_next_token().text.str() != "def") {
@@ -1315,14 +1715,16 @@ ast_node parser::func_decl() {
        lex_.next_token();
    }
    
+   cout << "entry.\n";
    if((ast_t = identifier()).atom != ast_failed)
        ast__.new_child( ast_t );
    else {
        syntax_error << "expected identifier before `" << lex_.tok.text.str() << "'.";
-       ast__.atom = ast_syntax_fail; 
+       ast__.atom = ast_failed; 
        return ast__;
    }
    
+   cout << "entry.\n";
    if(lex_.next_token().text.str() == "(") {
        ast_t.new_();
        ast_t.atom = ast_func_args;
@@ -1332,7 +1734,7 @@ ast_node parser::func_decl() {
    }
    else {
        syntax_error << "expected '(' before `" << lex_.tok.text.str() << "'.";
-       ast__.atom = ast_syntax_fail; 
+       ast__.atom = ast_failed; 
        return ast__;
    }
    
@@ -1342,7 +1744,7 @@ ast_node parser::func_decl() {
              .childs() = ast_t.childs();
        }
        else  {
-            ast__.atom = ast_syntax_fail; 
+            ast__.atom = ast_failed; 
             return ast__;
        }
    }
@@ -1356,7 +1758,7 @@ ast_node parser::func_decl() {
    }
    else  {
        syntax_error << "expected ')' before `" << lex_.tok.text.str() << "'.";
-       ast__.atom = ast_syntax_fail; 
+       ast__.atom = ast_failed; 
        return ast__;
    }
    
@@ -1365,7 +1767,7 @@ ast_node parser::func_decl() {
          .childs() = ast_t.childs();
    }
    else  {
-       ast__.atom = ast_syntax_fail; 
+       ast__.atom = ast_failed; 
        return ast__;
    }
    
