@@ -16,16 +16,20 @@
 class parser
 {
     public:
-      parser(string src)
+      parser(string src, string f)
       {
+          file.hash_start();
           source.hash_start();
+          
+          file.str(f);
           source.str(src);
       }
       bool parse();
       
     private:
-      sstring source;
+      sstring source, file;
       lexer lex_;
+      void parse_error();
       
       ast_node identifier();
       ast_node float_literal();
@@ -40,7 +44,7 @@ class parser
       ast_node string_type();
       ast_node char_type();
       ast_node id_type();
-      ast_node type();
+      ast_node type(bool static_ = false);
       ast_node begin_paren();
       ast_node end_paren();
       ast_node function_call();
@@ -91,7 +95,7 @@ class parser
       ast_node eq_expr();
       ast_node logical_expr();
       ast_node cond_expr();
-      ast_node func_cal_params();
+      ast_node func_call_params();
       ast_node func_args();
       ast_node expression();
       ast_node statement();

@@ -60,7 +60,7 @@ void run_bootstrap()
             cout << zres._warnings_.str();
         
         zippy.Cleanup();
-        parser new_parser(source.str());
+        parser new_parser(source.str(), core.source_items[i].name.str());
         
         parser_stack.add( new_parser );
         new_parser.parse();

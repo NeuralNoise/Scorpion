@@ -28,7 +28,8 @@ enum // ast_base_types
     ast_type_expr = 123, ast_condition_expr = 124,
     ast_log_expr = 125, ast_for_init_expr = 126,
     ast_for_stm_expr = 127, ast_else_expr = 128,
-    ast_return_expr= 129
+    ast_return_expr= 129, ast_value_expression = 130,
+    ast_var_init_expr = 131
 };
 
 enum // ast_failures
@@ -48,7 +49,7 @@ enum // ast_types
     ast_slash = 17, ast_lt = 18, ast_lte = 19, ast_gt = 20,
     ast_gte = 21, ast_eq_eq = 22, ast_not_eq = 23, ast_log_and = 24,
     ast_log_or = 25, ast_col = 26, ast_left_bracket = 27, 
-    ast_right_bracket = 28
+    ast_right_bracket = 28, ast_semicolon= 29
 };
 
 class ast_node

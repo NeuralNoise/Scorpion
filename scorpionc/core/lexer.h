@@ -66,7 +66,7 @@ class lexer
    public:
      token tok;
      unsigned long iter;
-     unsigned long line, col, mode, check;
+     unsigned long line, col, mode;
      void init(std::string source, int lex_mode);
      token next_token(bool safe = false);
      token peek_next_token();
