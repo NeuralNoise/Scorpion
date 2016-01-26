@@ -37,6 +37,19 @@ bool reserved_id(std::string symbol)
 {
     return (symbol == "def" || symbol == "class" || symbol == "native" 
             || symbol == "extern" || symbol == "if" || symbol == "do" || symbol == "while"
+            || symbol == "for" || symbol == "return" || symbol == "goto" || symbol == "base" 
+            || symbol == "else" || symbol == "char" || symbol == "const" || symbol == "true" 
+            || symbol == "false" || symbol == "new" || symbol == "throw" || symbol == "throws" 
+            || symbol == "node" || symbol == "this" || symbol == "sizeof" || symbol == "null" 
+            || symbol == "self" || symbol == "typedef" || symbol == "static" || symbol == "public"
+            || symbol == "private" || symbol == "protected" || symbol == "import"
+            || symbol == "package" || symbol == "asm");
+} 
+
+bool reserved_symbol(std::string symbol)
+{
+    return (symbol == "def" || symbol == "class" || symbol == "native" 
+            || symbol == "extern" || symbol == "if" || symbol == "do" || symbol == "while"
             || symbol == "for" || symbol == "return" || symbol == "goto" || symbol == "int"
             || symbol == "bool" || symbol == "short" || symbol == "double" || symbol == "float"
             || symbol == "string" || symbol == "base" || symbol == "else" || symbol == "char" 
@@ -232,6 +245,7 @@ ast_node parser::type(bool static_) {
      else lex_.iter = iter;
      
      if((ast_t = id_type()).atom != ast_failed) {
+         cout << "id " << ast_t.value.str() << " = " << (static_ && reserved_id(ast_t.value.str()))  << endl;
          if(static_ && reserved_id(ast_t.value.str()))
            ast_t.atom = ast_failed;
          return ast_t;
@@ -326,11 +340,12 @@ ast_node parser::function_call() {
 ast_node parser::member_access() {
    ast_node ast__(ast_member_access), ast_t(ast_failed);
    
-   if((ast_t = identifier()).atom != ast_failed)
+   if((ast_t = identifier()).atom != ast_failed && !reserved_symbol(ast_t.value.str()))
        ast__.new_child( ast_t );
    else {
        syntax_error << "expected identifier before `" << lex_.tok.text.str() << "'.";
        parse_error();
+       ast_t.atom = ast_failed;
        return ast_t;
    }
    
@@ -338,11 +353,12 @@ ast_node parser::member_access() {
    if(lex_.peek_next_token().text.str() == ".") {
        lex_.iter++;
        
-       if((ast_t = identifier()).atom != ast_failed)
+       if((ast_t = identifier()).atom != ast_failed && !reserved_symbol(ast_t.value.str()))
            ast__.new_child( ast_t );
        else {
            syntax_error << "expected identifier before `" << lex_.tok.text.str() << "'.";
            parse_error();
+           ast_t.atom = ast_failed;
            return ast_t;
        }
        goto member;
@@ -408,6 +424,7 @@ ast_node parser::value() {
      }
      
      if((ast_t = member_access()).atom != ast_failed) {
+         cout << "member\n";
          return ast_t;
      }
      else {
@@ -1127,10 +1144,7 @@ ast_node parser::block_begin() {
      ast_node ast__(ast_left_bracket), ast_t(ast_failed);
      
      if(lex_.next_token().text.str() == "{") {
-           ast_t.atom = ast_left_bracket;
-           ast_t.value.str("{");
-           
-           ast__.new_child( ast_t );
+           ast__.value.str("{");
      }
      else {
          syntax_error << "expected '{' before `" << lex_.tok.text.str() << "'.";
@@ -1145,10 +1159,7 @@ ast_node parser::block_end() {
      ast_node ast__(ast_right_bracket), ast_t(ast_failed);
      
      if(lex_.next_token().text.str() == "}") {
-           ast_t.atom = ast_right_bracket;
-           ast_t.value.str("}");
-           
-           ast__.new_child( ast_t );
+           ast__.value.str("}");
      }
      else {
          syntax_error << "expected '}' before `" << lex_.tok.text.str() << "'.";
@@ -1159,39 +1170,58 @@ ast_node parser::block_end() {
      return ast__;
 }
 
+ast_node parser::semi_colon() {
+     ast_node ast__(ast_semicolon), ast_t(ast_failed);
+     
+     if(lex_.next_token().text.str() == ";") {
+           ast__.value.str(";");
+     }
+     else {
+         syntax_error << "expected ';' before `" << lex_.tok.text.str() << "'.";
+         parse_error();
+         return ast_t;
+     }
+     
+     return ast__;
+}
+
 ast_node parser::block_stm() {
-     ast_node ast__(ast_gte_expr), ast_t(ast_failed);
+     ast_node ast__(ast_block_stm), ast_t(ast_failed);
      unsigned long iter;
      
-     cout << "block begin " << lex_.peek_next_token().text.str() << "\n";
      if((ast_t = block_begin()).atom != ast_failed) {
-            ast__.new_child( ast_t );
      }
      else {
          return ast_t;
      }
-     cout << "new block\n";
+     
      statement_:
         iter = lex_.iter;
         if((ast_t = statement()).atom != ast_failed) {
             if(ast_t.atom == ast_syntax_fail) {
-                return ast_t;
+                cout << errno.str() << endl;
+                errno.str("");
             }
-     
-            ast__.new_child( ast_t );
-            goto statement_;
+            else {
+                ast__.new_child( ast_t );
+                goto statement_;
+            }
         }
         else {
-            lex_.iter = iter;
-            errno.str("");
+            if(lex_.end())
+            {
+                return ast__;
+            }
         }
      
-     cout << "end " << lex_.peek_next_token().text.str() << endl;
+     iter = lex_.iter;
      if((ast_t = block_end()).atom != ast_failed) {
-            ast__.new_child( ast_t );
+         cout << "block end\n";
      }
      else {
-         return ast_t;
+            lex_.iter = iter;
+            errno.str("");
+            goto statement_;
      }
        
      return ast__;
@@ -1240,7 +1270,7 @@ ast_node parser::for_step() {
 ast_node parser::for_stm() {
    ast_node ast__(ast_for_stm_expr), ast_t(ast_failed);
    syntax_error.str("");
-   cout << "for " << lex_.peek_next_token().text.str() << endl;
+   
    if(lex_.peek_next_token().text.str() != "for") {
        return ast_t;
    }
@@ -1525,12 +1555,11 @@ ast_node parser::expression_stm() {
 }
 
 ast_node parser::statement() {
-     ast_node ast__(ast_syntax_fail);
+     ast_node ast__(ast_failed), ast_t(ast_failed);
      unsigned long iter = lex_.iter;
-     bool semi = false;
-     
+     cout << "statement " << lex_.peek_next_token().text.str() << endl;
      if((ast__ = block_stm()).atom != ast_failed) {
-         goto end;
+         return ast__;
      }
      else {
        lex_.iter = iter;
@@ -1539,7 +1568,7 @@ ast_node parser::statement() {
      
      if((ast__ = for_stm()).atom != ast_failed) {
      cout << "for statement\n";
-         goto end;
+         return ast__;
      }
      else {
        lex_.iter = iter;
@@ -1548,7 +1577,7 @@ ast_node parser::statement() {
      
      if((ast__ = while_stm()).atom != ast_failed) {
      cout << "while statement\n";
-         goto end;
+         return ast__;
      }
      else {
        lex_.iter = iter;
@@ -1557,7 +1586,7 @@ ast_node parser::statement() {
      
      if((ast__ = if_stm()).atom != ast_failed) {
      cout << "if statement\n";
-         goto end;
+         return ast__;
      }
      else {
        lex_.iter = iter;
@@ -1566,8 +1595,13 @@ ast_node parser::statement() {
      
      if((ast__ = return_stm()).atom != ast_failed) {
      cout << "return statement\n";
-         semi = true;
-         goto end;
+         if((ast_t = semi_colon()).atom != ast_failed) {
+             return ast__;
+         }
+         else {
+             ast_t.atom = ast_syntax_fail; 
+             return ast_t;
+         }
      }
      else {
        lex_.iter = iter;
@@ -1576,7 +1610,13 @@ ast_node parser::statement() {
      
      if((ast__ = assignment_stm()).atom != ast_failed) {
      cout << "assignment statement\n";
-         goto end;
+         if((ast_t = semi_colon()).atom != ast_failed) {
+             return ast__;
+         }
+         else {
+             ast_t.atom = ast_syntax_fail; 
+             return ast_t;
+         }
      }
      else {
        lex_.iter = iter;
@@ -1585,8 +1625,13 @@ ast_node parser::statement() {
      
      if((ast__ = var_stm()).atom != ast_failed) {
      cout << "var statement\n";
-         semi = true;
-         goto end;
+         if((ast_t = semi_colon()).atom != ast_failed) {
+             return ast__;
+         }
+         else {
+             ast_t.atom = ast_syntax_fail; 
+             return ast_t;
+         }
      }
      else {
        lex_.iter = iter;
@@ -1594,9 +1639,14 @@ ast_node parser::statement() {
      }
      
      if((ast__ = expression_stm()).atom != ast_failed) {
-     cout << "expression statement\n";
-         semi = true;
-         goto end;
+         cout << "expression statement\n";
+         if((ast_t = semi_colon()).atom != ast_failed) {
+             return ast__;
+         }
+         else {
+             ast_t.atom = ast_syntax_fail; 
+             return ast_t;
+         }
      }
      else {
        lex_.iter = iter;
@@ -1607,23 +1657,23 @@ ast_node parser::statement() {
          lex_.iter++;
          ast__.atom = ast_semicolon;
          ast__.value.str(";");
-         goto end;
+         return ast__;
      }
      
-     
-     // error
-     end:
-       if(semi && lex_.next_token().text.str() != ";") {
-           syntax_error << "expected ';' before `" << lex_.tok.text.str() << "'.";
+     if(reserved_symbol(lex_.peek_next_token().text.str())) {
+           lex_.iter++;
+           syntax_error << "expected symbol `" << lex_.tok.text.str() << "'.";
            parse_error();
            ast__.atom = ast_syntax_fail;
-       }
-       return ast__;
+           return ast__;
+     }
+     
+     // error
+     return ast__;
 }
 
 ast_node parser::var_inst() {
    ast_node ast__(ast_return_expr), ast_t(ast_failed);
-   syntax_error.str("");
    
    if((ast_t = type(true)).atom != ast_failed)
        ast__.new_child( ast_t );
@@ -1747,7 +1797,7 @@ ast_node parser::func_args() {
 
 ast_node parser::struct_decl() {
    ast_node ast__(ast_struct), ast_t(ast_failed);
-   syntax_error.str("");
+   unsigned long iter;
    
    if(lex_.peek_next_token().text.str() != "node") {
        return ast_t;
@@ -1755,22 +1805,79 @@ ast_node parser::struct_decl() {
    else {
        lex_.next_token();
    }
+   
+   if((ast_t = identifier()).atom != ast_failed)
+       ast__.new_child( ast_t );
+   else {
+       syntax_error << "expected identifier before `" << lex_.tok.text.str() << "'.";
+       parse_error();
+       ast__.atom = ast_syntax_fail; 
+       return ast__;
+   }
+   
+   if((ast_t = block_begin()).atom != ast_failed) {
+   }
+   else {
+       ast__.atom = ast_syntax_fail; 
+       return ast__;
+   }
+   
+   struct_mem:
+     iter = lex_.iter;
+     if((ast__ = struct_member()).atom != ast_failed) {
+         ast__.new_child( ast_t );
+         
+         if((ast_t = semi_colon()).atom != ast_failed) {
+         }
+         else {
+             ast__.atom = ast_syntax_fail; 
+             return ast__;
+         }
+         goto struct_mem;
+     }
+     else {
+         lex_.iter = iter;
+         errno.str("");
+     }
+     
+     iter = lex_.iter;
+     if((ast_t = semi_colon()).atom != ast_failed) {
+         goto struct_mem;
+     }
+     else {
+         lex_.iter = iter;
+         errno.str("");
+     }
+     
+   if((ast_t = block_end()).atom != ast_failed) {
+   }
+   else {
+       ast__.atom = ast_syntax_fail; 
+       return ast__;
+   }
+   
    return ast__;
 }
 
 ast_node parser::var_decl() {
-   ast_node ast__(ast_var), ast_t(ast_failed);
-   syntax_error.str("");
+   ast_node ast__ = var_def(), ast_t;
    unsigned iter = lex_.iter;
    
-   if((ast_t = type(true)).atom != ast_failed) {
-      lex_.iter = iter;
-      return var_def();
+   if(ast__.atom != ast_failed) {
    }
    else {
        lex_.iter = iter;
+       errno.str("");
+   }
+  
+   if((ast_t = semi_colon()).atom != ast_failed) {
+   }
+   else {
+       ast_t.atom = ast_syntax_fail; 
        return ast_t;
    }
+     
+   return ast__;
 }
 
 ast_node parser::func_decl() {
@@ -1850,9 +1957,27 @@ ast_node parser::func_decl() {
 
 ast_node parser::declaration() {
      ast_node ast__;
+     unsigned long iter = lex_.iter;
+     
+     if((ast__ = block_begin()).atom != ast_failed) {
+         return ast__;
+     }
+     else {
+         lex_.iter = iter;
+         errno.str("");
+     }
+     
+     if((ast__ = block_end()).atom != ast_failed) {
+         return ast__;
+     }
+     else {
+         lex_.iter = iter;
+         errno.str("");
+     }
+     
      if(((ast__ = struct_decl()).atom != ast_failed)
-        || ((ast__ = var_decl()).atom != ast_failed)
-        || ((ast__ = func_decl()).atom != ast_failed))
+        || ((ast__ = func_decl()).atom != ast_failed)
+        || ((ast__ = var_decl()).atom != ast_failed))
         return ast__;
      else {
          ast__.atom = ast_failed;
@@ -1864,6 +1989,7 @@ ast_node parser::declaration() {
 ast parser::base_grammar() {
     ast prog_ast;
     prog_ast.construct();
+    int error_t = 0;      // to prevent reaccurring syntax errors
     
     for( ;; )
     {
@@ -1872,23 +1998,34 @@ ast parser::base_grammar() {
             if(lex_.end())
               break;
             else {
-                syntax_error << "expected node, class, function, or variable decliration.";
-                parse_error();
+                lex_.iter++;
+                error_t++;
                 
-                cout << errno.str();
-                // error
-                break;
+                if(error_t <= 1) {
+                    syntax_error << "expected node, class, function, or variable decliration.";
+                    parse_error();
+                    
+                    cout << errno.str();
+                }
+                
+                errno.str("");
             }
         }
         else {
-            if(ast__.atom == ast_syntax_fail) {
-              cout << "failure" << endl;
-              cout << errno.str() << endl;
+            if(lex_.end())
               break;
+            else if(ast__.atom == ast_syntax_fail) {
+                lex_.iter++;
+              cout << errno.str() << endl;
+              errno.str("");
+              continue;
             }
             
+            if(ast__.atom == ast_left_bracket && 
+                ast__.atom != ast_right_bracket)
+               error_t = 0;
+               
             cout << "success" << endl;
-            break;
             if(ast__.atom == ast_syntax_fail){}
               // error
             else

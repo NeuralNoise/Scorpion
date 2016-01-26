@@ -95,6 +95,7 @@ class parser
       ast_node eq_expr();
       ast_node logical_expr();
       ast_node cond_expr();
+      ast_node semi_colon();
       ast_node func_call_params();
       ast_node func_args();
       ast_node expression();

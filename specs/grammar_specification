@@ -1,0 +1,254 @@
+================================================
+	Scorpion Grammar Specification
+
+  - Copyright (C) 2015 The Scorpion Programming Language
+  
+  Symbols:
+    >>: sequence.
+    | : choice.
+    * : zero or more times loop.
+    + : one or more times loop.
+    - : optional.
+    & : logical AND.
+    ! : logical NOT.
+================================================
+
+text := [a-zA-Z]+ optional _ | [0-9]
+float := [0-9]+ optional . >> [0-9+]
+integer := [0-9]+ | 0x[a-fA-F0-9]+
+any := *char
+string := "\"" >> any >> "\""
+char := any character
+			
+=========== Literals :=========			
+			
+identifier := text
+
+float_literal := float
+
+int_literal := integer
+
+string_literal := string 
+
+char_literal := "'" >> char >> "'"
+
+bool_literal := "true" | "false"
+
+=========== Types :===========
+
+object_type := "object"
+
+int_type := "int"
+          | "short"
+    		  | "long"
+    		  | "byte"
+
+float_type := "float" | "double"
+
+bool_type := "bool" | "bit"
+
+string_type := "string"
+
+char_type := "char"
+
+
+id_type := identifier
+
+
+type := int_type
+      | float_type
+      | bool_type
+      | string_type
+      | char_type
+	    | object_type
+      | id_type
+	  
+// for when we only want to use the primitive types	  
+static_type :=
+
+=========== Expressions :===========
+	  
+begin_paren := "("
+end_paren := ")"
+func_call_params := -(expression >> *(',' >> expression)) 
+function_call := identifier >> begin_paren 
+			   >> func_call_params
+			   >> end_paren
+			   
+member_access := identifier >> *('.' >> identifier)
+
+
+literal_value := float_literal
+           | int_literal
+           | string_literal
+           | char_literal
+           | bool_literal
+	  
+value := function_call
+           | member_access
+           | literal_value
+           | '(' >> expression >> ')'
+
+logical_not_expr := '!' >> unary_expr
+
+positive_expr := '+' >> unary_expr
+
+negative_expr := '-' >> unary_expr
+
+unary_expr := logical_not_expr
+            | positive_expr
+            | negative_expr
+            | value
+
+mul_op := '*' >> unary_expr
+
+div_op := '/' >> unary_expr
+
+mul_expr := unary_expr >> *(mul_op | div_op)
+
+add_op := '+' >> mul_expr
+
+sub_op := '-' >> mul_expr
+
+add_expr := mul_expr >> *(add_op | sub_op)
+
+lt_op  := "<"  >> add_expr
+
+lte_op := "<=" >> add_expr
+
+gt_op  := ">"  >> add_expr
+
+gte_op := ">=" >> add_expr
+
+cmp_expr := add_expr >> *(lt_op | lte_op | gt_op | gte_op)
+
+eq_op   := "==" >> cmp_expr
+
+diff_op := "!=" >> cmp_expr
+
+eq_expr := cmp_expr >> *(eq_op | diff_op)
+
+log_and_op := "&&" >> eq_expr
+
+log_or_op  := "||" >> eq_expr
+
+logical_expr := eq_expr >> *(log_and_op | log_or_op)
+
+cond_op := '?' >> cond_expr >> ':' >> cond_expr
+
+cond_expr := logical_expr >> -cond_op
+
+expression := cond_expr
+
+============= STATEMENTS :============
+
+block_begin := '{'
+
+block_end := '}'
+
+block_stm := block_begin >> *statement >> block_end
+
+
+
+var_stm := var_def
+
+
+
+for_init := var_stm | assignment_stm
+
+for_cond := expression
+
+for_step := assignment_stm
+
+for_stm := expr("for") >> '(' 
+         >> -for_init 
+    		 >> ';' 
+    		 >> -for_cond 
+    		 >> ';' 
+    		 >> -for_step 
+    		 >> ')' 
+    		 >> block_stm
+
+
+
+while_stm := expr("while") >> '(' >> expression >> ')' >> block_stm
+
+
+
+else_if_stm := if_stm
+
+else_block_stm := block_stm
+
+if_stm := expr("if") >> '(' 
+        >> expression 
+		>> ')' 
+		>> block_stm 
+		>> -("else" >> (else_if_stm | else_block_stm))
+
+
+
+return_stm := "return" >> -expression
+
+
+
+assignment_stm := expression >> '=' >> expression
+
+
+
+expression_stm := expression
+
+
+statement := block_stm
+           | for_stm
+           | while_stm
+           | if_stm
+           | return_stm >> ';'           
+           | assignment_stm >> ';'       
+           | var_stm >> ';'                       
+           | expression_stm >> ';'      
+           | ';'
+			   
+============ DECLARATIONS :==========
+
+
+
+var_inst := type >> identifier
+
+
+
+var_init := '=' >> expression
+
+
+
+var_def := var_inst >> -var_init
+
+
+
+var_decl := var_def >> ';'
+
+
+truct member
+struct_member := var_inst >> ';'
+               | ';'
+
+// main declirations 			   
+struct_decl := "node" >> identifier 
+             >> '{' 
+      			 >> *struct_member 
+      			 >> '}'
+
+
+
+func_decl := "func" >> identifier 
+           >> '(' 
+		   >> -(var_inst >> *(',' >> var_inst)) 
+		   >> ')' 
+		   >> block_stm
+
+declaration := struct_decl
+             | var_decl
+             | func_decl
+             | '{'
+             | '}'
+
+base_grammar := *declaration

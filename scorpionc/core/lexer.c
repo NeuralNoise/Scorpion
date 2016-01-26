@@ -417,7 +417,7 @@ bool lexer::is_end()
 { return (iter >= (source.size()-1)); }
 
 bool lexer::token_end()
-{ return (iter >= token_list_.size()); }
+{ return (iter >= (token_list_.size()-1)); }
 
 bool lexer::end()
 { return token_end(); }
@@ -562,6 +562,7 @@ void lexer::init(std::string src, int lex_mode)
     t_eof.col = 0;
     t_eof.kind = k_eof;
     t_eof.is_float = false;
+    t_eof.line = line;
     token_list_.add( t_eof );
     iter= 0;
     line=0;

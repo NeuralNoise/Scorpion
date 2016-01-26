@@ -1,3 +1,8 @@
+node struct {
+   int i;
+   string g;
+}
+
 def f (int i, struct k) { 
     for(int i = 0; i < 10; i = i+1; ) {
         while (a == b){}
@@ -8,14 +13,21 @@ def f (int i, struct k) {
     }
     int i = 0;
     i=9;
+    i = (9+8*h);
     !!h;
+    node s;
     a==f;
     {
-       a;;
+       a;
       {
-        a;
+        int a = 9;
       }
     }
     return a > b ? a == 9 : b;
+}
+
+def init()
+{
+   9;
 }
 
